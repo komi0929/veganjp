@@ -56,16 +56,21 @@ export default function MapView() {
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showAmbientHint, setShowAmbientHint] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-  const hasValidKey = useMemo(() => apiKey && apiKey !== 'placeholder-google-maps-key', [apiKey]);
 
   useEffect(() => {
-    const hasSeen = localStorage.getItem('vegan_jp_onboarded_v1');
-    if (!hasSeen) {
-      setShowOnboarding(true);
+    const hasSeenHint = localStorage.getItem('vegan_jp_hint_dismissed');
+    if (!hasSeenHint) {
+      setShowAmbientHint(true);
     }
+  }, []);
+
+  const dismissHint = useCallback(() => {
+    setShowAmbientHint(false);
+    localStorage.setItem('vegan_jp_hint_dismissed', 'true');
   }, []);
 
   const fetchPlaces = useCallback(async () => {
@@ -118,7 +123,10 @@ export default function MapView() {
             <AdvancedMarker
               key={place.google_place_id}
               position={{ lat: place.lat, lng: place.lng }}
-              onClick={() => setSelectedPlace(place)}
+              onClick={() => {
+                setSelectedPlace(place);
+                dismissHint();
+              }}
             >
               <PlantMarker
                 count={place.posts.length}
@@ -175,32 +183,62 @@ export default function MapView() {
         </div>
       </motion.header>
 
-      {/* ─── Frictionless Shutter Pill (Floating Bottom Action) ─── */}
-      <motion.div
-        className="absolute bottom-8 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
-        initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 24, delay: 0.1 }}
-      >
-        <motion.button
-          onClick={() => setShowUpload(true)}
-          className="pointer-events-auto group flex items-center gap-2.5 bg-slate-900 hover:bg-botanical-900 text-white pl-4 pr-5 py-3.5 rounded-full shadow-pill transition-all duration-300 border border-white/20"
-          whileHover={{ scale: 1.04, y: -2 }}
-          whileTap={{ scale: 0.96 }}
-        >
-          <div className="w-6 h-6 rounded-full bg-botanical-500 text-slate-950 flex items-center justify-center text-sm font-bold shadow-sm group-hover:rotate-90 transition-transform duration-300">
-            +
-          </div>
-          <span className="text-xs font-semibold tracking-wide text-white">
-            Plant a spot
-          </span>
-          <span className="text-[11px] text-white/50 tracking-wider font-mono">
-            NO AUTH
-          </span>
-        </motion.button>
-      </motion.div>
+      {/* ─── Atmos-Style Ambient Guidance Pill ─── */}
+      <AnimatePresence>
+        {showAmbientHint && !selectedPlace && (
+          <motion.div
+            className="absolute top-20 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
+            initial={{ y: -10, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -10, opacity: 0, scale: 0.95 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="pointer-events-auto glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-glass-sm text-xs font-medium text-slate-700 border border-botanical-300/50 bg-white/95">
+              <span className="w-2 h-2 rounded-full bg-botanical-500 animate-pulse shrink-0" />
+              <span>Tap any photo pin to preview plant-based dishes</span>
+              <button
+                onClick={dismissHint}
+                className="ml-1 text-slate-400 hover:text-slate-700 text-xs font-bold leading-none p-1 rounded-full hover:bg-slate-100 transition-colors"
+                aria-label="Dismiss hint"
+              >
+                ✕
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* ─── Discovery Bottom Sheet ─── */}
+      {/* ─── Frictionless Shutter Pill (Hides smoothly when place is selected) ─── */}
+      <AnimatePresence>
+        {!selectedPlace && (
+          <motion.div
+            className="absolute bottom-8 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 40, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+          >
+            <motion.button
+              onClick={() => setShowUpload(true)}
+              className="pointer-events-auto group flex items-center gap-2.5 bg-slate-900 hover:bg-botanical-900 text-white pl-4 pr-5 py-3.5 rounded-full shadow-pill transition-all duration-300 border border-white/20"
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+            >
+              <div className="w-6 h-6 rounded-full bg-botanical-500 text-slate-950 flex items-center justify-center text-sm font-bold shadow-sm group-hover:rotate-90 transition-transform duration-300">
+                +
+              </div>
+              <span className="text-xs font-semibold tracking-wide text-white">
+                Plant a spot
+              </span>
+              <span className="text-[11px] text-white/50 tracking-wider font-mono">
+                NO AUTH
+              </span>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Progressive Discovery Bottom Sheet (Stage 1 Peek / Stage 2 Expanded) ─── */}
       <AnimatePresence>
         {selectedPlace && (
           <BottomSheet
@@ -223,7 +261,7 @@ export default function MapView() {
         )}
       </AnimatePresence>
 
-      {/* ─── Onboarding Flow ─── */}
+      {/* ─── Onboarding Walkthrough (Manual Trigger) ─── */}
       <OnboardingModal
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
