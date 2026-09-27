@@ -7,13 +7,9 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-}
-
-@layer base {
-  :root {
-    --color-primary: #5a9e3f;
-    --color-primary-dark: #467d30;
-  }
+  background-color: #FAF8F5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer utilities {
@@ -23,5 +19,19 @@ html, body {
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Paper craft noise subtle texture */
+  .bg-noise {
+    background-image: radial-gradient(rgba(46, 39, 32, 0.04) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Diorama terrain grid subtle guide */
+  .diorama-grid {
+    background-image: 
+      linear-gradient(to right, rgba(163, 141, 116, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(163, 141, 116, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 }

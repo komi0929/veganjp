@@ -37,8 +37,8 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Image must be under 10MB');
+    if (file.size > 15 * 1024 * 1024) {
+      setError('Please choose a photo under 15MB');
       return;
     }
     try {
@@ -47,7 +47,7 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
       setImagePreview(URL.createObjectURL(compressed));
       setError(null);
     } catch {
-      setError('Failed to process image. Try another photo.');
+      setError('Could not process photo. Please try another one.');
     }
   };
 
@@ -57,7 +57,7 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
     setError(null);
 
     try {
-      const fileExt = imageFile.name.split('.').pop() || 'jpg';
+      const fileExt = imageFile.name.split('.').pop() || 'webp';
       const fileName = `${uuidv4()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('post-images')
@@ -97,7 +97,7 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
       addMyPostId(postId);
 
       setStep('done');
-      setTimeout(() => onComplete(), 1200);
+      setTimeout(() => onComplete(), 1400);
     } catch (err: any) {
       setError(err.message || 'Upload failed. Please try again.');
       setStep('photo');
@@ -106,39 +106,41 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 bg-cream-50/98 backdrop-blur-xl flex flex-col"
+      className="fixed inset-0 z-50 bg-[#FAF8F5]/95 backdrop-blur-2xl flex flex-col justify-between"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 border-b border-bark-800/8">
-        <motion.h2
-          className="text-lg font-bold text-bark-800"
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-        >
-          {step === 'place' && 'Find the restaurant'}
-          {step === 'photo' && 'Share your photo'}
-          {step === 'uploading' && 'Uploading…'}
-          {step === 'done' && 'Done! 🎉'}
-        </motion.h2>
+      {/* Top Header */}
+      <div className="flex justify-between items-center px-6 py-4 border-b border-soil-200/50">
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-vegan-700">
+            Frictionless Sharing
+          </span>
+          <h2 className="text-xl font-serif font-bold text-bark-900 leading-tight">
+            {step === 'place' && 'Find the Restaurant'}
+            {step === 'photo' && 'Add Your Photo'}
+            {step === 'uploading' && 'Planting in Ground…'}
+            {step === 'done' && 'A New Flower Bloomed! 🎉'}
+          </h2>
+        </div>
         <button
           onClick={onClose}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-bark-800/5 hover:bg-bark-800/10 text-bark-700/60 hover:text-bark-800 transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-soil-100 hover:bg-soil-200 text-bark-700 transition-colors shadow-clay-sm"
+          aria-label="Close"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-8">
-        {/* Step 1: Place Search */}
+      {/* Main Form Content */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 max-w-lg w-full mx-auto">
         {step === 'place' && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
@@ -146,35 +148,31 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
           </motion.div>
         )}
 
-        {/* Step 2: Photo + Text */}
         {step === 'photo' && selectedPlace && (
           <motion.div
-            className="space-y-5 mt-4"
+            className="space-y-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            {/* Selected place badge */}
-            <div className="flex items-center gap-2 bg-vegan-50 border border-vegan-200 rounded-xl px-4 py-3">
-              <div className="w-8 h-8 rounded-full bg-vegan-100 flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-vegan-600">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-bark-800 truncate">
+            {/* Selected Spot Chip */}
+            <div className="flex items-center justify-between bg-white p-3.5 rounded-2xl border border-stone-200 shadow-clay-sm">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="w-8 h-8 rounded-full bg-vegan-100 flex items-center justify-center text-sm shadow-inner">
+                  📍
+                </span>
+                <span className="text-sm font-serif font-bold text-bark-900 truncate">
                   {selectedPlace.name}
-                </p>
+                </span>
               </div>
               <button
                 onClick={() => setStep('place')}
-                className="text-xs text-vegan-600 hover:text-vegan-700 font-medium"
+                className="text-xs font-semibold text-vegan-700 hover:underline px-2"
               >
                 Change
               </button>
             </div>
 
-            {/* Image picker */}
+            {/* Hidden File Input */}
             <input
               type="file"
               ref={fileInputRef}
@@ -184,114 +182,111 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
               className="hidden"
             />
 
+            {/* Photo Selection / Preview Area (Polaroid style) */}
             {imagePreview ? (
-              <motion.div
-                className="relative rounded-2xl overflow-hidden aspect-square bg-cream-200"
-                layoutId="preview"
-              >
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-3 right-3 bg-white/80 backdrop-blur-md text-bark-800 text-xs px-3 py-1.5 rounded-full hover:bg-white transition-colors shadow-sm"
-                >
-                  Change photo
-                </button>
-              </motion.div>
+              <div className="bg-white p-4 rounded-3xl shadow-polaroid border border-stone-200">
+                <div className="relative aspect-square rounded-2xl overflow-hidden bg-cream-200 shadow-inner">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-xs font-semibold px-4 py-2 rounded-full backdrop-blur-md shadow-md transition-all"
+                  >
+                    Change photo
+                  </button>
+                </div>
+              </div>
             ) : (
               <motion.button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-[4/3] rounded-2xl border-2 border-dashed border-vegan-300 hover:border-vegan-400 flex flex-col items-center justify-center gap-3 text-vegan-500 hover:text-vegan-600 transition-colors bg-vegan-50/50"
+                className="w-full aspect-[4/3] rounded-3xl border-2 border-dashed border-vegan-300 hover:border-vegan-500 bg-white/60 hover:bg-vegan-50/50 flex flex-col items-center justify-center gap-3 transition-all p-6 shadow-clay-sm group"
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-                <span className="text-sm font-medium">Tap to take or choose a photo</span>
+                <div className="w-14 h-14 rounded-full bg-vegan-100 text-vegan-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-inner">
+                  📷
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-serif font-bold text-bark-900">
+                    Snap or choose a photo
+                  </p>
+                  <p className="text-xs text-bark-600/60 mt-1">
+                    Auto-compressed to WebP for zero lag
+                  </p>
+                </div>
               </motion.button>
             )}
 
-            {/* Text input */}
-            <div className="relative">
+            {/* Short Caption Input */}
+            <div className="relative bg-white p-3 rounded-2xl border border-stone-200 shadow-clay-sm">
               <textarea
                 value={shortText}
                 onChange={(e) => setShortText(e.target.value.slice(0, 140))}
-                placeholder="What did you eat? 🌱 (optional)"
-                className="w-full bg-white border border-bark-800/10 rounded-xl px-4 py-3 text-bark-800 placeholder-bark-700/30 text-sm resize-none focus:outline-none focus:border-vegan-400 focus:ring-2 focus:ring-vegan-100 transition-all"
+                placeholder="What dish was it? 🌱 (optional notes for travelers)"
+                className="w-full bg-transparent text-sm text-bark-900 placeholder-bark-600/40 resize-none focus:outline-none"
                 rows={2}
               />
-              <span className="absolute bottom-2 right-3 text-[10px] text-bark-700/30">
+              <div className="text-right text-[10px] text-bark-600/40 font-mono">
                 {shortText.length}/140
-              </span>
+              </div>
             </div>
 
-            {/* Error */}
             {error && (
-              <motion.p
-                className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-2"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
+              <p className="text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-200">
                 {error}
-              </motion.p>
+              </p>
             )}
 
-            {/* Submit button */}
+            {/* Submit Action */}
             <motion.button
               onClick={handleSubmit}
               disabled={!imageFile}
-              className="w-full py-4 rounded-2xl bg-vegan-500 hover:bg-vegan-600 disabled:bg-bark-800/10 disabled:text-bark-700/30 text-white font-semibold text-base transition-colors shadow-md shadow-vegan-500/15 disabled:shadow-none"
-              whileHover={{ scale: 1.01 }}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-vegan-500 to-vegan-700 text-white font-serif font-bold text-base shadow-clay-md hover:brightness-105 disabled:opacity-40 disabled:pointer-events-none transition-all"
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              Share on Map 📍
+              Plant on Map 🌸
             </motion.button>
           </motion.div>
         )}
 
-        {/* Uploading state */}
         {step === 'uploading' && (
-          <motion.div
-            className="flex flex-col items-center justify-center py-20 gap-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
             <motion.div
-              className="w-16 h-16 border-4 border-vegan-200 border-t-vegan-500 rounded-full"
+              className="w-16 h-16 rounded-full border-4 border-vegan-200 border-t-vegan-600"
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             />
-            <p className="text-bark-700/60 text-sm">Uploading your photo…</p>
-          </motion.div>
+            <p className="text-base font-serif font-bold text-bark-900">
+              Planting your photo into the garden…
+            </p>
+          </div>
         )}
 
-        {/* Done state */}
         {step === 'done' && (
           <motion.div
-            className="flex flex-col items-center justify-center py-20 gap-4"
+            className="flex flex-col items-center justify-center py-20 gap-4 text-center"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
-            <motion.div
-              className="w-20 h-20 bg-vegan-100 rounded-full flex items-center justify-center"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.1, type: 'spring' }}
-            >
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-vegan-600">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </motion.div>
-            <p className="text-bark-800 font-semibold text-lg">Photo shared!</p>
-            <p className="text-bark-700/50 text-sm">Your pin is now on the map</p>
+            <div className="w-20 h-20 bg-vegan-100 rounded-full flex items-center justify-center text-4xl shadow-clay-md">
+              🌸
+            </div>
+            <h3 className="text-2xl font-serif font-bold text-bark-900">
+              Planted Successfully!
+            </h3>
+            <p className="text-sm text-bark-600">
+              Your memory is now rooted in the Hakoniwa map.
+            </p>
           </motion.div>
         )}
+      </div>
+
+      <div className="py-2 text-center text-[10px] text-bark-600/40">
+        No account required · Pure community love
       </div>
     </motion.div>
   );
