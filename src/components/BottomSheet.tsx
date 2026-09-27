@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
 import { isMyPost } from '@/lib/local-posts';
+import { isPlaceSaved, toggleSavePlaceId } from '@/lib/saved-places';
 
 interface BottomSheetProps {
   place: PlaceWithPosts;
@@ -16,10 +17,21 @@ interface BottomSheetProps {
  *   Stage 1: 'peek' mode preserves 85%+ map exploration, floating compact preview card.
  *   Stage 2: 'expanded' mode smoothly slides up full gallery and traveler dish logs.
  * - Amie-style tactile grab handle and fluid spring physics.
+ * - Zero-Auth Bookmark: Save wishlist without login.
  */
 export default function BottomSheet({ place, onClose }: BottomSheetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsSaved(isPlaceSaved(place.google_place_id));
+  }, [place.google_place_id]);
+
+  const handleToggleSave = () => {
+    const next = toggleSavePlaceId(place.google_place_id);
+    setIsSaved(next);
+  };
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
@@ -101,6 +113,22 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
 
               {/* Actions */}
               <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                {/* Wishlist Bookmark Button */}
+                <button
+                  onClick={handleToggleSave}
+                  className={`p-2.5 rounded-full transition-colors ${
+                    isSaved
+                      ? 'bg-botanical-100 text-botanical-800'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  }`}
+                  title={isSaved ? 'Saved in Wishlist' : 'Save to Wishlist'}
+                  aria-label="Wishlist toggle"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                </button>
+
                 {/* Directions to Google Maps */}
                 <a
                   href={googleMapsUrl}
@@ -109,7 +137,7 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                   className="p-2.5 rounded-full bg-slate-100 hover:bg-botanical-50 hover:text-botanical-700 text-slate-700 transition-colors"
                   title="Directions in Google Maps"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                     <polyline points="15 3 21 3 21 9" />
                     <line x1="10" y1="14" x2="21" y2="3" />
@@ -122,7 +150,7 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                   className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors"
                   aria-label="Close"
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -174,6 +202,22 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {/* Wishlist Button */}
+                <button
+                  onClick={handleToggleSave}
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border transition-colors ${
+                    isSaved
+                      ? 'bg-botanical-100 border-botanical-300 text-botanical-800'
+                      : 'bg-slate-100 border-slate-200/80 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span>{isSaved ? 'Saved' : 'Wishlist'}</span>
+                </button>
+
+                {/* Google Maps Directions */}
                 <a
                   href={googleMapsUrl}
                   target="_blank"
@@ -188,6 +232,8 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                     <line x1="10" y1="14" x2="21" y2="3" />
                   </svg>
                 </a>
+
+                {/* Collapse */}
                 <button
                   onClick={() => setIsExpanded(false)}
                   className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"

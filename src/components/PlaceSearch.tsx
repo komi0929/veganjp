@@ -16,21 +16,30 @@ export default function PlaceSearch({ onSelect }: PlaceSearchProps) {
   const [query, setQuery] = useState('');
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Safely retrieve places library and map
   const placesLib = useMapsLibrary('places');
+  const map = useMap();
+
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
-  const map = useMap();
   const debounceRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (!placesLib) return;
-    autocompleteService.current = new placesLib.AutocompleteService();
-  }, [placesLib]);
-
-  useEffect(() => {
-    if (!map || !placesLib) return;
-    placesService.current = new placesLib.PlacesService(map);
-  }, [map, placesLib]);
+    try {
+      if (!autocompleteService.current) {
+        autocompleteService.current = new placesLib.AutocompleteService();
+      }
+      if (!placesService.current) {
+        // Fallback to dummy div if map is not attached
+        const container = map ? map : document.createElement('div');
+        placesService.current = new placesLib.PlacesService(container);
+      }
+    } catch (e) {
+      console.warn('Google Places service init fallback', e);
+    }
+  }, [placesLib, map]);
 
   const search = useCallback(
     (input: string) => {
