@@ -20,16 +20,16 @@ async function getArticle(slug: string): Promise<CuratedArticle | null> {
 
 function renderMarkdown(md: string): string {
   return md
-    .replace(/^### (.+)$/gm, '<h3 class="text-xl font-serif font-bold text-bark-900 mt-10 mb-3 tracking-tight">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-3xl font-serif font-bold text-bark-900 mt-14 mb-4 tracking-tight border-b border-soil-200/50 pb-2">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-4xl sm:text-5xl font-serif font-extrabold text-bark-900 mb-6 tracking-tight leading-tight">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-bark-900">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em class="italic text-bark-700">$1</em>')
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<div class="my-8 rounded-3xl overflow-hidden shadow-polaroid border border-stone-200 bg-white p-2"><img src="$2" alt="$1" class="rounded-2xl w-full object-cover max-h-[500px]" loading="lazy" /></div>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-vegan-700 underline underline-offset-4 decoration-vegan-300 hover:decoration-vegan-600 transition-colors font-medium">$1</a>')
-    .replace(/^- (.+)$/gm, '<li class="ml-6 list-disc text-bark-700 leading-relaxed">$1</li>')
-    .replace(/^> (.+)$/gm, '<blockquote class="my-6 border-l-4 border-vegan-400 pl-5 italic text-bark-700/80 font-serif text-lg leading-relaxed bg-vegan-50/50 py-3 rounded-r-2xl">$1</blockquote>')
-    .replace(/^(?!<[hlab-z]|<div)(\S.+)$/gm, '<p class="text-bark-700 leading-relaxed text-base mb-5 font-sans">$1</p>');
+    .replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-slate-900 mt-8 mb-3 tracking-tight">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold text-slate-900 mt-12 mb-4 tracking-tight border-b border-slate-100 pb-2">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-6 tracking-tight leading-tight">$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em class="italic text-slate-700">$1</em>')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<div class="my-8 rounded-2xl overflow-hidden border border-black/[0.06] bg-slate-100 shadow-sm"><img src="$2" alt="$1" class="w-full object-cover max-h-[460px]" loading="lazy" /></div>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-botanical-700 font-semibold underline underline-offset-4 decoration-botanical-300 hover:decoration-botanical-600 transition-colors">$1</a>')
+    .replace(/^- (.+)$/gm, '<li class="ml-5 list-disc text-slate-600 leading-relaxed text-sm">$1</li>')
+    .replace(/^> (.+)$/gm, '<blockquote class="my-6 border-l-2 border-botanical-500 pl-4 italic text-slate-600 text-base leading-relaxed bg-botanical-50/50 py-3 rounded-r-xl">$1</blockquote>')
+    .replace(/^(?!<[hlab-z]|<div)(\S.+)$/gm, '<p class="text-slate-600 leading-relaxed text-sm sm:text-base mb-4 font-sans">$1</p>');
 }
 
 export default async function ArticlePage({
@@ -41,60 +41,48 @@ export default async function ArticlePage({
   if (!article) return notFound();
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-bark-800 bg-noise">
-      {/* Top Bar */}
-      <nav className="max-w-3xl mx-auto px-6 pt-10 pb-4">
+    <div className="min-h-screen bg-[#F8FAF8] text-slate-900">
+      <nav className="max-w-3xl mx-auto px-6 py-8">
         <Link
           href="/articles"
-          className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-vegan-700 hover:text-vegan-800 transition-colors group"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
         >
-          <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Guides
+          ← Back to Guides
         </Link>
       </nav>
 
-      {/* Article Content Container */}
-      <article className="max-w-3xl mx-auto px-6 py-8">
-        <header className="mb-10 pb-8 border-b border-soil-200/60">
-          <div className="flex items-center gap-2.5 mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-vegan-700 bg-vegan-100 px-3 py-1 rounded-full border border-vegan-200">
-              {article.area} Region
+      <article className="max-w-3xl mx-auto px-6 py-4 pb-16">
+        <header className="mb-8 pb-6 border-b border-black/[0.06]">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-botanical-700 bg-botanical-50 px-2.5 py-0.5 rounded-full border border-botanical-200/60">
+              {article.area} Guide
             </span>
-            <span className="text-xs text-bark-600/50 font-mono">
-              Published {new Date(article.created_at).toLocaleDateString('en-US', {
+            <span className="text-[11px] text-slate-400 font-mono">
+              {new Date(article.created_at).toLocaleDateString('en-US', {
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric',
               })}
             </span>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-serif font-black text-bark-900 tracking-tight leading-[1.15]">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
             {article.title}
           </h1>
         </header>
 
-        {/* Prose Body */}
         <div
-          className="prose prose-stone max-w-none"
+          className="prose prose-slate max-w-none"
           dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content_markdown) }}
         />
       </article>
 
-      {/* Footer Call to Action */}
-      <footer className="max-w-3xl mx-auto px-6 py-16 border-t border-soil-200/60 mt-12 text-center">
-        <div className="bg-white p-8 rounded-3xl shadow-clay-sm border border-stone-200/70">
-          <h3 className="text-2xl font-serif font-bold text-bark-900 mb-2">
-            Contribute to the Map
-          </h3>
-          <p className="text-sm text-bark-600 max-w-md mx-auto mb-6">
-            Found an unforgettable plant-based dish in Japan? Pin your photo in seconds without an account.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 bg-vegan-600 hover:bg-vegan-700 text-white text-sm font-semibold px-6 py-3.5 rounded-full shadow-clay-md transition-all hover:scale-105"
-          >
-            Open Interactive Map 🗺️
-          </Link>
-        </div>
+      <footer className="max-w-3xl mx-auto px-6 py-12 border-t border-black/[0.06] text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 bg-slate-900 hover:bg-botanical-900 text-white text-xs font-bold px-5 py-3 rounded-full shadow-sm transition-colors"
+        >
+          Explore Interactive Map 🗺️
+        </Link>
       </footer>
     </div>
   );

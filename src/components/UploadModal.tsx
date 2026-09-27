@@ -37,8 +37,8 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 15 * 1024 * 1024) {
-      setError('Please choose a photo under 15MB');
+    if (file.size > 20 * 1024 * 1024) {
+      setError('Please choose an image under 20MB');
       return;
     }
     try {
@@ -47,7 +47,7 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
       setImagePreview(URL.createObjectURL(compressed));
       setError(null);
     } catch {
-      setError('Could not process photo. Please try another one.');
+      setError('Image compression failed. Please try another photo.');
     }
   };
 
@@ -97,197 +97,149 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
       addMyPostId(postId);
 
       setStep('done');
-      setTimeout(() => onComplete(), 1400);
+      setTimeout(() => onComplete(), 1100);
     } catch (err: any) {
-      setError(err.message || 'Upload failed. Please try again.');
+      setError(err.message || 'Upload failed');
       setStep('photo');
     }
   };
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 bg-[#FAF8F5]/95 backdrop-blur-2xl flex flex-col justify-between"
+      className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Top Header */}
-      <div className="flex justify-between items-center px-6 py-4 border-b border-soil-200/50">
-        <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-vegan-700">
-            Frictionless Sharing
-          </span>
-          <h2 className="text-xl font-serif font-bold text-bark-900 leading-tight">
-            {step === 'place' && 'Find the Restaurant'}
-            {step === 'photo' && 'Add Your Photo'}
-            {step === 'uploading' && 'Planting in Ground…'}
-            {step === 'done' && 'A New Flower Bloomed! 🎉'}
-          </h2>
+      <motion.div
+        className="w-full max-w-lg bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl border border-black/[0.06] overflow-hidden flex flex-col max-h-[92vh]"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 50, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+      >
+        {/* Navigation Bar */}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-botanical-600 block">
+              Frictionless Upload · No Sign-Up
+            </span>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+              {step === 'place' && 'Select Restaurant'}
+              {step === 'photo' && 'Add Dish Photo'}
+              {step === 'uploading' && 'Planting on Map…'}
+              {step === 'done' && 'Planted Successfully ✨'}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+          >
+            ✕
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-soil-100 hover:bg-soil-200 text-bark-700 transition-colors shadow-clay-sm"
-          aria-label="Close"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </div>
 
-      {/* Main Form Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 max-w-lg w-full mx-auto">
-        {step === 'place' && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
+        {/* Dynamic Body */}
+        <div className="p-6 overflow-y-auto scrollbar-hide">
+          {step === 'place' && (
             <PlaceSearch onSelect={handlePlaceSelect} />
-          </motion.div>
-        )}
+          )}
 
-        {step === 'photo' && selectedPlace && (
-          <motion.div
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            {/* Selected Spot Chip */}
-            <div className="flex items-center justify-between bg-white p-3.5 rounded-2xl border border-stone-200 shadow-clay-sm">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-full bg-vegan-100 flex items-center justify-center text-sm shadow-inner">
-                  📍
-                </span>
-                <span className="text-sm font-serif font-bold text-bark-900 truncate">
-                  {selectedPlace.name}
-                </span>
+          {step === 'photo' && selectedPlace && (
+            <div className="space-y-5">
+              {/* Selected Place Badge */}
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200/60">
+                <div className="min-w-0 pr-2">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Target spot</span>
+                  <p className="text-sm font-bold text-slate-900 truncate">{selectedPlace.name}</p>
+                </div>
+                <button
+                  onClick={() => setStep('place')}
+                  className="text-xs font-semibold text-botanical-600 hover:underline shrink-0"
+                >
+                  Change
+                </button>
               </div>
-              <button
-                onClick={() => setStep('place')}
-                className="text-xs font-semibold text-vegan-700 hover:underline px-2"
-              >
-                Change
-              </button>
-            </div>
 
-            {/* Hidden File Input */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-            />
+              {/* Photo Box */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+              />
 
-            {/* Photo Selection / Preview Area (Polaroid style) */}
-            {imagePreview ? (
-              <div className="bg-white p-4 rounded-3xl shadow-polaroid border border-stone-200">
-                <div className="relative aspect-square rounded-2xl overflow-hidden bg-cream-200 shadow-inner">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
+              {imagePreview ? (
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-xs font-semibold px-4 py-2 rounded-full backdrop-blur-md shadow-md transition-all"
+                    className="absolute bottom-3 right-3 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white text-xs font-medium backdrop-blur-md transition-colors"
                   >
-                    Change photo
+                    Replace
                   </button>
                 </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full aspect-[4/3] rounded-2xl border-2 border-dashed border-slate-200 hover:border-botanical-400 bg-slate-50/50 hover:bg-botanical-50/20 flex flex-col items-center justify-center gap-2.5 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-700 text-xl group-hover:scale-110 transition-transform">
+                    📸
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-800">Tap to upload dish photo</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Auto-converted to modern WebP</p>
+                  </div>
+                </button>
+              )}
+
+              {/* Note Input */}
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 focus-within:border-botanical-500 transition-colors">
+                <input
+                  type="text"
+                  value={shortText}
+                  onChange={(e) => setShortText(e.target.value.slice(0, 140))}
+                  placeholder="Notes about this vegan dish (e.g. Soy milk tantanmen)"
+                  className="w-full bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
+                />
               </div>
-            ) : (
-              <motion.button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-[4/3] rounded-3xl border-2 border-dashed border-vegan-300 hover:border-vegan-500 bg-white/60 hover:bg-vegan-50/50 flex flex-col items-center justify-center gap-3 transition-all p-6 shadow-clay-sm group"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+
+              {error && (
+                <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100">{error}</p>
+              )}
+
+              {/* Action */}
+              <button
+                onClick={handleSubmit}
+                disabled={!imageFile}
+                className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-botanical-900 text-white text-xs font-bold tracking-wide shadow-pill disabled:opacity-30 disabled:pointer-events-none transition-all"
               >
-                <div className="w-14 h-14 rounded-full bg-vegan-100 text-vegan-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-inner">
-                  📷
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-serif font-bold text-bark-900">
-                    Snap or choose a photo
-                  </p>
-                  <p className="text-xs text-bark-600/60 mt-1">
-                    Auto-compressed to WebP for zero lag
-                  </p>
-                </div>
-              </motion.button>
-            )}
+                Publish to Live Map
+              </button>
+            </div>
+          )}
 
-            {/* Short Caption Input */}
-            <div className="relative bg-white p-3 rounded-2xl border border-stone-200 shadow-clay-sm">
-              <textarea
-                value={shortText}
-                onChange={(e) => setShortText(e.target.value.slice(0, 140))}
-                placeholder="What dish was it? 🌱 (optional notes for travelers)"
-                className="w-full bg-transparent text-sm text-bark-900 placeholder-bark-600/40 resize-none focus:outline-none"
-                rows={2}
-              />
-              <div className="text-right text-[10px] text-bark-600/40 font-mono">
-                {shortText.length}/140
+          {step === 'uploading' && (
+            <div className="py-16 text-center space-y-3">
+              <div className="w-10 h-10 border-2 border-slate-200 border-t-botanical-600 rounded-full animate-spin mx-auto" />
+              <p className="text-xs font-semibold text-slate-700">Connecting with map coordinates…</p>
+            </div>
+          )}
+
+          {step === 'done' && (
+            <div className="py-16 text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-botanical-100 text-botanical-700 flex items-center justify-center text-xl mx-auto">
+                ✓
               </div>
+              <h3 className="text-base font-bold text-slate-900">Spot Rooted!</h3>
+              <p className="text-xs text-slate-500">Your memory is now visible to all travelers.</p>
             </div>
-
-            {error && (
-              <p className="text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-200">
-                {error}
-              </p>
-            )}
-
-            {/* Submit Action */}
-            <motion.button
-              onClick={handleSubmit}
-              disabled={!imageFile}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-vegan-500 to-vegan-700 text-white font-serif font-bold text-base shadow-clay-md hover:brightness-105 disabled:opacity-40 disabled:pointer-events-none transition-all"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Plant on Map 🌸
-            </motion.button>
-          </motion.div>
-        )}
-
-        {step === 'uploading' && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-            <motion.div
-              className="w-16 h-16 rounded-full border-4 border-vegan-200 border-t-vegan-600"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            />
-            <p className="text-base font-serif font-bold text-bark-900">
-              Planting your photo into the garden…
-            </p>
-          </div>
-        )}
-
-        {step === 'done' && (
-          <motion.div
-            className="flex flex-col items-center justify-center py-20 gap-4 text-center"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-          >
-            <div className="w-20 h-20 bg-vegan-100 rounded-full flex items-center justify-center text-4xl shadow-clay-md">
-              🌸
-            </div>
-            <h3 className="text-2xl font-serif font-bold text-bark-900">
-              Planted Successfully!
-            </h3>
-            <p className="text-sm text-bark-600">
-              Your memory is now rooted in the Hakoniwa map.
-            </p>
-          </motion.div>
-        )}
-      </div>
-
-      <div className="py-2 text-center text-[10px] text-bark-600/40">
-        No account required · Pure community love
-      </div>
+          )}
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

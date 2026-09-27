@@ -1,105 +1,50 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ONBOARDING_KEY = 'vegan_jp_onboarded_v1';
 
 const STEPS = [
   {
-    step: '01',
-    badge: 'Discover',
-    title: 'Explore the Botanical Map',
+    badge: 'Overview',
+    title: 'The Living Vegan Map',
     description:
-      'Every plant on the map represents a real vegan restaurant visited by conscious travelers across Japan.',
-    graphic: (
-      <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-        {/* Soft ground mound */}
-        <div className="absolute bottom-2 w-28 h-10 rounded-[50%/40%] bg-gradient-to-b from-[#d8c6a9] to-[#8f7757] shadow-clay-sm" />
-        {/* Animated growing plant */}
-        <motion.div
-          className="relative z-10 w-24 h-24"
-          animate={{ rotate: [-2, 2, -2], y: [0, -3, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <svg viewBox="0 0 52 52" className="w-full h-full drop-shadow-md">
-            <defs>
-              <linearGradient id="onbLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#a3db70" />
-                <stop offset="100%" stopColor="#458a27" />
-              </linearGradient>
-              <linearGradient id="onbPetal" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffd4e3" />
-                <stop offset="100%" stopColor="#e26694" />
-              </linearGradient>
-            </defs>
-            <path d="M 26 48 Q 26 34 26 26" stroke="#4f8f2e" strokeWidth="4" strokeLinecap="round" fill="none" />
-            <circle cx="26" cy="16" r="7" fill="url(#onbPetal)" />
-            <circle cx="17" cy="23" r="7" fill="url(#onbPetal)" />
-            <circle cx="35" cy="23" r="7" fill="url(#onbPetal)" />
-            <circle cx="20" cy="32" r="7" fill="url(#onbPetal)" />
-            <circle cx="32" cy="32" r="7" fill="url(#onbPetal)" />
-            <circle cx="26" cy="25" r="6" fill="#f6c445" />
-          </svg>
-        </motion.div>
+      'A community-curated visual index of verified vegan food across Japan. No sponsored rankings — every spot is planted by real travelers.',
+    icon: (
+      <div className="w-16 h-16 rounded-2xl bg-botanical-50 border border-botanical-200/80 flex items-center justify-center text-botanical-700 mx-auto">
+        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
+          <path d="M12 7v5l3 3" />
+        </svg>
       </div>
     ),
   },
   {
-    step: '02',
-    badge: 'Browse',
-    title: 'Tap to Peek Polaroid Albums',
+    badge: 'Discovery',
+    title: 'Candid Shared Albums',
     description:
-      'Tap any blooming pin to browse candid, honest photos and notes. No sponsored rankings — just real traveler meals.',
-    graphic: (
-      <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-        {/* Overlapping polaroids */}
-        <motion.div
-          className="absolute w-22 h-26 bg-white p-2 pb-5 rounded-xl shadow-polaroid border border-stone-200"
-          style={{ rotate: -8, x: -14, y: 4 }}
-          animate={{ rotate: [-8, -6, -8] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <div className="w-18 h-18 bg-vegan-100 rounded-lg flex items-center justify-center text-xl">
-            🍜
-          </div>
-        </motion.div>
-        <motion.div
-          className="absolute w-24 h-28 bg-white p-2 pb-6 rounded-xl shadow-clay-md border border-stone-200 z-10"
-          style={{ rotate: 6, x: 12, y: -4 }}
-          animate={{ rotate: [6, 8, 6], scale: [1, 1.03, 1] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <div className="w-20 h-20 bg-[#fde8ef] rounded-lg flex items-center justify-center text-2xl">
-            🌱
-          </div>
-        </motion.div>
+      'Tap any floating pin to inspect actual guest photos, dish notes, and open direct navigation routes in Google Maps.',
+    icon: (
+      <div className="w-16 h-16 rounded-2xl bg-botanical-50 border border-botanical-200/80 flex items-center justify-center text-botanical-700 mx-auto">
+        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="M21 15l-5-5L5 21" />
+        </svg>
       </div>
     ),
   },
   {
-    step: '03',
-    badge: 'Share',
-    title: 'Zero Login. Plant in Seconds.',
+    badge: 'Contribution',
+    title: 'Zero-Friction Sharing',
     description:
-      'Found a delicious plant-based gem? Tap the (+) button, pick the spot, and plant your photo in under 10 seconds. No sign-up required — ever.',
-    graphic: (
-      <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-        {/* Pulsing FAB simulation */}
-        <motion.div
-          className="w-18 h-18 rounded-full bg-gradient-to-br from-vegan-400 via-vegan-500 to-vegan-700 text-white flex items-center justify-center shadow-clay-md text-3xl border border-white/50"
-          animate={{ scale: [1, 1.1, 1], rotate: [0, 90, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          +
-        </motion.div>
-        <motion.span
-          className="absolute -top-1 -right-1 text-2xl"
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          ✨
-        </motion.span>
+      'Found a delicious plant-based dish? Tap the (+) button, pick the restaurant, and post in seconds. No login or account required.',
+    icon: (
+      <div className="w-16 h-16 rounded-2xl bg-botanical-50 border border-botanical-200/80 flex items-center justify-center text-botanical-700 mx-auto">
+        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
       </div>
     ),
   },
@@ -134,93 +79,75 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 bg-bark-900/60 backdrop-blur-md flex items-center justify-center p-4 select-none"
+        className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4 select-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="relative w-full max-w-sm bg-[#FAF8F5] rounded-[32px] shadow-clay-lg border border-white/80 p-7 flex flex-col justify-between overflow-hidden"
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+          className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-black/[0.06] p-7 flex flex-col justify-between"
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 30 }}
         >
-          {/* Top Skip Button */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-vegan-700 bg-vegan-100/90 px-3 py-1 rounded-full border border-vegan-200">
-              {current.badge} · {currentStep + 1}/{STEPS.length}
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-botanical-700 bg-botanical-50 px-2.5 py-0.5 rounded-full border border-botanical-200/60">
+              {current.badge} · {currentStep + 1} of {STEPS.length}
             </span>
             <button
               onClick={handleSkip}
-              className="text-xs font-semibold text-bark-600/60 hover:text-bark-900 transition-colors px-2 py-1"
+              className="text-xs font-semibold text-slate-400 hover:text-slate-800 transition-colors"
             >
               Skip
             </button>
           </div>
 
-          {/* Interactive Illustrated Graphic */}
-          <div className="py-4 my-2">
+          {/* Icon */}
+          <div className="py-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.25 }}
-              >
-                {current.graphic}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Text Storytelling */}
-          <div className="text-center my-3">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentStep}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                <h3 className="text-2xl font-serif font-bold text-bark-900 leading-snug mb-2">
-                  {current.title}
-                </h3>
-                <p className="text-xs text-bark-600 leading-relaxed max-w-xs mx-auto">
-                  {current.description}
-                </p>
+                {current.icon}
               </motion.div>
             </AnimatePresence>
           </div>
 
-          {/* Step Indicator Dots */}
+          {/* Copy */}
+          <div className="text-center my-4">
+            <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-2">
+              {current.title}
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+              {current.description}
+            </p>
+          </div>
+
+          {/* Dot Progress */}
           <div className="flex justify-center gap-1.5 my-4">
             {STEPS.map((_, i) => (
               <span
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === currentStep
-                    ? 'w-6 bg-vegan-600'
-                    : 'w-1.5 bg-soil-200'
+                  i === currentStep ? 'w-5 bg-slate-900' : 'w-1.5 bg-slate-200'
                 }`}
               />
             ))}
           </div>
 
-          {/* Action Button */}
-          <motion.button
+          {/* Button */}
+          <button
             onClick={handleNext}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-vegan-500 to-vegan-700 text-white font-serif font-bold text-sm shadow-clay-md hover:brightness-105 transition-all flex items-center justify-center gap-2"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-botanical-900 text-white text-xs font-bold tracking-wide shadow-pill transition-all"
           >
-            {currentStep === STEPS.length - 1 ? (
-              <>Enter the Garden 🌱</>
-            ) : (
-              <>Continue →</>
-            )}
-          </motion.button>
+            {currentStep === STEPS.length - 1 ? 'Start Exploring' : 'Next'}
+          </button>
         </motion.div>
       </motion.div>
     </AnimatePresence>

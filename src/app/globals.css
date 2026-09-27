@@ -7,9 +7,11 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #FAF8F5;
+  background-color: #F8FAF8;
+  color: #0F172A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 @layer utilities {
@@ -21,17 +23,25 @@ html, body {
     display: none;
   }
 
-  /* Paper craft noise subtle texture */
-  .bg-noise {
-    background-image: radial-gradient(rgba(46, 39, 32, 0.04) 1px, transparent 0);
-    background-size: 24px 24px;
+  /* Ultra-refined Glass Surface (Linear / Raycast / Apple Maps standard) */
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 
+      0 4px 20px -2px rgba(0, 0, 0, 0.05),
+      0 1px 3px rgba(0, 0, 0, 0.02),
+      inset 0 1px 1px rgba(255, 255, 255, 0.8);
   }
 
-  /* Diorama terrain grid subtle guide */
-  .diorama-grid {
-    background-image: 
-      linear-gradient(to right, rgba(163, 141, 116, 0.08) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(163, 141, 116, 0.08) 1px, transparent 1px);
-    background-size: 40px 40px;
+  .glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(32px) saturate(190%);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 
+      0 20px 48px -12px rgba(18, 38, 26, 0.08),
+      0 1px 4px rgba(0, 0, 0, 0.02);
   }
 }

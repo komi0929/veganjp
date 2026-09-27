@@ -18,111 +18,38 @@ import OnboardingModal from './OnboardingModal';
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
 
 /**
- * Hakoniwa Pastel Diorama Map Style
+ * Ultra-clean Modernist Map Palette (Linear / Apple Maps inspired)
+ * Minimal contrast, sage water, zero visual clutter
  */
-const HAKONIWA_STYLES: google.maps.MapTypeStyle[] = [
-  { elementType: 'geometry', stylers: [{ color: '#f3ece0' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8a7d66' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#fdfbf7' }] },
+const REFINED_MAP_STYLES: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#F7F9F7' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#64748B' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#FFFFFF' }, { weight: 3 }] },
   { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
 
-  { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#bdddd4' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#6ea698' }] },
+  // Water: Clean modern translucent sage
+  { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#D4E2D9' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#5B7A66' }] },
 
-  { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#ece4d4' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e0d6c2' }] },
-  { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#e6dac4' }] },
+  // Roads: Crisp white and subtle grey dividers
+  { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#FFFFFF' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#E8EBE8' }] },
+  { featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: '#F0F3F0' }] },
   { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
 
-  { featureType: 'poi.park', elementType: 'geometry.fill', stylers: [{ color: '#d5e6cb' }] },
-  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#688c52' }] },
+  // Parks: Soft natural moss
+  { featureType: 'poi.park', elementType: 'geometry.fill', stylers: [{ color: '#E2ECE4' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#487D59' }] },
 
+  // Clutter elimination
   { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi.government', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi.medical', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi.school', stylers: [{ visibility: 'off' }] },
   { featureType: 'poi.sports_complex', stylers: [{ visibility: 'off' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-
-  { featureType: 'landscape.man_made', elementType: 'geometry.fill', stylers: [{ color: '#efe6d7' }] },
-  { featureType: 'landscape.natural', elementType: 'geometry.fill', stylers: [{ color: '#e9e0cf' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#CBD5E1' }, { weight: 0.8 }] },
 ];
-
-/**
- * Interactive Hakoniwa Diorama Canvas
- * Rendered when Google Maps API key is not yet configured or as an organic fallback
- */
-function DioramaCanvas({
-  places,
-  onSelectPlace,
-}: {
-  places: PlaceWithPosts[];
-  onSelectPlace: (place: PlaceWithPosts) => void;
-}) {
-  return (
-    <div className="relative w-full h-full bg-[#f4ece1] overflow-hidden select-none diorama-grid">
-      {/* Decorative Miniature Islands / Terrain patches */}
-      <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 120 180 Q 220 120 380 200 T 640 260 T 900 190 Q 1100 240 1280 180" fill="none" stroke="#e0d4bf" strokeWidth="80" strokeLinecap="round" opacity="0.6" />
-        <circle cx="280" cy="420" r="140" fill="#dcedc8" opacity="0.5" />
-        <circle cx="720" cy="380" r="200" fill="#dcedc8" opacity="0.45" />
-        <circle cx="1060" cy="520" r="160" fill="#dcedc8" opacity="0.5" />
-      </svg>
-
-      {/* Floating clouds drifting over the diorama */}
-      <motion.div
-        className="absolute w-48 h-20 bg-white/40 rounded-full blur-md pointer-events-none"
-        style={{ top: '15%', left: '-10%' }}
-        animate={{ x: ['0vw', '120vw'] }}
-        transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
-      />
-      <motion.div
-        className="absolute w-64 h-24 bg-white/30 rounded-full blur-lg pointer-events-none"
-        style={{ top: '45%', left: '-20%' }}
-        animate={{ x: ['0vw', '130vw'] }}
-        transition={{ duration: 60, repeat: Infinity, ease: 'linear', delay: 15 }}
-      />
-
-      {/* Interactive Plant Markers placed on the miniature terrain */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
-        {places.map((place, idx) => {
-          // Spread across canvas in an organic pattern around Japan's approximate geometry
-          const positions = [
-            { x: '0px', y: '0px' },      // Tokyo
-            { x: '-160px', y: '80px' },  // Kyoto / Osaka
-            { x: '-340px', y: '160px' }, // Fukuoka
-            { x: '180px', y: '-140px' }, // Sendai
-            { x: '280px', y: '-280px' }, // Sapporo
-          ];
-          const pos = positions[idx % positions.length];
-
-          return (
-            <div
-              key={place.google_place_id}
-              className="absolute z-10"
-              style={{ transform: `translate(${pos.x}, ${pos.y})` }}
-            >
-              <PlantMarker
-                count={place.posts.length}
-                imageUrl={place.posts[0]?.image_url}
-                onClick={() => onSelectPlace(place)}
-              />
-              {/* Place Name Tag */}
-              <motion.div
-                className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-clay-sm border border-stone-200/60 pointer-events-none whitespace-nowrap"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <p className="text-xs font-semibold text-bark-800">{place.name}</p>
-              </motion.div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function MapView() {
   const [places, setPlaces] = useState<PlaceWithPosts[]>([]);
@@ -131,15 +58,15 @@ export default function MapView() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const hasValidKey = useMemo(() => apiKey && apiKey !== 'placeholder-google-maps-key', [apiKey]);
+
   useEffect(() => {
     const hasSeen = localStorage.getItem('vegan_jp_onboarded_v1');
     if (!hasSeen) {
       setShowOnboarding(true);
     }
   }, []);
-
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-  const hasValidKey = useMemo(() => apiKey && apiKey !== 'placeholder-google-maps-key', [apiKey]);
 
   const fetchPlaces = useCallback(async () => {
     setLoading(true);
@@ -166,27 +93,6 @@ export default function MapView() {
         });
       }
       setPlaces(Array.from(placeMap.values()));
-    } else {
-      // Fallback sample spot for immediate delight
-      setPlaces([
-        {
-          id: 'sample-1',
-          google_place_id: 'ChIJde22lE6LGGARWpW2_lQZ0w8',
-          name: "T's TanTan Tokyo Station",
-          lat: 35.6812,
-          lng: 139.7671,
-          created_at: new Date().toISOString(),
-          posts: [
-            {
-              id: 'p-1',
-              google_place_id: 'ChIJde22lE6LGGARWpW2_lQZ0w8',
-              image_url: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80',
-              short_text: 'Golden Sesame DanDan Ramen! 100% plant-based comfort food 🌱🍜',
-              created_at: new Date().toISOString(),
-            },
-          ],
-        },
-      ]);
     }
     setLoading(false);
   }, []);
@@ -195,111 +101,106 @@ export default function MapView() {
     fetchPlaces();
   }, [fetchPlaces]);
 
-  const handleUploadComplete = () => {
-    setShowUpload(false);
-    fetchPlaces();
-  };
-
   return (
-    <div className="relative w-full h-full overflow-hidden">
-      {/* ─── Map Layer: Google Maps or Hakoniwa Canvas Fallback ─── */}
-      {hasValidKey ? (
-        <APIProvider apiKey={apiKey} libraries={['places']}>
-          <Map
-            mapId="vegan_jp_map"
-            defaultCenter={JAPAN_CENTER}
-            defaultZoom={6}
-            gestureHandling="greedy"
-            disableDefaultUI
-            styles={HAKONIWA_STYLES}
-            className="w-full h-full"
-          >
-            {places.map((place) => (
-              <AdvancedMarker
-                key={place.google_place_id}
-                position={{ lat: place.lat, lng: place.lng }}
-                onClick={() => setSelectedPlace(place)}
-              >
-                <PlantMarker
-                  count={place.posts.length}
-                  imageUrl={place.posts[0]?.image_url}
-                />
-              </AdvancedMarker>
-            ))}
-          </Map>
-        </APIProvider>
-      ) : (
-        <DioramaCanvas
-          places={places}
-          onSelectPlace={(p) => setSelectedPlace(p)}
-        />
-      )}
+    <div className="relative w-full h-full overflow-hidden bg-[#F8FAF8]">
+      {/* ─── Map Layer: Real Google Maps ─── */}
+      <APIProvider apiKey={apiKey} libraries={['places']}>
+        <Map
+          mapId="vegan_jp_map"
+          defaultCenter={JAPAN_CENTER}
+          defaultZoom={6}
+          gestureHandling="greedy"
+          disableDefaultUI
+          styles={REFINED_MAP_STYLES}
+          className="w-full h-full"
+        >
+          {places.map((place) => (
+            <AdvancedMarker
+              key={place.google_place_id}
+              position={{ lat: place.lat, lng: place.lng }}
+              onClick={() => setSelectedPlace(place)}
+            >
+              <PlantMarker
+                count={place.posts.length}
+                imageUrl={place.posts[0]?.image_url}
+                name={place.name}
+              />
+            </AdvancedMarker>
+          ))}
+        </Map>
+      </APIProvider>
 
-      {/* ─── Editorial Brand Header ─── */}
+      {/* ─── Floating Dynamic Island Header (Lume / Raycast style) ─── */}
       <motion.header
-        className="absolute top-0 left-0 right-0 z-30 pointer-events-none p-5 flex items-center justify-between"
-        initial={{ y: -50, opacity: 0 }}
+        className="absolute top-5 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
+        initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 26 }}
       >
-        <div className="pointer-events-auto flex items-center gap-3">
-          <div className="bg-white/85 backdrop-blur-xl px-5 py-3 rounded-2xl shadow-clay-sm border border-white/70">
-            <h1 className="text-2xl font-serif font-black tracking-tight leading-none text-bark-900">
-              vegan<span className="text-vegan-600 font-sans font-bold">.jp</span>
-            </h1>
-            <p className="text-[10px] font-sans font-bold tracking-[0.2em] uppercase text-bark-600/50 mt-1">
-              Hakoniwa Photo Community
-            </p>
-          </div>
-
-          <Link
-            href="/articles"
-            className="hidden sm:inline-flex items-center gap-1.5 bg-white/85 hover:bg-white backdrop-blur-xl px-4 py-3 rounded-2xl shadow-clay-sm border border-white/70 text-xs font-semibold text-bark-800 transition-all hover:scale-105"
-          >
-            <span>📖 Curated Guides</span>
+        <div className="pointer-events-auto glass-pill px-4 py-2.5 rounded-full flex items-center gap-3.5 shadow-glass-md">
+          {/* Brand */}
+          <Link href="/" className="flex items-center gap-1.5 group">
+            <span className="w-2.5 h-2.5 rounded-full bg-botanical-600 transition-transform group-hover:scale-125" />
+            <span className="text-sm font-bold tracking-tight text-slate-900 font-sans">
+              vegan<span className="text-botanical-600">.jp</span>
+            </span>
           </Link>
 
-          <button
-            onClick={() => setShowOnboarding(true)}
-            className="bg-white/85 hover:bg-white backdrop-blur-xl px-3.5 py-3 rounded-2xl shadow-clay-sm border border-white/70 text-xs font-semibold text-bark-800 transition-all hover:scale-105 flex items-center gap-1"
-            title="How it works"
-          >
-            <span>🌱 Guide</span>
-          </button>
-        </div>
+          <span className="w-px h-3.5 bg-black/10" />
 
-        {/* Live Community Indicator */}
-        <div className="pointer-events-auto bg-white/85 backdrop-blur-xl px-4 py-2.5 rounded-2xl shadow-clay-sm border border-white/70 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-vegan-500 animate-pulse" />
-          <span className="text-xs font-semibold text-bark-700">
-            {places.length} {places.length === 1 ? 'garden blooming' : 'gardens blooming'}
-          </span>
+          {/* Live Spot Counter */}
+          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+            <span className="text-slate-900 font-semibold">{places.length}</span>
+            <span className="text-slate-500 hidden sm:inline">spots mapped</span>
+          </div>
+
+          <span className="w-px h-3.5 bg-black/10" />
+
+          {/* Navigation Items */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/articles"
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded-full hover:bg-black/5 transition-colors"
+            >
+              Guides
+            </Link>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-slate-600 text-xs font-semibold transition-colors"
+              title="About & Guide"
+            >
+              ?
+            </button>
+          </div>
         </div>
       </motion.header>
 
-      {/* ─── Claymorphic Planting Action Button (FAB) ─── */}
-      <motion.button
-        onClick={() => setShowUpload(true)}
-        className="absolute bottom-8 right-6 z-30 group flex items-center gap-3"
-        whileHover={{ scale: 1.05, y: -3 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ scale: 0, rotate: -90 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: 'spring', stiffness: 350, damping: 20, delay: 0.2 }}
-        aria-label="Plant a vegan memory"
+      {/* ─── Frictionless Shutter Pill (Floating Bottom Action) ─── */}
+      <motion.div
+        className="absolute bottom-8 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 24, delay: 0.1 }}
       >
-        <span className="hidden sm:inline-block bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-clay-sm text-xs font-bold text-bark-800 tracking-wide border border-white/80">
-          Plant a spot 🌱
-        </span>
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-vegan-400 via-vegan-500 to-vegan-700 text-white flex items-center justify-center shadow-clay-md border border-white/40">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </div>
-      </motion.button>
+        <motion.button
+          onClick={() => setShowUpload(true)}
+          className="pointer-events-auto group flex items-center gap-2.5 bg-slate-900 hover:bg-botanical-900 text-white pl-4 pr-5 py-3.5 rounded-full shadow-pill transition-all duration-300 border border-white/20"
+          whileHover={{ scale: 1.04, y: -2 }}
+          whileTap={{ scale: 0.96 }}
+        >
+          <div className="w-6 h-6 rounded-full bg-botanical-500 text-slate-950 flex items-center justify-center text-sm font-bold shadow-sm group-hover:rotate-90 transition-transform duration-300">
+            +
+          </div>
+          <span className="text-xs font-semibold tracking-wide text-white">
+            Plant a spot
+          </span>
+          <span className="text-[11px] text-white/50 tracking-wider font-mono">
+            NO AUTH
+          </span>
+        </motion.button>
+      </motion.div>
 
-      {/* ─── Bottom Sheet Album ─── */}
+      {/* ─── Discovery Bottom Sheet ─── */}
       <AnimatePresence>
         {selectedPlace && (
           <BottomSheet
@@ -309,33 +210,36 @@ export default function MapView() {
         )}
       </AnimatePresence>
 
-      {/* ─── Upload Flow Modal ─── */}
+      {/* ─── Upload Modal ─── */}
       <AnimatePresence>
         {showUpload && (
           <UploadModal
             onClose={() => setShowUpload(false)}
-            onComplete={handleUploadComplete}
+            onComplete={() => {
+              setShowUpload(false);
+              fetchPlaces();
+            }}
           />
         )}
       </AnimatePresence>
 
-      {/* ─── Onboarding Tutorial Modal ─── */}
+      {/* ─── Onboarding Flow ─── */}
       <OnboardingModal
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
       />
 
-      {/* ─── Loading Pill ─── */}
+      {/* ─── Micro Loading Indicator ─── */}
       <AnimatePresence>
         {loading && (
           <motion.div
-            className="absolute top-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white/90 backdrop-blur-md px-5 py-2.5 rounded-full shadow-clay-sm border border-stone-200 text-xs font-semibold text-bark-700"
-            initial={{ opacity: 0, y: -10 }}
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none glass-pill px-3.5 py-1.5 rounded-full text-[11px] font-medium text-slate-600 flex items-center gap-2 shadow-glass-sm"
+            initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -5 }}
           >
-            <span className="animate-spin inline-block">🌱</span>
-            Sprouting community gardens…
+            <span className="w-1.5 h-1.5 rounded-full bg-botanical-500 animate-ping" />
+            Loading spots…
           </motion.div>
         )}
       </AnimatePresence>

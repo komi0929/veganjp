@@ -9,46 +9,59 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        vegan: {
-          50: '#f2f8ed',
-          100: '#e1f0da',
-          200: '#c5e2b8',
-          300: '#9ecf8d',
-          400: '#73b75f',
-          500: '#549c40',
-          600: '#407e30',
-          700: '#346328',
-          800: '#2c4f23',
-          900: '#25421f',
+        // Refined Botanical Luxury Palette (Inspired by Aesop, Lume, Erewhon)
+        botanical: {
+          50: '#F4F7F5',
+          100: '#E6ECE8',
+          200: '#C8D8CE',
+          300: '#9DBBA7',
+          400: '#6E9A7C',
+          500: '#487D59',
+          600: '#346344',
+          700: '#284E36',
+          800: '#1D3B29', // Deep British Racing Forest
+          900: '#12261A',
+          950: '#0A170F',
         },
-        cream: {
-          50: '#FAF8F5',
-          100: '#F5F0E8',
-          200: '#EFE7DA',
-          300: '#E5D9C4',
+        luxe: {
+          surface: '#FFFFFF',
+          canvas: '#F9FAF9',
+          muted: '#F0F2F0',
+          border: 'rgba(0, 0, 0, 0.06)',
+          borderSubtle: 'rgba(0, 0, 0, 0.03)',
         },
-        bark: {
-          600: '#5E5245',
-          700: '#463C32',
-          800: '#2E2720',
-          900: '#1C1713',
-        },
-        soil: {
-          100: '#e8dcce',
-          200: '#d7c5b1',
-          300: '#beaa92',
-          400: '#a38d74',
+        slate: {
+          900: '#0F172A',
+          800: '#1E293B',
+          700: '#334155',
+          600: '#475569',
+          500: '#64748B',
+          400: '#94A3B8',
         },
       },
       fontFamily: {
-        serif: ['var(--font-fraunces)', 'serif'],
-        sans: ['var(--font-jakarta)', 'Noto Sans JP', 'sans-serif'],
+        sans: [
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Text"',
+          '"SF Pro Display"',
+          'var(--font-jakarta)',
+          'sans-serif',
+        ],
+        serif: ['var(--font-fraunces)', 'Georgia', 'serif'],
       },
       boxShadow: {
-        'clay-sm': '0 3px 6px rgba(60, 45, 20, 0.08), inset 0 2px 2px rgba(255,255,255,0.7), inset 0 -2px 3px rgba(60, 45, 20, 0.1)',
-        'clay-md': '0 8px 20px rgba(60, 45, 20, 0.12), inset 0 3px 3px rgba(255,255,255,0.8), inset 0 -3px 5px rgba(60, 45, 20, 0.12)',
-        'clay-lg': '0 16px 36px rgba(60, 45, 20, 0.16), inset 0 4px 4px rgba(255,255,255,0.9), inset 0 -4px 6px rgba(60, 45, 20, 0.15)',
-        'polaroid': '0 10px 25px -5px rgba(40, 30, 20, 0.12), 0 8px 10px -6px rgba(40, 30, 20, 0.08)',
+        // Modern ultra-fine floating shadows (Linear / Lume style)
+        'glass-sm': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
+        'glass-md': '0 8px 24px -4px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
+        'glass-lg': '0 20px 40px -8px rgba(0, 0, 0, 0.08), 0 6px 16px -4px rgba(0, 0, 0, 0.04)',
+        'pill': '0 12px 32px -4px rgba(18, 38, 26, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.04)',
+        'photo-card': '0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.03)',
+      },
+      backdropBlur: {
+        '2xl': '40px',
+        '3xl': '64px',
       },
     },
   },
