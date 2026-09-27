@@ -206,6 +206,7 @@ export default function MapView() {
       {hasValidKey ? (
         <APIProvider apiKey={apiKey} libraries={['places']}>
           <Map
+            mapId="vegan_jp_map"
             defaultCenter={JAPAN_CENTER}
             defaultZoom={6}
             gestureHandling="greedy"
