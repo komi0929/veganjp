@@ -13,6 +13,7 @@ import type { PlaceWithPosts } from '@/lib/types';
 import BottomSheet from './BottomSheet';
 import UploadModal from './UploadModal';
 import PlantMarker from './PlantMarker';
+import OnboardingModal from './OnboardingModal';
 
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
 
@@ -127,7 +128,15 @@ export default function MapView() {
   const [places, setPlaces] = useState<PlaceWithPosts[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('vegan_jp_onboarded_v1');
+    if (!hasSeen) {
+      setShowOnboarding(true);
+    }
+  }, []);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
   const hasValidKey = useMemo(() => apiKey && apiKey !== 'placeholder-google-maps-key', [apiKey]);
@@ -248,6 +257,14 @@ export default function MapView() {
           >
             <span>📖 Curated Guides</span>
           </Link>
+
+          <button
+            onClick={() => setShowOnboarding(true)}
+            className="bg-white/85 hover:bg-white backdrop-blur-xl px-3.5 py-3 rounded-2xl shadow-clay-sm border border-white/70 text-xs font-semibold text-bark-800 transition-all hover:scale-105 flex items-center gap-1"
+            title="How it works"
+          >
+            <span>🌱 Guide</span>
+          </button>
         </div>
 
         {/* Live Community Indicator */}
@@ -300,6 +317,12 @@ export default function MapView() {
           />
         )}
       </AnimatePresence>
+
+      {/* ─── Onboarding Tutorial Modal ─── */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+      />
 
       {/* ─── Loading Pill ─── */}
       <AnimatePresence>
