@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
 import { isMyPost } from '@/lib/local-posts';
 import { isPlaceSaved, toggleSavePlaceId } from '@/lib/saved-places';
+import { showToast } from './Toast';
 
 interface BottomSheetProps {
   place: PlaceWithPosts;
@@ -13,11 +14,10 @@ interface BottomSheetProps {
 
 /**
  * Goodpatch Knowledge Applied:
- * - Progressive Disclosure (Apple Books / WEAR semi-modal pattern):
- *   Stage 1: 'peek' mode preserves 85%+ map exploration, floating compact preview card.
- *   Stage 2: 'expanded' mode smoothly slides up full gallery and traveler dish logs.
- * - Amie-style tactile grab handle and fluid spring physics.
- * - Zero-Auth Bookmark: Save wishlist without login.
+ * - Progressive Disclosure (Apple Books / WEAR semi-modal pattern)
+ * - Tactile Grab indicator & fluid spring damping
+ * - Native Web Share & Apple/Google Maps deep-linking
+ * - Inbound Vegan dietary badge highlighting
  */
 export default function BottomSheet({ place, onClose }: BottomSheetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -28,9 +28,47 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
     setIsSaved(isPlaceSaved(place.google_place_id));
   }, [place.google_place_id]);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (activePhoto) {
+          setActivePhoto(null);
+        } else if (isExpanded) {
+          setIsExpanded(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activePhoto, isExpanded, onClose]);
+
   const handleToggleSave = () => {
     const next = toggleSavePlaceId(place.google_place_id);
     setIsSaved(next);
+    showToast(next ? `Saved ${place.name} to Wishlist` : 'Removed from Wishlist', next ? '❤️' : '🤍');
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/?place=${encodeURIComponent(place.google_place_id)}`;
+    const shareData = {
+      title: `${place.name} — vegan.jp`,
+      text: `Found verified plant-based food at ${place.name} in Japan! Check it out:`,
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or share failed, fallback silently
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Link copied to clipboard!', '📋');
+    }
   };
 
   const formatDate = (iso: string) => {
@@ -45,6 +83,8 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     place.name
   )}&query_place_id=${place.google_place_id}`;
+
+  const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(place.name)}&ll=${place.lat},${place.lng}`;
 
   const heroImage = place.posts[0]?.image_url;
 
@@ -68,14 +108,14 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
           /* ─── Stage 1: Peek Preview Card (Apple Books / WEAR Style) ─── */
           <motion.div
             key="peek-card"
-            className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[500px] z-40 bg-white/95 backdrop-blur-2xl rounded-3xl p-3 sm:p-3.5 shadow-glass-xl border border-black/[0.08] cursor-pointer group"
+            className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[520px] z-40 bg-white/95 backdrop-blur-2xl rounded-3xl p-3 sm:p-3.5 shadow-glass-xl border border-black/[0.08] cursor-pointer group"
             initial={{ y: 80, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 60, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 380, damping: 28 }}
             onClick={() => setIsExpanded(true)}
           >
-            <div className="flex items-center gap-3.5">
+            <div className="flex items-center gap-3">
               {/* Thumbnail Hero */}
               <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-black/[0.04]">
                 {heroImage ? (
@@ -89,7 +129,7 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                     🌱
                   </div>
                 )}
-                <span className="absolute bottom-1 right-1 text-[9px] font-bold text-white bg-slate-900/80 px-1.5 py-0.5 rounded-full backdrop-blur-xs">
+                <span className="absolute bottom-1 right-1 text-[9px] font-bold text-white bg-slate-900/85 px-1.5 py-0.5 rounded-full backdrop-blur-xs">
                   {place.posts.length}
                 </span>
               </div>
@@ -106,19 +146,19 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                   {place.name}
                 </h3>
                 <p className="text-xs text-slate-500 font-medium truncate mt-0.5 flex items-center gap-1">
-                  <span>Tap to expand photo gallery</span>
+                  <span>View photo stream & details</span>
                   <span className="text-botanical-600 font-semibold">↑</span>
                 </p>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                {/* Wishlist Bookmark Button */}
+              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                {/* Wishlist Button */}
                 <button
                   onClick={handleToggleSave}
                   className={`p-2.5 rounded-full transition-colors ${
                     isSaved
-                      ? 'bg-botanical-100 text-botanical-800'
+                      ? 'bg-rose-50 text-rose-600 border border-rose-200'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                   }`}
                   title={isSaved ? 'Saved in Wishlist' : 'Save to Wishlist'}
@@ -129,7 +169,23 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                   </svg>
                 </button>
 
-                {/* Directions to Google Maps */}
+                {/* Share Button */}
+                <button
+                  onClick={handleShare}
+                  className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                  title="Share place"
+                  aria-label="Share spot"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </button>
+
+                {/* Directions Button */}
                 <a
                   href={googleMapsUrl}
                   target="_blank"
@@ -162,7 +218,7 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
           /* ─── Stage 2: Expanded Full Discovery Sheet ─── */
           <motion.div
             key="expanded-sheet"
-            className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-3xl rounded-t-[36px] max-h-[88vh] flex flex-col shadow-2xl border-t border-black/[0.06]"
+            className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-3xl rounded-t-[36px] max-h-[88vh] flex flex-col shadow-2xl border-t border-black/[0.06] pb-[env(safe-area-inset-bottom,0px)]"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -201,13 +257,13 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                 </h2>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {/* Wishlist Button */}
                 <button
                   onClick={handleToggleSave}
                   className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border transition-colors ${
                     isSaved
-                      ? 'bg-botanical-100 border-botanical-300 text-botanical-800'
+                      ? 'bg-rose-50 border-rose-200 text-rose-700'
                       : 'bg-slate-100 border-slate-200/80 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
@@ -217,16 +273,32 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                   <span>{isSaved ? 'Saved' : 'Wishlist'}</span>
                 </button>
 
-                {/* Google Maps Directions */}
+                {/* Share Button */}
+                <button
+                  onClick={handleShare}
+                  className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                  title="Share"
+                  aria-label="Share spot"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </button>
+
+                {/* Directions Dropdown / Buttons */}
                 <a
                   href={googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-botanical-50 text-botanical-800 border border-botanical-200 hover:bg-botanical-100 transition-colors"
-                  title="Open in Google Maps"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-full bg-botanical-50 text-botanical-800 border border-botanical-200 hover:bg-botanical-100 transition-colors"
+                  title="Directions in Google Maps"
                 >
                   <span>Directions</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                     <polyline points="15 3 21 3 21 9" />
                     <line x1="10" y1="14" x2="21" y2="3" />
@@ -264,6 +336,9 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                         alt={post.short_text || place.name}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
                       />
                       {isMyPost(post.id) && (
                         <span className="absolute top-3 right-3 text-[10px] font-bold bg-slate-900/85 text-white px-2.5 py-1 rounded-full backdrop-blur-md">
@@ -275,15 +350,15 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                     {/* Meta Information */}
                     <div className="p-4">
                       {post.short_text ? (
-                        <p className="text-sm font-normal text-slate-800 leading-relaxed line-clamp-2">
+                        <p className="text-sm font-normal text-slate-800 leading-relaxed line-clamp-3">
                           {post.short_text}
                         </p>
                       ) : (
-                        <p className="text-xs text-slate-400 italic">No notes attached</p>
+                        <p className="text-xs text-slate-400 italic">No traveler notes attached</p>
                       )}
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
                         <span>{formatDate(post.created_at)}</span>
-                        <span className="text-botanical-600 font-semibold group-hover:underline">
+                        <span className="text-botanical-700 font-semibold group-hover:underline">
                           Enlarge photo ↗
                         </span>
                       </div>
@@ -320,6 +395,7 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
               <button
                 onClick={() => setActivePhoto(null)}
                 className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition-colors"
+                aria-label="Close lightbox"
               >
                 ✕
               </button>

@@ -16,6 +16,7 @@ import BottomSheet from './BottomSheet';
 import UploadModal from './UploadModal';
 import PlantMarker from './PlantMarker';
 import OnboardingModal from './OnboardingModal';
+import ToastContainer from './Toast';
 
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
 
@@ -27,6 +28,14 @@ const CITIES = [
   { id: 'fukuoka', label: 'Fukuoka', lat: 33.5904, lng: 130.4017, zoom: 13 },
 ];
 
+const CATEGORIES = [
+  { id: 'all', label: 'All Foods' },
+  { id: 'ramen', label: '🍜 Ramen', keyword: 'ramen' },
+  { id: 'traditional', label: '🍱 Shojin / Traditional', keyword: 'shojin' },
+  { id: 'cafe', label: '☕ Cafe & Bakery', keyword: 'cafe' },
+  { id: '100vegan', label: '🌱 100% Vegan', keyword: '100% vegan' },
+];
+
 function InnerMapView() {
   const map = useMap();
   const [places, setPlaces] = useState<PlaceWithPosts[]>([]);
@@ -36,6 +45,7 @@ function InnerMapView() {
   const [showAmbientHint, setShowAmbientHint] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeCity, setActiveCity] = useState('all');
+  const [activeCategory, setActiveCategory] = useState('all');
   const [savedFilterOnly, setSavedFilterOnly] = useState(false);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [locating, setLocating] = useState(false);
@@ -87,10 +97,25 @@ function InnerMapView() {
           created_at: post.created_at,
         });
       }
-      setPlaces(Array.from(placeMap.values()));
+      const placesList = Array.from(placeMap.values());
+      setPlaces(placesList);
+
+      // Deep link support (?place=ChIJ...)
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const placeId = params.get('place');
+        if (placeId) {
+          const target = placesList.find((p) => p.google_place_id === placeId);
+          if (target) {
+            setSelectedPlace(target);
+            map?.panTo({ lat: target.lat, lng: target.lng });
+            map?.setZoom(15);
+          }
+        }
+      }
     }
     setLoading(false);
-  }, []);
+  }, [map]);
 
   useEffect(() => {
     fetchPlaces();
@@ -124,13 +149,26 @@ function InnerMapView() {
     );
   };
 
-  // Filtered places based on wishlist toggle
+  // Filtered places based on wishlist toggle & category
   const visiblePlaces = useMemo(() => {
+    let result = places;
     if (savedFilterOnly) {
-      return places.filter((p) => savedIds.includes(p.google_place_id));
+      result = result.filter((p) => savedIds.includes(p.google_place_id));
     }
-    return places;
-  }, [places, savedFilterOnly, savedIds]);
+    if (activeCategory !== 'all') {
+      const cat = CATEGORIES.find((c) => c.id === activeCategory);
+      if (cat?.keyword) {
+        result = result.filter((p) => {
+          const matchName = p.name.toLowerCase().includes(cat.keyword);
+          const matchPosts = p.posts.some((post) =>
+            post.short_text?.toLowerCase().includes(cat.keyword)
+          );
+          return matchName || matchPosts;
+        });
+      }
+    }
+    return result;
+  }, [places, savedFilterOnly, savedIds, activeCategory]);
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#F8FAF8]">
@@ -200,7 +238,7 @@ function InnerMapView() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill={savedFilterOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.4">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
-            <span>Saved {savedIds.length > 0 && `(${savedIds.length})`}</span>
+            <span>Wishlist {savedIds.length > 0 && `(${savedIds.length})`}</span>
           </button>
 
           <span className="w-px h-3.5 bg-black/10" />
@@ -224,14 +262,15 @@ function InnerMapView() {
         </div>
       </motion.header>
 
-      {/* ─── City Quick-Jump Filter Bar (Customer Journey Enhancement) ─── */}
+      {/* ─── Quick-Jump & Category Control Cluster ─── */}
       <motion.div
-        className="absolute top-16 inset-x-0 z-20 pointer-events-none flex justify-center px-4"
+        className="absolute top-16 inset-x-0 z-20 pointer-events-none flex flex-col items-center gap-2 px-4"
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-white/80 backdrop-blur-xl border border-black/[0.06] shadow-sm overflow-x-auto max-w-full scrollbar-hide">
+        {/* City Chips */}
+        <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-white/85 backdrop-blur-xl border border-black/[0.06] shadow-sm overflow-x-auto max-w-full scrollbar-hide">
           {CITIES.map((c) => (
             <button
               key={c.id}
@@ -246,6 +285,23 @@ function InnerMapView() {
             </button>
           ))}
         </div>
+
+        {/* Category Filters */}
+        <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all shrink-0 border ${
+                activeCategory === cat.id
+                  ? 'bg-botanical-700 text-white border-botanical-800 shadow-xs'
+                  : 'bg-white/85 text-slate-600 border-black/[0.06] hover:bg-white hover:text-slate-900'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* ─── Floating Locate Me Compass Button ─── */}
@@ -254,7 +310,8 @@ function InnerMapView() {
           onClick={handleLocateMe}
           disabled={locating}
           className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-glass-md flex items-center justify-center text-slate-700 hover:text-botanical-700 hover:bg-white transition-all disabled:opacity-50"
-          title="Locate my position"
+          title="Locate my position in Japan"
+          aria-label="Locate me"
         >
           {locating ? (
             <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-botanical-600 animate-spin" />
@@ -266,11 +323,36 @@ function InnerMapView() {
         </button>
       </div>
 
+      {/* ─── Empty Filter Pill ─── */}
+      <AnimatePresence>
+        {visiblePlaces.length === 0 && !loading && (
+          <motion.div
+            className="absolute top-36 inset-x-0 z-10 pointer-events-none flex justify-center px-4"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+          >
+            <div className="pointer-events-auto glass-pill px-4 py-2 rounded-full flex items-center gap-2 shadow-glass-sm text-xs font-semibold text-slate-700 border border-slate-200 bg-white/95">
+              <span>{savedFilterOnly ? 'No saved spots yet in Wishlist' : 'No spots matching this category'}</span>
+              <button
+                onClick={() => {
+                  setSavedFilterOnly(false);
+                  setActiveCategory('all');
+                }}
+                className="text-botanical-700 underline underline-offset-2 ml-1"
+              >
+                Reset filter
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ─── Atmos-Style Ambient Guidance Pill ─── */}
       <AnimatePresence>
-        {showAmbientHint && !selectedPlace && (
+        {showAmbientHint && !selectedPlace && visiblePlaces.length > 0 && (
           <motion.div
-            className="absolute top-28 inset-x-0 z-10 pointer-events-none flex justify-center px-4"
+            className="absolute top-36 inset-x-0 z-10 pointer-events-none flex justify-center px-4"
             initial={{ y: -8, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -8, opacity: 0, scale: 0.95 }}
@@ -295,7 +377,7 @@ function InnerMapView() {
       <AnimatePresence>
         {!selectedPlace && (
           <motion.div
-            className="absolute bottom-8 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
+            className="absolute bottom-8 inset-x-0 z-30 pointer-events-none flex justify-center px-4 pb-[env(safe-area-inset-bottom,0px)]"
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
@@ -349,6 +431,9 @@ function InnerMapView() {
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
       />
+
+      {/* ─── Global Tactile Toast Container ─── */}
+      <ToastContainer />
 
       {/* ─── Micro Loading Indicator ─── */}
       <AnimatePresence>

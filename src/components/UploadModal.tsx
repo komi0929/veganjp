@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { addMyPostId } from '@/lib/local-posts';
 import { compressImage } from '@/lib/compress-image';
+import { showToast } from './Toast';
 import { v4 as uuidv4 } from 'uuid';
 import PlaceSearch from './PlaceSearch';
 
@@ -20,14 +21,35 @@ interface SelectedPlace {
   lng: number;
 }
 
+const DIETARY_TAGS = [
+  '🌱 100% Vegan',
+  '🥗 Vegan Options',
+  '🍜 Vegan Ramen',
+  '🍱 Shojin / Traditional',
+  '☕ Cafe & Sweets',
+  '🧄 No Garlic/Onion (五葷)',
+  '🌾 Gluten-Free Option',
+  '🇬🇧 English Menu',
+];
+
 export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
   const [step, setStep] = useState<'place' | 'photo' | 'uploading' | 'done'>('place');
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [shortText, setShortText] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handlePlaceSelect = useCallback((place: SelectedPlace) => {
     setSelectedPlace(place);
@@ -37,8 +59,8 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      setError('Please choose an image under 20MB');
+    if (file.size > 25 * 1024 * 1024) {
+      setError('Please choose an image under 25MB');
       return;
     }
     try {
@@ -48,6 +70,14 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
       setError(null);
     } catch {
       setError('Image compression failed. Please try another photo.');
+    }
+  };
+
+  const handleToggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags((prev) => prev.filter((t) => t !== tag));
+    } else {
+      setSelectedTags((prev) => [...prev, tag]);
     }
   };
 
@@ -84,20 +114,28 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
         { onConflict: 'google_place_id' }
       );
 
+      const combinedText = [
+        ...selectedTags,
+        shortText.trim(),
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
       const postId = uuidv4();
       const { error: postError } = await supabase.from('posts').insert({
         id: postId,
         google_place_id: selectedPlace.google_place_id,
         image_url: imageUrl,
-        short_text: shortText.trim(),
+        short_text: combinedText,
       });
 
       if (postError) throw postError;
 
       addMyPostId(postId);
+      showToast('Spot successfully planted on live map!', '🌱');
 
       setStep('done');
-      setTimeout(() => onComplete(), 1100);
+      setTimeout(() => onComplete(), 1000);
     } catch (err: any) {
       setError(err.message || 'Upload failed');
       setStep('photo');
@@ -122,11 +160,11 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-botanical-600 block">
-              Frictionless Upload · No Sign-Up
+              Zero Login · Instant Community Share
             </span>
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-              {step === 'place' && 'Select Restaurant'}
-              {step === 'photo' && 'Add Dish Photo'}
+              {step === 'place' && '1. Select Restaurant'}
+              {step === 'photo' && '2. Add Dish Photo & Details'}
               {step === 'uploading' && 'Planting on Map…'}
               {step === 'done' && 'Planted Successfully ✨'}
             </h2>
@@ -134,28 +172,29 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"
+            aria-label="Close dialog"
           >
             ✕
           </button>
         </div>
 
         {/* Dynamic Body */}
-        <div className="p-6 overflow-y-auto scrollbar-hide">
+        <div className="p-6 overflow-y-auto scrollbar-hide pb-8">
           {step === 'place' && (
             <PlaceSearch onSelect={handlePlaceSelect} />
           )}
 
           {step === 'photo' && selectedPlace && (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* Selected Place Badge */}
               <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200/60">
                 <div className="min-w-0 pr-2">
-                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Target spot</span>
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Spot</span>
                   <p className="text-sm font-bold text-slate-900 truncate">{selectedPlace.name}</p>
                 </div>
                 <button
                   onClick={() => setStep('place')}
-                  className="text-xs font-semibold text-botanical-600 hover:underline shrink-0"
+                  className="text-xs font-semibold text-botanical-700 hover:underline shrink-0"
                 >
                   Change
                 </button>
@@ -167,7 +206,6 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
                 ref={fileInputRef}
                 onChange={handleImageChange}
                 accept="image/*"
-                capture="environment"
                 className="hidden"
               />
 
@@ -178,7 +216,7 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-3 right-3 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white text-xs font-medium backdrop-blur-md transition-colors"
                   >
-                    Replace
+                    Change Photo
                   </button>
                 </div>
               ) : (
@@ -190,11 +228,37 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
                     📸
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-bold text-slate-800">Tap to upload dish photo</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Auto-converted to modern WebP</p>
+                    <p className="text-xs font-bold text-slate-800">Tap to choose dish photo</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Camera or library · Auto-compressed to WebP</p>
                   </div>
                 </button>
               )}
+
+              {/* Inbound Vegan Dietary Tags (Crucial for Japan travel) */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">
+                  Dietary & Facility Badges
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {DIETARY_TAGS.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleToggleTag(tag)}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+                          isSelected
+                            ? 'bg-botanical-700 text-white border-botanical-800 font-semibold shadow-xs'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200/70 font-medium'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Note Input */}
               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/60 focus-within:border-botanical-500 transition-colors">
@@ -202,7 +266,7 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
                   type="text"
                   value={shortText}
                   onChange={(e) => setShortText(e.target.value.slice(0, 140))}
-                  placeholder="Notes about this vegan dish (e.g. Soy milk tantanmen)"
+                  placeholder="Additional notes (e.g. Rich sesame broth, friendly English-speaking staff)"
                   className="w-full bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
                 />
               </div>
@@ -211,7 +275,7 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
                 <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100">{error}</p>
               )}
 
-              {/* Action */}
+              {/* Action Button */}
               <button
                 onClick={handleSubmit}
                 disabled={!imageFile}

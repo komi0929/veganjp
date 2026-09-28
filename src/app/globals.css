@@ -7,11 +7,14 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   background-color: #F8FAF8;
   color: #0F172A;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  touch-action: manipulation;
 }
 
 @layer utilities {
@@ -23,9 +26,17 @@ html, body {
     display: none;
   }
 
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+  }
+
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top, 1rem));
+  }
+
   /* Ultra-refined Glass Surface (Linear / Raycast / Apple Maps standard) */
   .glass-pill {
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.9);
@@ -36,7 +47,7 @@ html, body {
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(32px) saturate(190%);
     -webkit-backdrop-filter: blur(32px) saturate(190%);
     border: 1px solid rgba(255, 255, 255, 0.95);

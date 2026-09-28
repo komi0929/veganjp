@@ -2,13 +2,13 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'vegan.jp — Vegan Map & Photo Community',
+    name: 'vegan.jp — The Plant-Based Diorama of Japan',
     short_name: 'vegan.jp',
-    description: 'Discover and share vegan-friendly restaurants across Japan. No sign-up required.',
+    description: 'Living photo atlas of verified plant-based sanctuaries across Japan. Zero sign-up required.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#FFFDF8',
-    theme_color: '#5a9e3f',
+    background_color: '#F8FAF8',
+    theme_color: '#1D3B29',
     icons: [
       {
         src: '/favicon.svg',
