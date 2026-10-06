@@ -36,6 +36,8 @@ const CITIES = [
 
 const CATEGORIES = [
   { id: 'all', label: 'All Foods' },
+  { id: '100vegan', label: '🌱 100% Vegan (専門店)', is100: true },
+  { id: 'options', label: '🥗 Vegan Options (一般店)', isOption: true },
   { id: 'ramen', label: '🍜 Ramen', genre: 'ラーメン' },
   { id: 'cafe', label: '☕ Cafe & Sweets', genre: 'カフェ' },
   { id: 'washoku', label: '🍱 Shojin / Washoku', genre: '和食・精進' },
@@ -44,12 +46,16 @@ const CATEGORIES = [
   { id: 'italian', label: '🍕 Italian / Pizza', genre: 'イタリアン・ピザ' },
   { id: 'chinese', label: '🥟 Chinese / Asian', genre: '中華・台湾素食' },
   { id: 'macro', label: '🥗 Macrobiotic', genre: 'マクロビ・オーガニック' },
-  { id: '100vegan', label: '🌱 100% Vegan', is100: true },
 ];
+
+const INITIAL_MASTER_PLACES: PlaceWithPosts[] = MASTER_PLACES.map((p) => ({
+  ...p,
+  posts: [],
+}));
 
 function InnerMapView() {
   const map = useMap();
-  const [places, setPlaces] = useState<PlaceWithPosts[]>(MASTER_PLACES);
+  const [places, setPlaces] = useState<PlaceWithPosts[]>(INITIAL_MASTER_PLACES);
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadTargetPlace, setUploadTargetPlace] = useState<PlaceWithPosts | null>(null);
@@ -187,7 +193,11 @@ function InnerMapView() {
       if (cat) {
         if (cat.is100) {
           result = result.filter((p) =>
-            p.features?.some((f) => f.includes('100%植物性') || f.includes('全メニューヴィーガン'))
+            p.dietary_type === '100%_vegan' || (!p.dietary_type && p.features?.some((f) => f.includes('100%植物性') || f.includes('全メニューヴィーガン')))
+          );
+        } else if (cat.isOption) {
+          result = result.filter((p) =>
+            p.dietary_type === 'vegan_friendly' || (!p.dietary_type && !p.features?.some((f) => f.includes('100%植物性') || f.includes('全メニューヴィーガン')))
           );
         } else if (cat.genre) {
           result = result.filter((p) => p.genre === cat.genre);
@@ -222,6 +232,7 @@ function InnerMapView() {
               imageUrl={place.posts[0]?.image_url}
               name={place.name}
               genre={place.genre}
+              dietary_type={place.dietary_type}
             />
           </AdvancedMarker>
         ))}

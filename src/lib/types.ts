@@ -9,6 +9,7 @@ export interface Place {
   prefecture?: string;
   profile_text?: string;
   features?: string[];
+  dietary_type?: '100%_vegan' | 'vegan_friendly';
   instagram_id?: string;
   instagram_url?: string;
   created_at: string;

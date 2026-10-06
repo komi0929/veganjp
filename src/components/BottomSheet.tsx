@@ -94,7 +94,7 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
 
   const heroImage = place.posts[0]?.image_url;
   const genreEmoji = (place.genre && GENRE_EMOJIS[place.genre]) || '🌱';
-  const is100Vegan = place.features?.some(f => f.includes('100%植物性') || f.includes('全メニューヴィーガン'));
+  const is100Vegan = place.dietary_type === '100%_vegan' || (!place.dietary_type && place.features?.some(f => f.includes('100%植物性') || f.includes('全メニューヴィーガン')));
 
   return (
     <>
@@ -145,9 +145,13 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
               {/* Main Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {is100Vegan ? '100% Vegan' : 'Verified Plant-Based'}
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    is100Vegan
+                      ? 'text-emerald-800 bg-emerald-50 border-emerald-200/60'
+                      : 'text-amber-800 bg-amber-50 border-amber-200/60'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    {is100Vegan ? '🌱 100% Vegan' : '🥗 Vegan Options'}
                   </span>
                   {place.genre && (
                     <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
@@ -262,9 +266,13 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
             <div className="px-6 py-4 flex items-start justify-between gap-4 border-b border-black/[0.04]">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {is100Vegan ? '100% Vegan' : 'Verified Plant-Based'}
+                  <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    is100Vegan
+                      ? 'text-emerald-800 bg-emerald-50 border-emerald-200/60'
+                      : 'text-amber-800 bg-amber-50 border-amber-200/60'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    {is100Vegan ? '🌱 100% Vegan (完全ヴィーガン専門店)' : '🥗 Vegan Options (ヴィーガン対応・一般飲食店)'}
                   </span>
                   {place.genre && (
                     <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">

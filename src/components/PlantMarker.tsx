@@ -8,6 +8,7 @@ interface PlantMarkerProps {
   imageUrl?: string;
   name?: string;
   genre?: string;
+  dietary_type?: '100%_vegan' | 'vegan_friendly';
   onClick?: () => void;
 }
 
@@ -25,11 +26,12 @@ const GENRE_EMOJIS: Record<string, string> = {
   'レストラン': '🌿',
 };
 
-export default function PlantMarker({ count, imageUrl, name, genre, onClick }: PlantMarkerProps) {
+export default function PlantMarker({ count, imageUrl, name, genre, dietary_type = '100%_vegan', onClick }: PlantMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const isBloom = count >= 5;
   const emoji = (genre && GENRE_EMOJIS[genre]) || '🌱';
+  const isPureVegan = dietary_type === '100%_vegan';
 
   return (
     <motion.div
@@ -50,21 +52,21 @@ export default function PlantMarker({ count, imageUrl, name, genre, onClick }: P
 
       {/* ─── Capsule Body: Pure White Ceramic Shell with Ultra-fine Border ─── */}
       <div
-        className="relative flex items-center bg-white/95 backdrop-blur-md rounded-full transition-all duration-300 border border-black/[0.08]"
+        className={`relative flex items-center bg-white/95 backdrop-blur-md rounded-full transition-all duration-300 border ${
+          isPureVegan ? 'border-botanical-500/40 ring-1 ring-botanical-400/20' : 'border-amber-400/60'
+        }`}
         style={{
-          boxShadow: `
-            0 10px 25px -4px rgba(18, 38, 26, 0.16),
-            0 4px 10px -2px rgba(0, 0, 0, 0.06),
-            inset 0 1px 1px rgba(255, 255, 255, 1)
-          `,
+          boxShadow: isPureVegan
+            ? `0 10px 25px -4px rgba(18, 38, 26, 0.16), 0 4px 10px -2px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(255, 255, 255, 1)`
+            : `0 8px 20px -4px rgba(180, 83, 9, 0.14), 0 3px 8px -2px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 1)`,
           padding: isHovered && name ? '4px 14px 4px 4px' : '4px',
         }}
       >
         {/* Photo or Genre / Botanical Emblem */}
         <div
-          className={`relative rounded-full overflow-hidden bg-botanical-50 flex items-center justify-center transition-all ${
-            isBloom ? 'w-10 h-10' : 'w-8 h-8'
-          }`}
+          className={`relative rounded-full overflow-hidden flex items-center justify-center transition-all ${
+            isPureVegan ? 'bg-botanical-50' : 'bg-amber-50'
+          } ${isBloom ? 'w-10 h-10' : 'w-8 h-8'}`}
         >
           {imageUrl ? (
             <img
@@ -80,9 +82,13 @@ export default function PlantMarker({ count, imageUrl, name, genre, onClick }: P
 
           {/* Activity Dot */}
           {count > 0 ? (
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-botanical-600 border-2 border-white shadow-sm" />
+            <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white shadow-sm ${
+              isPureVegan ? 'bg-botanical-600' : 'bg-amber-500'
+            }`} />
           ) : (
-            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-slate-300 border border-white shadow-xs" />
+            <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white shadow-xs ${
+              isPureVegan ? 'bg-botanical-400' : 'bg-amber-400'
+            }`} />
           )}
         </div>
 
@@ -104,8 +110,10 @@ export default function PlantMarker({ count, imageUrl, name, genre, onClick }: P
                   </span>
                 )}
               </div>
-              <p className="text-[10px] font-medium text-botanical-600 tracking-wide uppercase">
-                {count > 0 ? `${count} ${count === 1 ? 'photo' : 'photos'}` : '🌱 Verified Spot'}
+              <p className={`text-[10px] font-bold tracking-wide uppercase ${
+                isPureVegan ? 'text-botanical-600' : 'text-amber-600'
+              }`}>
+                {isPureVegan ? '🌱 100% Vegan' : '🥗 Vegan Options'} · {count > 0 ? `${count} photos` : 'Verified Spot'}
               </p>
             </motion.div>
           )}
