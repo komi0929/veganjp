@@ -4,6 +4,13 @@ export interface Place {
   name: string;
   lat: number;
   lng: number;
+  genre?: string;
+  area?: string;
+  prefecture?: string;
+  profile_text?: string;
+  features?: string[];
+  instagram_id?: string;
+  instagram_url?: string;
   created_at: string;
 }
 

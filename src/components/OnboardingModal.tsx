@@ -46,11 +46,11 @@ const STEPS = [
 ];
 
 interface OnboardingModalProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
 }
 
-export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
+export default function OnboardingModal({ isOpen = true, onClose }: OnboardingModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {

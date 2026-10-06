@@ -10,16 +10,24 @@ import { showToast } from './Toast';
 interface BottomSheetProps {
   place: PlaceWithPosts;
   onClose: () => void;
+  onOpenUpload?: (place: PlaceWithPosts) => void;
 }
 
-/**
- * Goodpatch Knowledge Applied:
- * - Progressive Disclosure (Apple Books / WEAR semi-modal pattern)
- * - Tactile Grab indicator & fluid spring damping
- * - Native Web Share & Apple/Google Maps deep-linking
- * - Inbound Vegan dietary badge highlighting
- */
-export default function BottomSheet({ place, onClose }: BottomSheetProps) {
+const GENRE_EMOJIS: Record<string, string> = {
+  'ラーメン': '🍜',
+  'カフェ': '☕',
+  '和食・精進': '🍱',
+  'バーガー': '🍔',
+  'カレー': '🍛',
+  'イタリアン・ピザ': '🍕',
+  '中華・台湾素食': '🥟',
+  'マクロビ・オーガニック': '🥗',
+  'ホテル': '🏨',
+  '居酒屋・バー': '🍶',
+  'レストラン': '🌿',
+};
+
+export default function BottomSheet({ place, onClose, onOpenUpload }: BottomSheetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
@@ -81,12 +89,12 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
   };
 
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    place.name
+    place.name + ' ' + (place.prefecture || '') + ' ' + (place.area || '')
   )}&query_place_id=${place.google_place_id}`;
 
-  const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(place.name)}&ll=${place.lat},${place.lng}`;
-
   const heroImage = place.posts[0]?.image_url;
+  const genreEmoji = (place.genre && GENRE_EMOJIS[place.genre]) || '🌱';
+  const is100Vegan = place.features?.some(f => f.includes('100%植物性') || f.includes('全メニューヴィーガン'));
 
   return (
     <>
@@ -105,10 +113,10 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
 
       <AnimatePresence mode="wait">
         {!isExpanded ? (
-          /* ─── Stage 1: Peek Preview Card (Apple Books / WEAR Style) ─── */
+          /* ─── Stage 1: Peek Preview Card ─── */
           <motion.div
             key="peek-card"
-            className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[520px] z-40 bg-white/95 backdrop-blur-2xl rounded-3xl p-3 sm:p-3.5 shadow-glass-xl border border-black/[0.08] cursor-pointer group"
+            className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[540px] z-40 bg-white/95 backdrop-blur-2xl rounded-3xl p-3 sm:p-3.5 shadow-glass-xl border border-black/[0.08] cursor-pointer group"
             initial={{ y: 80, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 60, opacity: 0, scale: 0.96 }}
@@ -116,8 +124,8 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
             onClick={() => setIsExpanded(true)}
           >
             <div className="flex items-center gap-3">
-              {/* Thumbnail Hero */}
-              <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-black/[0.04]">
+              {/* Thumbnail Hero or Genre Icon */}
+              <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-emerald-50 shrink-0 border border-black/[0.04] flex items-center justify-center">
                 {heroImage ? (
                   <img
                     src={heroImage}
@@ -125,29 +133,39 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-botanical-600 bg-botanical-50">
-                    🌱
-                  </div>
+                  <span className="text-3xl select-none">{genreEmoji}</span>
                 )}
-                <span className="absolute bottom-1 right-1 text-[9px] font-bold text-white bg-slate-900/85 px-1.5 py-0.5 rounded-full backdrop-blur-xs">
-                  {place.posts.length}
-                </span>
+                {place.posts.length > 0 && (
+                  <span className="absolute bottom-1 right-1 text-[9px] font-bold text-white bg-slate-900/85 px-1.5 py-0.5 rounded-full backdrop-blur-xs">
+                    {place.posts.length}
+                  </span>
+                )}
               </div>
 
               {/* Main Info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-botanical-700 bg-botanical-50 px-2 py-0.5 rounded-full border border-botanical-200/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-botanical-500" />
-                    Verified Plant-Based
+                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {is100Vegan ? '100% Vegan' : 'Verified Plant-Based'}
                   </span>
+                  {place.genre && (
+                    <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                      {place.genre}
+                    </span>
+                  )}
+                  {place.area && (
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      📍 {place.area}
+                    </span>
+                  )}
                 </div>
                 <h3 className="text-base font-bold text-slate-900 tracking-tight truncate">
                   {place.name}
                 </h3>
                 <p className="text-xs text-slate-500 font-medium truncate mt-0.5 flex items-center gap-1">
-                  <span>View photo stream & details</span>
-                  <span className="text-botanical-600 font-semibold">↑</span>
+                  <span>View details & photos</span>
+                  <span className="text-emerald-600 font-semibold">↑</span>
                 </p>
               </div>
 
@@ -190,7 +208,7 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                   href={googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2.5 rounded-full bg-slate-100 hover:bg-botanical-50 hover:text-botanical-700 text-slate-700 transition-colors"
+                  className="p-2.5 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 transition-colors"
                   title="Directions in Google Maps"
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -232,7 +250,7 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
               }
             }}
           >
-            {/* Tactile Grab Indicator (Amie style) */}
+            {/* Tactile Grab Indicator */}
             <div
               className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
               onClick={() => setIsExpanded(false)}
@@ -243,21 +261,28 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
             {/* Place Header Block */}
             <div className="px-6 py-4 flex items-start justify-between gap-4 border-b border-black/[0.04]">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-botanical-700 bg-botanical-50 px-2.5 py-0.5 rounded-full border border-botanical-200/60">
-                    <span className="w-1.5 h-1.5 rounded-full bg-botanical-500" />
-                    Verified Plant-Based
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {is100Vegan ? '100% Vegan' : 'Verified Plant-Based'}
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {place.posts.length} {place.posts.length === 1 ? 'shared photo' : 'shared photos'}
-                  </span>
+                  {place.genre && (
+                    <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                      {genreEmoji} {place.genre}
+                    </span>
+                  )}
+                  {place.prefecture && (
+                    <span className="text-xs text-slate-500 font-medium">
+                      📍 {place.prefecture} {place.area ? `(${place.area})` : ''}
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 truncate">
                   {place.name}
                 </h2>
               </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                 {/* Wishlist Button */}
                 <button
                   onClick={handleToggleSave}
@@ -273,28 +298,25 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
                   <span>{isSaved ? 'Saved' : 'Wishlist'}</span>
                 </button>
 
-                {/* Share Button */}
-                <button
-                  onClick={handleShare}
-                  className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                  title="Share"
-                  aria-label="Share spot"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                    <circle cx="18" cy="5" r="3" />
-                    <circle cx="6" cy="12" r="3" />
-                    <circle cx="18" cy="19" r="3" />
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                  </svg>
-                </button>
+                {/* Instagram Button */}
+                {place.instagram_url && (
+                  <a
+                    href={place.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-700 border border-pink-200 hover:bg-pink-100/40 transition-colors"
+                  >
+                    <span>📷</span>
+                    <span>{place.instagram_id || 'Instagram'}</span>
+                  </a>
+                )}
 
-                {/* Directions Dropdown / Buttons */}
+                {/* Google Maps Directions */}
                 <a
                   href={googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-full bg-botanical-50 text-botanical-800 border border-botanical-200 hover:bg-botanical-100 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors"
                   title="Directions in Google Maps"
                 >
                   <span>Directions</span>
@@ -319,53 +341,121 @@ export default function BottomSheet({ place, onClose }: BottomSheetProps) {
               </div>
             </div>
 
-            {/* Gallery Stream (Edge-to-Edge Cards) */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-6 bg-slate-50/50">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
-                {place.posts.map((post) => (
-                  <motion.div
-                    key={post.id}
-                    className="group relative bg-white rounded-3xl overflow-hidden border border-black/[0.06] shadow-sm hover:shadow-photo-card transition-all duration-300 cursor-pointer"
-                    onClick={() => setActivePhoto(post.image_url)}
-                    whileHover={{ y: -3 }}
-                  >
-                    {/* Visual Canvas */}
-                    <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden">
-                      <img
-                        src={post.image_url}
-                        alt={post.short_text || place.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                      {isMyPost(post.id) && (
-                        <span className="absolute top-3 right-3 text-[10px] font-bold bg-slate-900/85 text-white px-2.5 py-1 rounded-full backdrop-blur-md">
-                          Planted by you
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Meta Information */}
-                    <div className="p-4">
-                      {post.short_text ? (
-                        <p className="text-sm font-normal text-slate-800 leading-relaxed line-clamp-3">
-                          {post.short_text}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-slate-400 italic">No traveler notes attached</p>
-                      )}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
-                        <span>{formatDate(post.created_at)}</span>
-                        <span className="text-botanical-700 font-semibold group-hover:underline">
-                          Enlarge photo ↗
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-5 bg-slate-50/50 space-y-6">
+              {/* Feature Tags & Profile Block */}
+              <div className="bg-white rounded-3xl p-5 border border-black/[0.06] shadow-xs max-w-3xl mx-auto">
+                {place.features && place.features.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {place.features.map((feat, i) => (
+                      <span
+                        key={i}
+                        className="text-xs font-medium px-2.5 py-1 rounded-xl bg-slate-50 text-slate-700 border border-slate-200/70"
+                      >
+                        ✓ {feat}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {place.profile_text && (
+                  <p className="text-sm text-slate-700 leading-relaxed font-normal bg-slate-50/60 p-4 rounded-2xl border border-slate-100">
+                    {place.profile_text}
+                  </p>
+                )}
               </div>
+
+              {/* Photo Section Header */}
+              <div className="max-w-3xl mx-auto flex items-center justify-between">
+                <div>
+                  <h4 className="text-base font-bold text-slate-900 tracking-tight">Community Photos</h4>
+                  <p className="text-xs text-slate-500">
+                    {place.posts.length > 0
+                      ? `${place.posts.length} traveler photos shared`
+                      : 'No photos uploaded yet'}
+                  </p>
+                </div>
+                {onOpenUpload && (
+                  <button
+                    onClick={() => {
+                      setIsExpanded(false);
+                      onOpenUpload(place);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+                  >
+                    <span>📸 Plant a Photo</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Photo Stream or Empty State */}
+              {place.posts.length === 0 ? (
+                <div className="bg-white rounded-3xl p-8 border border-dashed border-emerald-200 text-center max-w-3xl mx-auto">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-3">
+                    🌱
+                  </div>
+                  <h4 className="text-base font-bold text-slate-900 mb-1">
+                    Be the first to plant a photo here!
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+                    Have you enjoyed food here? Snap a photo and help fellow travelers discover plant-based options in Japan.
+                  </p>
+                  {onOpenUpload && (
+                    <button
+                      onClick={() => {
+                        setIsExpanded(false);
+                        onOpenUpload(place);
+                      }}
+                      className="inline-flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+                    >
+                      <span>📸 Add the First Photo</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
+                  {place.posts.map((post) => (
+                    <motion.div
+                      key={post.id}
+                      className="group relative bg-white rounded-3xl overflow-hidden border border-black/[0.06] shadow-sm hover:shadow-photo-card transition-all duration-300 cursor-pointer"
+                      onClick={() => setActivePhoto(post.image_url)}
+                      whileHover={{ y: -3 }}
+                    >
+                      <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden">
+                        <img
+                          src={post.image_url}
+                          alt={post.short_text || place.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                        {isMyPost(post.id) && (
+                          <span className="absolute top-3 right-3 text-[10px] font-bold bg-slate-900/85 text-white px-2.5 py-1 rounded-full backdrop-blur-md">
+                            Planted by you
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="p-4">
+                        {post.short_text ? (
+                          <p className="text-sm font-normal text-slate-800 leading-relaxed line-clamp-3">
+                            {post.short_text}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-slate-400 italic">No traveler notes attached</p>
+                        )}
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
+                          <span>{formatDate(post.created_at)}</span>
+                          <span className="text-emerald-700 font-semibold group-hover:underline">
+                            Enlarge photo ↗
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}

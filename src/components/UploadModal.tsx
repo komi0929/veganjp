@@ -8,10 +8,13 @@ import { compressImage } from '@/lib/compress-image';
 import { showToast } from './Toast';
 import { v4 as uuidv4 } from 'uuid';
 import PlaceSearch from './PlaceSearch';
+import { PlaceWithPosts } from '@/lib/types';
 
 interface UploadModalProps {
   onClose: () => void;
-  onComplete: () => void;
+  onComplete?: () => void;
+  onSuccess?: () => void;
+  initialPlace?: PlaceWithPosts | null;
 }
 
 interface SelectedPlace {
@@ -32,9 +35,20 @@ const DIETARY_TAGS = [
   '🇬🇧 English Menu',
 ];
 
-export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
-  const [step, setStep] = useState<'place' | 'photo' | 'uploading' | 'done'>('place');
-  const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
+export default function UploadModal({ onClose, onComplete, onSuccess, initialPlace }: UploadModalProps) {
+  const [step, setStep] = useState<'place' | 'photo' | 'uploading' | 'done'>(
+    initialPlace ? 'photo' : 'place'
+  );
+  const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(
+    initialPlace
+      ? {
+          google_place_id: initialPlace.google_place_id,
+          name: initialPlace.name,
+          lat: initialPlace.lat,
+          lng: initialPlace.lng,
+        }
+      : null
+  );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [shortText, setShortText] = useState('');
@@ -135,7 +149,10 @@ export default function UploadModal({ onClose, onComplete }: UploadModalProps) {
       showToast('Spot successfully planted on live map!', '🌱');
 
       setStep('done');
-      setTimeout(() => onComplete(), 1000);
+      setTimeout(() => {
+        if (onSuccess) onSuccess();
+        else if (onComplete) onComplete();
+      }, 1000);
     } catch (err: any) {
       setError(err.message || 'Upload failed');
       setStep('photo');

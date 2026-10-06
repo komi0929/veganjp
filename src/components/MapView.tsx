@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import type { PlaceWithPosts } from '@/lib/types';
+import { MASTER_PLACES } from '@/lib/places-master';
 import { getSavedPlaceIds } from '@/lib/saved-places';
 import BottomSheet from './BottomSheet';
 import UploadModal from './UploadModal';
@@ -26,24 +27,35 @@ const CITIES = [
   { id: 'kyoto', label: 'Kyoto', lat: 35.0116, lng: 135.7681, zoom: 13 },
   { id: 'osaka', label: 'Osaka', lat: 34.6937, lng: 135.5023, zoom: 13 },
   { id: 'fukuoka', label: 'Fukuoka', lat: 33.5904, lng: 130.4017, zoom: 13 },
+  { id: 'nagoya', label: 'Nagoya', lat: 35.1802, lng: 136.9066, zoom: 13 },
+  { id: 'sapporo', label: 'Sapporo', lat: 43.0642, lng: 141.3469, zoom: 13 },
+  { id: 'okinawa', label: 'Okinawa', lat: 26.2124, lng: 127.6809, zoom: 11 },
+  { id: 'sendai', label: 'Sendai', lat: 38.2682, lng: 140.8694, zoom: 13 },
+  { id: 'hiroshima', label: 'Hiroshima', lat: 34.3966, lng: 132.4596, zoom: 13 },
 ];
 
 const CATEGORIES = [
   { id: 'all', label: 'All Foods' },
-  { id: 'ramen', label: '🍜 Ramen', keyword: 'ramen' },
-  { id: 'traditional', label: '🍱 Shojin / Traditional', keyword: 'shojin' },
-  { id: 'cafe', label: '☕ Cafe & Bakery', keyword: 'cafe' },
-  { id: '100vegan', label: '🌱 100% Vegan', keyword: '100% vegan' },
+  { id: 'ramen', label: '🍜 Ramen', genre: 'ラーメン' },
+  { id: 'cafe', label: '☕ Cafe & Sweets', genre: 'カフェ' },
+  { id: 'washoku', label: '🍱 Shojin / Washoku', genre: '和食・精進' },
+  { id: 'burger', label: '🍔 Burger', genre: 'バーガー' },
+  { id: 'curry', label: '🍛 Curry', genre: 'カレー' },
+  { id: 'italian', label: '🍕 Italian / Pizza', genre: 'イタリアン・ピザ' },
+  { id: 'chinese', label: '🥟 Chinese / Asian', genre: '中華・台湾素食' },
+  { id: 'macro', label: '🥗 Macrobiotic', genre: 'マクロビ・オーガニック' },
+  { id: '100vegan', label: '🌱 100% Vegan', is100: true },
 ];
 
 function InnerMapView() {
   const map = useMap();
-  const [places, setPlaces] = useState<PlaceWithPosts[]>([]);
+  const [places, setPlaces] = useState<PlaceWithPosts[]>(MASTER_PLACES);
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [uploadTargetPlace, setUploadTargetPlace] = useState<PlaceWithPosts | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAmbientHint, setShowAmbientHint] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [activeCity, setActiveCity] = useState('all');
   const [activeCategory, setActiveCategory] = useState('all');
   const [savedFilterOnly, setSavedFilterOnly] = useState(false);
@@ -73,34 +85,46 @@ function InnerMapView() {
     localStorage.setItem('vegan_jp_hint_dismissed', 'true');
   }, []);
 
+  // Fetch community posts and merge with master places
   const fetchPlaces = useCallback(async () => {
     setLoading(true);
-    const { data: postsData } = await supabase
-      .from('posts')
-      .select('*, place:places!inner(*)')
-      .order('created_at', { ascending: false })
-      .limit(500);
+    try {
+      const { data: postsData } = await supabase
+        .from('posts')
+        .select('*, place:places(*)')
+        .order('created_at', { ascending: false })
+        .limit(1000);
 
-    if (postsData && postsData.length > 0) {
+      // Create a map starting with MASTER_PLACES
       const placeMap = new globalThis.Map<string, PlaceWithPosts>();
-      for (const post of postsData) {
-        const place = post.place as any;
-        const pid = place.google_place_id;
-        if (!placeMap.has(pid)) {
-          placeMap.set(pid, { ...place, posts: [] });
-        }
-        placeMap.get(pid)!.posts.push({
-          id: post.id,
-          google_place_id: post.google_place_id,
-          image_url: post.image_url,
-          short_text: post.short_text,
-          created_at: post.created_at,
-        });
+      for (const master of MASTER_PLACES) {
+        placeMap.set(master.google_place_id, { ...master, posts: [] });
       }
+
+      if (postsData && postsData.length > 0) {
+        for (const post of postsData) {
+          const place = post.place as any;
+          if (!place) continue;
+          const pid = place.google_place_id;
+
+          if (!placeMap.has(pid)) {
+            placeMap.set(pid, { ...place, posts: [] });
+          }
+
+          placeMap.get(pid)!.posts.push({
+            id: post.id,
+            google_place_id: post.google_place_id,
+            image_url: post.image_url,
+            short_text: post.short_text,
+            created_at: post.created_at,
+          });
+        }
+      }
+
       const placesList = Array.from(placeMap.values());
       setPlaces(placesList);
 
-      // Deep link support (?place=ChIJ...)
+      // Deep link support (?place=vegan-ramen-01)
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const placeId = params.get('place');
@@ -113,8 +137,11 @@ function InnerMapView() {
           }
         }
       }
+    } catch (err) {
+      console.error('Failed to sync posts:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [map]);
 
   useEffect(() => {
@@ -157,14 +184,14 @@ function InnerMapView() {
     }
     if (activeCategory !== 'all') {
       const cat = CATEGORIES.find((c) => c.id === activeCategory);
-      if (cat?.keyword) {
-        result = result.filter((p) => {
-          const matchName = p.name.toLowerCase().includes(cat.keyword);
-          const matchPosts = p.posts.some((post) =>
-            post.short_text?.toLowerCase().includes(cat.keyword)
+      if (cat) {
+        if (cat.is100) {
+          result = result.filter((p) =>
+            p.features?.some((f) => f.includes('100%植物性') || f.includes('全メニューヴィーガン'))
           );
-          return matchName || matchPosts;
-        });
+        } else if (cat.genre) {
+          result = result.filter((p) => p.genre === cat.genre);
+        }
       }
     }
     return result;
@@ -194,24 +221,25 @@ function InnerMapView() {
               count={place.posts.length}
               imageUrl={place.posts[0]?.image_url}
               name={place.name}
+              genre={place.genre}
             />
           </AdvancedMarker>
         ))}
       </Map>
 
-      {/* ─── Floating Dynamic Island Header (Lume / Raycast style) ─── */}
+      {/* ─── Floating Dynamic Island Header ─── */}
       <motion.header
         className="absolute top-4 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 350, damping: 26 }}
       >
-        <div className="pointer-events-auto glass-pill px-4 py-2 rounded-full flex items-center gap-3 shadow-glass-md border border-black/[0.06]">
+        <div className="pointer-events-auto glass-pill px-4 py-2 rounded-full flex items-center gap-3 shadow-glass-md border border-black/[0.06] bg-white/90 backdrop-blur-xl">
           {/* Brand */}
           <Link href="/" className="flex items-center gap-1.5 group">
-            <span className="w-2.5 h-2.5 rounded-full bg-botanical-600 transition-transform group-hover:scale-125" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 transition-transform group-hover:scale-125" />
             <span className="text-sm font-bold tracking-tight text-slate-900 font-sans">
-              vegan<span className="text-botanical-600">.jp</span>
+              vegan<span className="text-emerald-600">.jp</span>
             </span>
           </Link>
 
@@ -219,8 +247,8 @@ function InnerMapView() {
 
           {/* Live Spot Counter */}
           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-            <span className="text-slate-900 font-semibold">{places.length}</span>
-            <span className="text-slate-500 hidden sm:inline">spots</span>
+            <span className="text-slate-900 font-bold">{visiblePlaces.length}</span>
+            <span className="text-slate-500 hidden sm:inline">verified spots</span>
           </div>
 
           <span className="w-px h-3.5 bg-black/10" />
@@ -230,7 +258,7 @@ function InnerMapView() {
             onClick={() => setSavedFilterOnly(!savedFilterOnly)}
             className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
               savedFilterOnly
-                ? 'bg-botanical-600 text-white shadow-sm'
+                ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
             }`}
             title="Filter by saved places"
@@ -294,7 +322,7 @@ function InnerMapView() {
               onClick={() => setActiveCategory(cat.id)}
               className={`text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all shrink-0 border ${
                 activeCategory === cat.id
-                  ? 'bg-botanical-700 text-white border-botanical-800 shadow-xs'
+                  ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
                   : 'bg-white/85 text-slate-600 border-black/[0.06] hover:bg-white hover:text-slate-900'
               }`}
             >
@@ -304,151 +332,105 @@ function InnerMapView() {
         </div>
       </motion.div>
 
-      {/* ─── Floating Locate Me Compass Button ─── */}
-      <div className="absolute top-28 right-4 z-20">
+      {/* ─── Floating Utilities (GPS + Add Post) ─── */}
+      <div className="absolute right-4 bottom-24 z-30 flex flex-col gap-2.5 pointer-events-auto">
+        {/* GPS Locate Button */}
         <button
           onClick={handleLocateMe}
           disabled={locating}
-          className="w-10 h-10 rounded-full bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-glass-md flex items-center justify-center text-slate-700 hover:text-botanical-700 hover:bg-white transition-all disabled:opacity-50"
-          title="Locate my position in Japan"
-          aria-label="Locate me"
+          className="w-12 h-12 rounded-full bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-glass-md flex items-center justify-center text-slate-700 hover:text-emerald-700 hover:bg-white transition-all active:scale-95 disabled:opacity-50"
+          title="Current Location"
+          aria-label="Find my location"
         >
-          {locating ? (
-            <span className="w-4 h-4 rounded-full border-2 border-slate-300 border-t-botanical-600 animate-spin" />
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <polygon points="3 11 22 2 13 21 11 13 3 11" />
-            </svg>
-          )}
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            className={locating ? 'animate-spin' : ''}
+          >
+            <circle cx="12" cy="12" r="7" />
+            <line x1="12" y1="1" x2="12" y2="5" />
+            <line x1="12" y1="19" x2="12" y2="23" />
+            <line x1="1" y1="12" x2="5" y2="12" />
+            <line x1="19" y1="12" x2="23" y2="12" />
+          </svg>
         </button>
+
+        {/* Plant Photo (Primary FAB) */}
+        <motion.button
+          onClick={() => {
+            setUploadTargetPlace(null);
+            setShowUpload(true);
+          }}
+          className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all border-2 border-white"
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          title="Plant a Photo"
+          aria-label="Add photo"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </motion.button>
       </div>
 
-      {/* ─── Empty Filter Pill ─── */}
+      {/* ─── Ambient Onboarding Tooltip ─── */}
       <AnimatePresence>
-        {visiblePlaces.length === 0 && !loading && (
+        {showAmbientHint && (
           <motion.div
-            className="absolute top-36 inset-x-0 z-10 pointer-events-none flex justify-center px-4"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto bg-slate-900/90 text-white px-4 py-2.5 rounded-full text-xs backdrop-blur-md shadow-glass-lg flex items-center gap-2 border border-white/10"
+            initial={{ opacity: 0, y: 12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
           >
-            <div className="pointer-events-auto glass-pill px-4 py-2 rounded-full flex items-center gap-2 shadow-glass-sm text-xs font-semibold text-slate-700 border border-slate-200 bg-white/95">
-              <span>{savedFilterOnly ? 'No saved spots yet in Wishlist' : 'No spots matching this category'}</span>
-              <button
-                onClick={() => {
-                  setSavedFilterOnly(false);
-                  setActiveCategory('all');
-                }}
-                className="text-botanical-700 underline underline-offset-2 ml-1"
-              >
-                Reset filter
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ─── Atmos-Style Ambient Guidance Pill ─── */}
-      <AnimatePresence>
-        {showAmbientHint && !selectedPlace && visiblePlaces.length > 0 && (
-          <motion.div
-            className="absolute top-36 inset-x-0 z-10 pointer-events-none flex justify-center px-4"
-            initial={{ y: -8, opacity: 0, scale: 0.95 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: -8, opacity: 0, scale: 0.95 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="pointer-events-auto glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-glass-sm text-xs font-medium text-slate-700 border border-botanical-300/50 bg-white/95">
-              <span className="w-2 h-2 rounded-full bg-botanical-500 animate-pulse shrink-0" />
-              <span>Tap any photo pin to preview plant-based dishes</span>
-              <button
-                onClick={dismissHint}
-                className="ml-1 text-slate-400 hover:text-slate-700 text-xs font-bold leading-none p-1 rounded-full hover:bg-slate-100 transition-colors"
-                aria-label="Dismiss hint"
-              >
-                ✕
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ─── Frictionless Shutter Pill (Hides smoothly when place is selected) ─── */}
-      <AnimatePresence>
-        {!selectedPlace && (
-          <motion.div
-            className="absolute bottom-8 inset-x-0 z-30 pointer-events-none flex justify-center px-4 pb-[env(safe-area-inset-bottom,0px)]"
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-          >
-            <motion.button
-              onClick={() => setShowUpload(true)}
-              className="pointer-events-auto group flex items-center gap-2.5 bg-slate-900 hover:bg-botanical-900 text-white pl-4 pr-5 py-3.5 rounded-full shadow-pill transition-all duration-300 border border-white/20"
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.96 }}
+            <span>🌱 Explore 500+ verified vegan spots across Japan! Tap any pin for details.</span>
+            <button
+              onClick={dismissHint}
+              className="text-white/60 hover:text-white font-bold ml-1"
             >
-              <div className="w-6 h-6 rounded-full bg-botanical-500 text-slate-950 flex items-center justify-center text-sm font-bold shadow-sm group-hover:rotate-90 transition-transform duration-300">
-                +
-              </div>
-              <span className="text-xs font-semibold tracking-wide text-white">
-                Plant a spot
-              </span>
-              <span className="text-[11px] text-white/50 tracking-wider font-mono">
-                NO AUTH
-              </span>
-            </motion.button>
+              ✕
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ─── Progressive Discovery Bottom Sheet (Stage 1 Peek / Stage 2 Expanded) ─── */}
-      <AnimatePresence>
-        {selectedPlace && (
-          <BottomSheet
-            place={selectedPlace}
-            onClose={() => setSelectedPlace(null)}
-          />
-        )}
-      </AnimatePresence>
+      {/* ─── Place Detail Bottom Sheet ─── */}
+      {selectedPlace && (
+        <BottomSheet
+          place={selectedPlace}
+          onClose={() => setSelectedPlace(null)}
+          onOpenUpload={(target) => {
+            setUploadTargetPlace(target);
+            setShowUpload(true);
+          }}
+        />
+      )}
 
-      {/* ─── Upload Modal (Now inside APIProvider, zero context errors) ─── */}
-      <AnimatePresence>
-        {showUpload && (
-          <UploadModal
-            onClose={() => setShowUpload(false)}
-            onComplete={() => {
-              setShowUpload(false);
-              fetchPlaces();
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {/* ─── Photo Upload Modal ─── */}
+      {showUpload && (
+        <UploadModal
+          initialPlace={uploadTargetPlace}
+          onClose={() => {
+            setShowUpload(false);
+            setUploadTargetPlace(null);
+          }}
+          onSuccess={() => {
+            setShowUpload(false);
+            setUploadTargetPlace(null);
+            fetchPlaces();
+          }}
+        />
+      )}
 
-      {/* ─── Onboarding Walkthrough (Manual Trigger) ─── */}
-      <OnboardingModal
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-      />
+      {/* ─── Onboarding Modal ─── */}
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
 
-      {/* ─── Global Tactile Toast Container ─── */}
       <ToastContainer />
-
-      {/* ─── Micro Loading Indicator ─── */}
-      <AnimatePresence>
-        {loading && (
-          <motion.div
-            className="absolute top-28 left-1/2 -translate-x-1/2 z-20 pointer-events-none glass-pill px-3.5 py-1.5 rounded-full text-[11px] font-medium text-slate-600 flex items-center gap-2 shadow-glass-sm"
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-botanical-500 animate-ping" />
-            Loading spots…
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -457,7 +439,7 @@ export default function MapView() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
   return (
-    <APIProvider apiKey={apiKey} libraries={['places']} language="en" region="JP">
+    <APIProvider apiKey={apiKey} libraries={['places']}>
       <InnerMapView />
     </APIProvider>
   );

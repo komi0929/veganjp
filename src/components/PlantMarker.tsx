@@ -7,15 +7,29 @@ interface PlantMarkerProps {
   count: number;
   imageUrl?: string;
   name?: string;
+  genre?: string;
   onClick?: () => void;
 }
 
-export default function PlantMarker({ count, imageUrl, name, onClick }: PlantMarkerProps) {
+const GENRE_EMOJIS: Record<string, string> = {
+  'ラーメン': '🍜',
+  'カフェ': '☕',
+  '和食・精進': '🍱',
+  'バーガー': '🍔',
+  'カレー': '🍛',
+  'イタリアン・ピザ': '🍕',
+  '中華・台湾素食': '🥟',
+  'マクロビ・オーガニック': '🥗',
+  'ホテル': '🏨',
+  '居酒屋・バー': '🍶',
+  'レストラン': '🌿',
+};
+
+export default function PlantMarker({ count, imageUrl, name, genre, onClick }: PlantMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Dynamic scale & hierarchy based on community activity (MD Vinyl / Lume principle)
   const isBloom = count >= 5;
-  const isSprout = count < 2;
+  const emoji = (genre && GENRE_EMOJIS[genre]) || '🌱';
 
   return (
     <motion.div
@@ -26,11 +40,13 @@ export default function PlantMarker({ count, imageUrl, name, onClick }: PlantMar
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 420, damping: 22 }}
-      whileHover={{ scale: 1.12, zIndex: 50 }}
+      whileHover={{ scale: 1.15, zIndex: 50 }}
       whileTap={{ scale: 0.94 }}
     >
-      {/* ─── Living Botanical Ambient Pulse (Lume-inspired) ─── */}
-      <span className="absolute -inset-1 rounded-full bg-botanical-500/20 animate-ping pointer-events-none duration-1000" />
+      {/* ─── Living Botanical Ambient Pulse ─── */}
+      {count > 0 && (
+        <span className="absolute -inset-1 rounded-full bg-botanical-500/20 animate-ping pointer-events-none duration-1000" />
+      )}
 
       {/* ─── Capsule Body: Pure White Ceramic Shell with Ultra-fine Border ─── */}
       <div
@@ -44,7 +60,7 @@ export default function PlantMarker({ count, imageUrl, name, onClick }: PlantMar
           padding: isHovered && name ? '4px 14px 4px 4px' : '4px',
         }}
       >
-        {/* Photo or Botanical Emblem */}
+        {/* Photo or Genre / Botanical Emblem */}
         <div
           className={`relative rounded-full overflow-hidden bg-botanical-50 flex items-center justify-center transition-all ${
             isBloom ? 'w-10 h-10' : 'w-8 h-8'
@@ -59,16 +75,18 @@ export default function PlantMarker({ count, imageUrl, name, onClick }: PlantMar
               draggable={false}
             />
           ) : (
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-botanical-700" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5z" />
-            </svg>
+            <span className="text-base select-none">{emoji}</span>
           )}
 
           {/* Activity Dot */}
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-botanical-600 border-2 border-white shadow-sm" />
+          {count > 0 ? (
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-botanical-600 border-2 border-white shadow-sm" />
+          ) : (
+            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-slate-300 border border-white shadow-xs" />
+          )}
         </div>
 
-        {/* Expandable Label on Hover (Airbnb / Apple Maps style) */}
+        {/* Expandable Label on Hover */}
         <AnimatePresence>
           {isHovered && name && (
             <motion.div
@@ -78,9 +96,16 @@ export default function PlantMarker({ count, imageUrl, name, onClick }: PlantMar
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
-              <p className="text-xs font-semibold text-slate-900 tracking-tight">{name}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-semibold text-slate-900 tracking-tight">{name}</p>
+                {genre && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
+                    {genre}
+                  </span>
+                )}
+              </div>
               <p className="text-[10px] font-medium text-botanical-600 tracking-wide uppercase">
-                {count} {count === 1 ? 'photo' : 'photos'}
+                {count > 0 ? `${count} ${count === 1 ? 'photo' : 'photos'}` : '🌱 Verified Spot'}
               </p>
             </motion.div>
           )}
