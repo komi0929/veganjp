@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   APIProvider,
@@ -17,6 +17,7 @@ import BottomSheet from './BottomSheet';
 import UploadModal from './UploadModal';
 import PlantMarker from './PlantMarker';
 import OnboardingModal from './OnboardingModal';
+import TravelerToolkitModal, { ToolkitTab } from './TravelerToolkitModal';
 import ToastContainer from './Toast';
 
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
@@ -34,18 +35,24 @@ const CITIES = [
   { id: 'hiroshima', label: 'Hiroshima', lat: 34.3966, lng: 132.4596, zoom: 13 },
 ];
 
-const CATEGORIES = [
-  { id: 'all', label: 'All Foods' },
-  { id: '100vegan', label: '🌱 100% Vegan Dedicated', is100: true },
-  { id: 'options', label: '🥗 Vegan Options Available', isOption: true },
+const DIETARY_FILTERS = [
+  { id: 'all', label: 'All Diets' },
+  { id: '100vegan', label: '🌱 100% Dedicated Vegan', is100: true },
+  { id: 'gluten_free', label: '🌾 Gluten-Free' },
+  { id: 'gokun', label: '🧅 Oriental Vegan (五葷抜)' },
+  { id: 'organic', label: '🌿 Organic & Macro' },
+  { id: 'options', label: '🥗 Vegan Options (Mixed)', isOption: true },
+];
+
+const CUISINES = [
+  { id: 'all', label: 'All Cuisines' },
   { id: 'ramen', label: '🍜 Ramen', genre: 'ラーメン', genreEn: 'Ramen' },
   { id: 'cafe', label: '☕ Cafe & Bakery', genre: 'カフェ', genreEn: 'Cafe & Bakery' },
-  { id: 'washoku', label: '🍱 Traditional / Shojin', genre: '和食・精進', genreEn: 'Traditional Shojin & Washoku' },
+  { id: 'washoku', label: '🍱 Traditional Washoku', genre: '和食・精進', genreEn: 'Traditional Shojin & Washoku' },
   { id: 'burger', label: '🍔 Burgers & Casual', genre: 'バーガー', genreEn: 'Burgers & Casual Dining' },
   { id: 'curry', label: '🍛 Curry & Spice', genre: 'カレー', genreEn: 'Curry & Spice' },
   { id: 'italian', label: '🍕 Pizza & Italian', genre: 'イタリアン・ピザ', genreEn: 'Pizza & Italian' },
   { id: 'chinese', label: '🥟 Asian & Dim Sum', genre: '中華・台湾素食', genreEn: 'Asian & Dim Sum' },
-  { id: 'macro', label: '🥗 Macrobiotic & Organic', genre: 'マクロビ・オーガニック', genreEn: 'Macrobiotic & Organic' },
 ];
 
 const INITIAL_MASTER_PLACES: PlaceWithPosts[] = MASTER_PLACES.map((p) => ({
@@ -60,13 +67,21 @@ function InnerMapView() {
   const [showUpload, setShowUpload] = useState(false);
   const [uploadTargetPlace, setUploadTargetPlace] = useState<PlaceWithPosts | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showToolkit, setShowToolkit] = useState(false);
+  const [toolkitTab, setToolkitTab] = useState<ToolkitTab>('passport');
   const [showAmbientHint, setShowAmbientHint] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeCity, setActiveCity] = useState('all');
+  const [activeDietary, setActiveDietary] = useState('all');
   const [activeCategory, setActiveCategory] = useState('all');
   const [savedFilterOnly, setSavedFilterOnly] = useState(false);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [locating, setLocating] = useState(false);
+
+  // Instant Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync saved wishlist IDs
   const syncSaved = useCallback(() => {
@@ -84,6 +99,17 @@ function InnerMapView() {
     if (!hasSeenHint) {
       setShowAmbientHint(true);
     }
+  }, []);
+
+  // Close search suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const dismissHint = useCallback(() => {
@@ -182,34 +208,143 @@ function InnerMapView() {
     );
   };
 
-  // Filtered places based on wishlist toggle & category
+  // Filtered places based on wishlist, dietary needs, cuisine & search query
   const visiblePlaces = useMemo(() => {
     let result = places;
+
+    // 1. Wishlist
     if (savedFilterOnly) {
       result = result.filter((p) => savedIds.includes(p.google_place_id));
     }
-    if (activeCategory !== 'all') {
-      const cat = CATEGORIES.find((c) => c.id === activeCategory);
-      if (cat) {
-        if (cat.is100) {
-          result = result.filter((p) =>
-            p.dietary_type === '100%_vegan' || (!p.dietary_type && p.features?.some((f) => f.includes('100%植物性') || f.includes('全メニューヴィーガン')))
-          );
-        } else if (cat.isOption) {
-          result = result.filter((p) =>
-            p.dietary_type === 'vegan_friendly' || (!p.dietary_type && !p.features?.some((f) => f.includes('100%植物性') || f.includes('全メニューヴィーガン')))
-          );
-        } else if (cat.genre) {
-          result = result.filter((p) => p.genre === cat.genre || (cat.genreEn && p.genre_en === cat.genreEn));
-        }
+
+    // 2. Strict Dietary Filter (Decisive differentiator vs Google Maps)
+    if (activeDietary !== 'all') {
+      if (activeDietary === '100vegan') {
+        result = result.filter(
+          (p) =>
+            p.dietary_type === '100%_vegan' ||
+            (!p.dietary_type &&
+              p.features?.some(
+                (f) =>
+                  f.includes('100%植物性') ||
+                  f.includes('全メニューヴィーガン') ||
+                  f.includes('100%ヴィーガン')
+              ))
+        );
+      } else if (activeDietary === 'gluten_free') {
+        result = result.filter((p) => {
+          const str = `${p.features?.join(' ') || ''} ${p.features_en?.join(' ') || ''} ${
+            p.profile_text || ''
+          } ${p.profile_text_en || ''}`;
+          return /グルテン|gluten/i.test(str);
+        });
+      } else if (activeDietary === 'gokun') {
+        result = result.filter((p) => {
+          const str = `${p.features?.join(' ') || ''} ${p.features_en?.join(' ') || ''} ${
+            p.profile_text || ''
+          } ${p.profile_text_en || ''}`;
+          return /五葷|oriental|garlic|allium/i.test(str);
+        });
+      } else if (activeDietary === 'organic') {
+        result = result.filter((p) => {
+          const str = `${p.features?.join(' ') || ''} ${p.features_en?.join(' ') || ''} ${
+            p.profile_text || ''
+          } ${p.profile_text_en || ''}`;
+          return /オーガニック|organic|マクロビ|macrobiotic/i.test(str);
+        });
+      } else if (activeDietary === 'options') {
+        result = result.filter(
+          (p) =>
+            p.dietary_type === 'vegan_friendly' ||
+            (!p.dietary_type &&
+              !p.features?.some(
+                (f) =>
+                  f.includes('100%植物性') ||
+                  f.includes('全メニューヴィーガン') ||
+                  f.includes('100%ヴィーガン')
+              ))
+        );
       }
     }
+
+    // 3. Cuisine Genre Filter
+    if (activeCategory !== 'all') {
+      const cat = CUISINES.find((c) => c.id === activeCategory);
+      if (cat?.genre) {
+        result = result.filter(
+          (p) => p.genre === cat.genre || (cat.genreEn && p.genre_en === cat.genreEn)
+        );
+      }
+    }
+
+    // 4. Free-Text Omni Search Query
+    if (searchQuery.trim().length > 0) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((p) => {
+        const textBlob = [
+          p.name,
+          p.name_ja,
+          p.genre,
+          p.genre_en,
+          p.area,
+          p.area_en,
+          p.prefecture,
+          p.prefecture_en,
+          ...(p.features || []),
+          ...(p.features_en || []),
+          p.profile_text,
+          p.profile_text_en,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return textBlob.includes(q);
+      });
+    }
+
     return result;
-  }, [places, savedFilterOnly, savedIds, activeCategory]);
+  }, [places, savedFilterOnly, savedIds, activeDietary, activeCategory, searchQuery]);
+
+  // Top autocomplete suggestions for live search
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase().trim();
+    return places
+      .filter((p) => {
+        const textBlob = [
+          p.name,
+          p.name_ja,
+          p.genre,
+          p.genre_en,
+          p.area,
+          p.area_en,
+          ...(p.features || []),
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return textBlob.includes(q);
+      })
+      .slice(0, 5);
+  }, [places, searchQuery]);
+
+  const handleSelectSuggestion = (place: PlaceWithPosts) => {
+    setSelectedPlace(place);
+    setSearchFocused(false);
+    if (map) {
+      map.panTo({ lat: place.lat, lng: place.lng });
+      map.setZoom(15);
+    }
+  };
+
+  const openToolkitWithTab = (tab: ToolkitTab) => {
+    setToolkitTab(tab);
+    setShowToolkit(true);
+  };
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#F8FAF8]">
-      {/* ─── Map Layer: Real Google Maps ─── */}
+      {/* ─── Map Layer: Real Google Maps with English Locale ─── */}
       <Map
         mapId="vegan_jp_map"
         defaultCenter={JAPAN_CENTER}
@@ -241,61 +376,91 @@ function InnerMapView() {
 
       {/* ─── Floating Dynamic Island Header ─── */}
       <motion.header
-        className="absolute top-4 inset-x-0 z-30 pointer-events-none flex justify-center px-4"
+        className="absolute top-3 inset-x-0 z-30 pointer-events-none flex justify-center px-3"
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 350, damping: 26 }}
       >
-        <div className="pointer-events-auto glass-pill px-4 py-2 rounded-full flex items-center gap-3 shadow-glass-md border border-black/[0.06] bg-white/90 backdrop-blur-xl">
+        <div className="pointer-events-auto glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2.5 shadow-glass-md border border-black/[0.06] bg-white/95 backdrop-blur-xl">
           {/* Brand */}
-          <Link href="/" className="flex items-center gap-1.5 group">
+          <Link href="/" className="flex items-center gap-1.5 group shrink-0">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 transition-transform group-hover:scale-125" />
             <span className="text-sm font-bold tracking-tight text-slate-900 font-sans">
               vegan<span className="text-emerald-600">.jp</span>
             </span>
           </Link>
 
-          <span className="w-px h-3.5 bg-black/10" />
+          <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
-          {/* Live Spot Counter */}
-          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-            <span className="text-slate-900 font-bold">{visiblePlaces.length}</span>
-            <span className="text-slate-500 hidden sm:inline">verified spots</span>
+          {/* Live Verified Spots Count */}
+          <div className="flex items-center gap-1 text-xs font-semibold text-slate-700 shrink-0">
+            <span className="text-emerald-700 font-bold">{visiblePlaces.length}</span>
+            <span className="text-slate-500 hidden sm:inline">spots</span>
           </div>
 
-          <span className="w-px h-3.5 bg-black/10" />
+          <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
-          {/* Saved Wishlist Toggle */}
+          {/* Wishlist Toggle */}
           <button
             onClick={() => setSavedFilterOnly(!savedFilterOnly)}
-            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
+            className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
               savedFilterOnly
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
             }`}
             title="Filter by saved places"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill={savedFilterOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.4">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill={savedFilterOnly ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="2.4"
+            >
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
-            <span>Wishlist {savedIds.length > 0 && `(${savedIds.length})`}</span>
+            <span className="hidden sm:inline">Wishlist</span>
+            {savedIds.length > 0 && <span className="text-[10px]">({savedIds.length})</span>}
           </button>
 
-          <span className="w-px h-3.5 bg-black/10" />
+          <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
-          {/* Navigation Items */}
-          <div className="flex items-center gap-1.5">
+          {/* Survival Kit Triggers */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Chef Card */}
             <button
-              onClick={() => setShowOnboarding(true)}
-              className="flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title="Show Japanese Vegan Phrase Card to waitstaff"
+              onClick={() => openToolkitWithTab('passport')}
+              className="flex items-center gap-1 text-xs font-bold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 border border-amber-300/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
+              title="Show Japanese Dietary Card to Chef / Waitstaff"
             >
               <span>🗣️</span>
-              <span className="hidden sm:inline">Phrase Card</span>
+              <span className="hidden sm:inline">Chef Card</span>
             </button>
+
+            {/* Why Not Google Maps? (Direct Objection Solver) */}
+            <button
+              onClick={() => openToolkitWithTab('why_us')}
+              className="hidden md:flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
+              title="Why Google Maps fails for vegans in Japan (Dashi & Review traps)"
+            >
+              <span>🛡️</span>
+              <span>Why Not Google?</span>
+            </button>
+
+            {/* Konbini Guide */}
+            <button
+              onClick={() => openToolkitWithTab('konbini')}
+              className="hidden lg:flex items-center gap-1 text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
+              title="Late-night convenience store survival guide"
+            >
+              <span>🏪</span>
+              <span>Konbini</span>
+            </button>
+
             <Link
               href="/articles"
-              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2.5 py-1 rounded-full hover:bg-black/5 transition-colors"
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded-full hover:bg-black/5 transition-colors hidden sm:inline"
             >
               Guides
             </Link>
@@ -303,39 +468,135 @@ function InnerMapView() {
         </div>
       </motion.header>
 
-      {/* ─── Quick-Jump & Category Control Cluster ─── */}
+      {/* ─── Floating Search & Dietary Filter Control Cluster ─── */}
       <motion.div
-        className="absolute top-16 inset-x-0 z-20 pointer-events-none flex flex-col items-center gap-2 px-4"
+        className="absolute top-14 inset-x-0 z-20 pointer-events-none flex flex-col items-center gap-1.5 px-3 max-w-4xl mx-auto"
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        {/* City Chips */}
-        <div className="pointer-events-auto flex items-center gap-1.5 p-1 rounded-full bg-white/85 backdrop-blur-xl border border-black/[0.06] shadow-sm overflow-x-auto max-w-full scrollbar-hide">
-          {CITIES.map((c) => (
+        {/* Instant Omni-Search Bar */}
+        <div
+          ref={searchContainerRef}
+          className="pointer-events-auto relative w-full max-w-md shadow-glass-md rounded-2xl bg-white/95 backdrop-blur-xl border border-black/[0.08]"
+        >
+          <div className="flex items-center px-3 py-1.5 gap-2">
+            <span className="text-slate-400 text-sm select-none">🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              placeholder="Search 500+ spots, ramen, gluten-free, Tokyo..."
+              className="w-full text-xs font-medium text-slate-800 placeholder:text-slate-400 bg-transparent outline-none"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-slate-400 hover:text-slate-600 text-xs px-1"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Autocomplete Dropdown */}
+          <AnimatePresence>
+            {searchFocused && searchSuggestions.length > 0 && (
+              <motion.div
+                className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden divide-y divide-slate-100 z-50 max-h-72 overflow-y-auto"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+              >
+                <div className="px-3 py-1 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Verified Matches ({searchSuggestions.length})
+                </div>
+                {searchSuggestions.map((place) => (
+                  <div
+                    key={place.google_place_id}
+                    onClick={() => handleSelectSuggestion(place)}
+                    className="p-2.5 hover:bg-emerald-50/60 cursor-pointer flex items-center justify-between gap-2 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-slate-900 truncate">
+                          {place.name}
+                        </span>
+                        {place.name_ja && (
+                          <span className="text-[10px] text-slate-400 truncate">
+                            {place.name_ja}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500">
+                        <span>📍 {place.area_en || place.area}</span>
+                        <span>•</span>
+                        <span>{place.genre_en || place.genre}</span>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                        place.dietary_type === '100%_vegan'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {place.dietary_type === '100%_vegan' ? '🌱 100% Vegan' : '🥗 Options'}
+                    </span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Dietary Requirement Pills (The Non-Negotiables for Vegans) */}
+        <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
+          {DIETARY_FILTERS.map((d) => (
             <button
-              key={c.id}
-              onClick={() => handleCitySelect(c)}
-              className={`text-[11px] font-semibold px-3 py-1 rounded-full transition-all shrink-0 ${
-                activeCity === c.id
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              key={d.id}
+              onClick={() => setActiveDietary(d.id)}
+              className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all shrink-0 border cursor-pointer ${
+                activeDietary === d.id
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                  : 'bg-white/90 text-slate-700 border-black/[0.08] hover:bg-white hover:text-slate-900'
               }`}
             >
-              {c.label}
+              {d.label}
             </button>
           ))}
         </div>
 
-        {/* Category Filters */}
+        {/* City Quick-Jumps & Cuisines row */}
         <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
-          {CATEGORIES.map((cat) => (
+          {/* City Chips */}
+          <div className="flex items-center gap-1 bg-white/80 backdrop-blur-md p-0.5 rounded-full border border-black/[0.06] shrink-0">
+            {CITIES.slice(0, 5).map((c) => (
+              <button
+                key={c.id}
+                onClick={() => handleCitySelect(c)}
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all shrink-0 cursor-pointer ${
+                  activeCity === c.id
+                    ? 'bg-emerald-700 text-white'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          <span className="w-px h-3.5 bg-black/10 shrink-0" />
+
+          {/* Cuisine Chips */}
+          {CUISINES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all shrink-0 border ${
+              className={`text-[10px] font-medium px-2 py-0.5 rounded-full transition-all shrink-0 border cursor-pointer ${
                 activeCategory === cat.id
-                  ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
+                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
                   : 'bg-white/85 text-slate-600 border-black/[0.06] hover:bg-white hover:text-slate-900'
               }`}
             >
@@ -351,7 +612,7 @@ function InnerMapView() {
         <button
           onClick={handleLocateMe}
           disabled={locating}
-          className="w-12 h-12 rounded-full bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-glass-md flex items-center justify-center text-slate-700 hover:text-emerald-700 hover:bg-white transition-all active:scale-95 disabled:opacity-50"
+          className="w-12 h-12 rounded-full bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-glass-md flex items-center justify-center text-slate-700 hover:text-emerald-700 hover:bg-white transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           title="Current Location"
           aria-label="Find my location"
         >
@@ -379,13 +640,21 @@ function InnerMapView() {
             setUploadTargetPlace(null);
             setShowUpload(true);
           }}
-          className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all border-2 border-white"
+          className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all border-2 border-white cursor-pointer"
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
           title="Plant a Photo"
           aria-label="Add photo"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+          >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -401,10 +670,10 @@ function InnerMapView() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
           >
-            <span>🌱 Explore 500+ verified vegan spots across Japan! Tap any pin for details.</span>
+            <span>🌱 500+ verified vegan spots across Japan. Tap any pin for details.</span>
             <button
               onClick={dismissHint}
-              className="text-white/60 hover:text-white font-bold ml-1"
+              className="text-white/60 hover:text-white font-bold ml-1 cursor-pointer"
             >
               ✕
             </button>
@@ -421,6 +690,7 @@ function InnerMapView() {
             setUploadTargetPlace(target);
             setShowUpload(true);
           }}
+          onOpenToolkit={(tab) => openToolkitWithTab(tab || 'passport')}
         />
       )}
 
@@ -440,8 +710,15 @@ function InnerMapView() {
         />
       )}
 
-      {/* ─── Onboarding Modal ─── */}
+      {/* ─── First-time Onboarding Modal ─── */}
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+
+      {/* ─── Comprehensive Traveler Survival Toolkit Modal ─── */}
+      <TravelerToolkitModal
+        isOpen={showToolkit}
+        initialTab={toolkitTab}
+        onClose={() => setShowToolkit(false)}
+      />
 
       <ToastContainer />
     </div>

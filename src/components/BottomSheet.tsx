@@ -11,6 +11,7 @@ interface BottomSheetProps {
   place: PlaceWithPosts;
   onClose: () => void;
   onOpenUpload?: (place: PlaceWithPosts) => void;
+  onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'konbini' | 'phrases') => void;
 }
 
 const GENRE_EMOJIS: Record<string, string> = {
@@ -42,7 +43,7 @@ const GENRE_EMOJIS: Record<string, string> = {
   'Plant-Based Bistro': '🌿',
 };
 
-export default function BottomSheet({ place, onClose, onOpenUpload }: BottomSheetProps) {
+export default function BottomSheet({ place, onClose, onOpenUpload, onOpenToolkit }: BottomSheetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
@@ -398,6 +399,23 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
                           ? 'All dishes and ingredients are 100% plant-based. Free from meat, poultry, seafood, fish-flake dashi broth, dairy, and eggs.'
                           : 'This restaurant prepares meat or fish dishes. Vegan items are prepared to order or offered as a dedicated set. Please inform staff of dietary requirements.'}
                       </p>
+                      <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                        {is100Vegan ? (
+                          <button
+                            onClick={() => onOpenToolkit?.('why_us')}
+                            className="text-[11px] font-bold text-emerald-800 bg-white/80 hover:bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <span>🛡️ Pre-Audited (No Dashi Trap)</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => onOpenToolkit?.('passport')}
+                            className="text-[11px] font-bold text-amber-900 bg-white/90 hover:bg-white px-2.5 py-1 rounded-lg border border-amber-300 shadow-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <span>🗣️ Show Chef Card for Dashi-Free Order</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
