@@ -12,6 +12,9 @@ interface BottomSheetProps {
   onClose: () => void;
   onOpenUpload?: (place: PlaceWithPosts) => void;
   onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'konbini' | 'phrases') => void;
+  onOpenReport?: (place: PlaceWithPosts) => void;
+  onOpenB2B?: (place: PlaceWithPosts) => void;
+  onOpenPerk?: () => void;
 }
 
 const GENRE_EMOJIS: Record<string, string> = {
@@ -43,7 +46,15 @@ const GENRE_EMOJIS: Record<string, string> = {
   'Plant-Based Bistro': '🌿',
 };
 
-export default function BottomSheet({ place, onClose, onOpenUpload, onOpenToolkit }: BottomSheetProps) {
+export default function BottomSheet({
+  place,
+  onClose,
+  onOpenUpload,
+  onOpenToolkit,
+  onOpenReport,
+  onOpenB2B,
+  onOpenPerk,
+}: BottomSheetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
@@ -437,6 +448,47 @@ export default function BottomSheet({ place, onClose, onOpenUpload, onOpenToolki
                     {place.profile_text_en || place.profile_text}
                   </p>
                 )}
+
+                {/* Exclusive VIP Perk Banner (For SoyStories) */}
+                {place.google_place_id === 'soystories-yakuin' && (
+                  <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-emerald-500/10 border-2 border-amber-300 flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full uppercase">
+                        Exclusive Traveler VIP Perk 🎁
+                      </span>
+                      <h5 className="text-xs font-bold text-slate-900 mt-1">
+                        Show vegan.jp at the counter for a Free Topping or Double-Scoop Upgrade!
+                      </h5>
+                    </div>
+                    <button
+                      onClick={onOpenPerk}
+                      className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-colors cursor-pointer shadow-xs"
+                    >
+                      View Perk 🎟️
+                    </button>
+                  </div>
+                )}
+
+                {/* Community Trustworthiness & B2B Wholesale Footer */}
+                <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs flex-wrap gap-2">
+                  <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span>Verified for 2026</span>
+                    <span>•</span>
+                    <button
+                      onClick={() => onOpenReport?.(place)}
+                      className="text-slate-600 hover:text-emerald-700 font-semibold underline underline-offset-2 cursor-pointer"
+                    >
+                      Report status / Suggest edit
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => onOpenB2B?.(place)}
+                    className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
+                  >
+                    🏪 Restaurant Owners: Partner with SoyStories Wholesale
+                  </button>
+                </div>
               </div>
 
               {/* Photo Section Header */}
