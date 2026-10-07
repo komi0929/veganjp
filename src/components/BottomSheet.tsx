@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
 import { isMyPost } from '@/lib/local-posts';
 import { isPlaceSaved, toggleSavePlaceId } from '@/lib/saved-places';
 import { SupportedLanguage, TRANSLATIONS } from '@/lib/i18n';
+import { useGooglePlaceDetails, getCuratedPhotosForPlace } from '@/lib/place-photos';
 import { showToast } from './Toast';
 
 interface BottomSheetProps {
   place: PlaceWithPosts;
   currentLang?: SupportedLanguage;
+  placesLibrary?: google.maps.PlacesLibrary | null;
+  map?: google.maps.Map | null;
   onClose: () => void;
   onOpenUpload?: (place: PlaceWithPosts) => void;
   onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'konbini' | 'phrases') => void;
@@ -49,6 +52,8 @@ const GENRE_EMOJIS: Record<string, string> = {
 export default function BottomSheet({
   place,
   currentLang = 'en',
+  placesLibrary,
+  map,
   onClose,
   onOpenUpload,
   onOpenToolkit,
@@ -58,7 +63,25 @@ export default function BottomSheet({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [gratitudeNotes, setGratitudeNotes] = useState<any[]>([]);
+
+  // ─── 2026 Google Places Live Meta (Photos, Star Rating, Open Status) ───
+  const googleMeta = useGooglePlaceDetails(place, placesLibrary || null, map || null);
+  const curatedPhotos = useMemo(() => getCuratedPhotosForPlace(place), [place]);
+
+  const allPhotos = useMemo(() => {
+    const userPhotos = place.posts.map((p) => p.image_url).filter(Boolean);
+    const gPhotos = googleMeta.photos || [];
+    const list = Array.from(new Set([...userPhotos, ...gPhotos, ...curatedPhotos]));
+    return list.filter(Boolean);
+  }, [place, googleMeta.photos, curatedPhotos]);
+
+  const heroImage = allPhotos[activePhotoIndex] || allPhotos[0];
+
+  useEffect(() => {
+    setActivePhotoIndex(0);
+  }, [place.google_place_id]);
 
   useEffect(() => {
     const loadNotes = () => {
@@ -111,9 +134,7 @@ export default function BottomSheet({
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
-        // User cancelled or share failed, fallback silently
-      }
+      } catch (err) {}
     } else {
       await navigator.clipboard.writeText(shareUrl);
       showToast('Link copied to clipboard!', '📋');
@@ -133,17 +154,24 @@ export default function BottomSheet({
     place.name + ' ' + (place.prefecture || '') + ' ' + (place.area || '')
   )}&query_place_id=${place.google_place_id}`;
 
-  const heroImage = place.posts[0]?.image_url;
   const genreEmoji = (place.genre && GENRE_EMOJIS[place.genre]) || '🌱';
-  const is100Vegan = place.dietary_type === '100%_vegan' || (!place.dietary_type && place.features?.some(f => f.includes('100%植物性') || f.includes('全メニューヴィーガン')));
+  const is100Vegan =
+    place.dietary_type === '100%_vegan' ||
+    (!place.dietary_type &&
+      place.features?.some(
+        (f) =>
+          f.includes('100%植物性') ||
+          f.includes('全メニューヴィーガン') ||
+          f.includes('100%ヴィーガン')
+      ));
 
   return (
     <>
       <AnimatePresence>
-        {/* Dimmed Backdrop - ONLY visible in expanded mode */}
+        {/* Dimmed Backdrop (Visible on mobile when expanded) */}
         {isExpanded && (
           <motion.div
-            className="fixed inset-0 bg-slate-950/30 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 md:bg-slate-950/20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -154,69 +182,93 @@ export default function BottomSheet({
 
       <AnimatePresence mode="wait">
         {!isExpanded ? (
-          /* ─── Stage 1: Peek Preview Card ─── */
+          /* ─── Stage 1: Peek Preview Card (2026 Sleek Floating Glass Pill) ─── */
           <motion.div
             key="peek-card"
-            className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[540px] z-40 bg-white/95 backdrop-blur-2xl rounded-3xl p-3 sm:p-3.5 shadow-glass-xl border border-black/[0.08] cursor-pointer group"
+            className="fixed bottom-6 inset-x-4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[580px] z-40 bg-white/95 backdrop-blur-2xl rounded-3xl p-3 sm:p-3.5 shadow-glass-xl border border-black/[0.08] cursor-pointer group hover:border-emerald-300 transition-all"
             initial={{ y: 80, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 60, opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 380, damping: 28 }}
             onClick={() => setIsExpanded(true)}
           >
-            <div className="flex items-center gap-3">
-              {/* Thumbnail Hero or Genre Icon */}
-              <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden bg-emerald-50 shrink-0 border border-black/[0.04] flex items-center justify-center">
+            <div className="flex items-center gap-3.5">
+              {/* High-Definition Food Thumbnail */}
+              <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-black/[0.06] shadow-2xs flex items-center justify-center">
                 {heroImage ? (
                   <img
                     src={heroImage}
                     alt={place.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
+                    loading="lazy"
                   />
                 ) : (
                   <span className="text-3xl select-none">{genreEmoji}</span>
                 )}
-                {place.posts.length > 0 && (
-                  <span className="absolute bottom-1 right-1 text-[9px] font-bold text-white bg-slate-900/85 px-1.5 py-0.5 rounded-full backdrop-blur-xs">
-                    {place.posts.length}
+                {allPhotos.length > 1 && (
+                  <span className="absolute bottom-1 right-1 text-[9px] font-bold text-white bg-slate-900/85 px-1.5 py-0.5 rounded-full backdrop-blur-xs flex items-center gap-0.5">
+                    <span>📷</span>
+                    <span>{allPhotos.length}</span>
                   </span>
                 )}
               </div>
 
               {/* Main Info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                    is100Vegan
-                      ? 'text-emerald-800 bg-emerald-50 border-emerald-200/60'
-                      : 'text-amber-800 bg-amber-50 border-amber-200/60'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      is100Vegan
+                        ? 'text-emerald-800 bg-emerald-50 border-emerald-200/60'
+                        : 'text-amber-800 bg-amber-50 border-amber-200/60'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`}
+                    />
                     {is100Vegan ? t.tag_100vegan : t.tag_options}
                   </span>
+
+                  {googleMeta.rating && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full shadow-3xs">
+                      <span>★</span>
+                      <span>{googleMeta.rating.toFixed(1)}</span>
+                      {googleMeta.userRatingsTotal && (
+                        <span className="text-amber-700/80 font-normal">
+                          ({googleMeta.userRatingsTotal})
+                        </span>
+                      )}
+                    </span>
+                  )}
+
                   {(place.genre_en || place.genre) && (
                     <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
                       {place.genre_en || place.genre}
                     </span>
                   )}
-                  {(place.area_en || place.area) && (
-                    <span className="text-[10px] text-slate-500 font-medium">
-                      📍 {place.area_en || place.area}
-                    </span>
-                  )}
                 </div>
-                <h3 className="text-base font-bold text-slate-900 tracking-tight truncate">
+
+                <h3 className="text-base font-bold text-slate-900 tracking-tight truncate group-hover:text-emerald-700 transition-colors">
                   {place.name}
                 </h3>
-                <p className="text-xs text-slate-500 font-medium truncate mt-0.5 flex items-center gap-1">
-                  <span>{t.view_details}</span>
-                  <span className="text-emerald-600 font-semibold">↑</span>
-                </p>
+
+                <div className="flex items-center justify-between mt-1 text-xs text-slate-500">
+                  <span className="truncate">📍 {place.area_en || place.area}</span>
+                  <span className="text-emerald-700 font-bold text-[11px] shrink-0 group-hover:underline flex items-center gap-0.5 ml-2">
+                    <span>{t.view_details}</span>
+                    <span>↑</span>
+                  </span>
+                </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                {/* Wishlist Button */}
+              {/* Action Buttons */}
+              <div
+                className="flex items-center gap-1 shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Wishlist */}
                 <button
                   onClick={handleToggleSave}
                   className={`p-2.5 rounded-full transition-colors ${
@@ -227,28 +279,19 @@ export default function BottomSheet({
                   title={isSaved ? t.btn_saved : t.btn_save}
                   aria-label="Wishlist toggle"
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill={isSaved ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                  >
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
                 </button>
 
-                {/* Share Button */}
-                <button
-                  onClick={handleShare}
-                  className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-                  title="Share place"
-                  aria-label="Share spot"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                    <circle cx="18" cy="5" r="3" />
-                    <circle cx="6" cy="12" r="3" />
-                    <circle cx="18" cy="19" r="3" />
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                  </svg>
-                </button>
-
-                {/* Directions Button */}
+                {/* Directions */}
                 <a
                   href={googleMapsUrl}
                   target="_blank"
@@ -256,7 +299,15 @@ export default function BottomSheet({
                   className="p-2.5 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 transition-colors"
                   title="Directions in Google Maps"
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  >
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                     <polyline points="15 3 21 3 21 9" />
                     <line x1="10" y1="14" x2="21" y2="3" />
@@ -269,7 +320,15 @@ export default function BottomSheet({
                   className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors"
                   aria-label="Close"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                  >
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -278,13 +337,13 @@ export default function BottomSheet({
             </div>
           </motion.div>
         ) : (
-          /* ─── Stage 2: Expanded Full Discovery Sheet ─── */
+          /* ─── Stage 2: 2026 World-Class Discovery Sheet / Desktop Side Drawer ─── */
           <motion.div
             key="expanded-sheet"
-            className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-3xl rounded-t-[36px] max-h-[88vh] flex flex-col shadow-2xl border-t border-black/[0.06] pb-[env(safe-area-inset-bottom,0px)]"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            className="fixed bottom-0 inset-x-0 z-50 bg-white/98 backdrop-blur-3xl rounded-t-[36px] max-h-[92vh] flex flex-col shadow-2xl border-t border-black/[0.08] pb-[env(safe-area-inset-bottom,0px)] md:fixed md:top-16 md:left-6 md:bottom-6 md:inset-x-auto md:w-[500px] md:max-h-[calc(100vh-80px)] md:rounded-[32px] md:border md:border-black/[0.08]"
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', stiffness: 360, damping: 32 }}
             drag="y"
             dragConstraints={{ top: 0 }}
@@ -295,124 +354,236 @@ export default function BottomSheet({
               }
             }}
           >
-            {/* Tactile Grab Indicator */}
+            {/* Tactile Grab Bar (Mobile) */}
             <div
-              className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+              className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing md:hidden"
               onClick={() => setIsExpanded(false)}
             >
               <div className="w-12 h-1.5 rounded-full bg-slate-200 hover:bg-slate-300 transition-colors" />
             </div>
 
-            {/* Place Header Block */}
-            <div className="px-6 py-4 flex items-start justify-between gap-4 border-b border-black/[0.04]">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                    is100Vegan
-                      ? 'text-emerald-800 bg-emerald-50 border-emerald-200/60'
-                      : 'text-amber-800 bg-amber-50 border-amber-200/60'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    {is100Vegan ? t.tag_100vegan : t.tag_options}
-                  </span>
-                  {(place.genre_en || place.genre) && (
-                    <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                      {genreEmoji} {place.genre_en || place.genre}
+            {/* ─── Grand Culinary Hero Photo Showcase (Magazine Gallery) ─── */}
+            <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full bg-slate-900 overflow-hidden shrink-0 group">
+              <img
+                src={heroImage}
+                alt={place.name}
+                className="w-full h-full object-cover transition-all duration-500 cursor-pointer"
+                onClick={() => setActivePhoto(heroImage)}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30 pointer-events-none" />
+
+              {/* Floating Top Header Badges */}
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2 pointer-events-auto">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {googleMeta.rating && (
+                    <a
+                      href={googleMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-extrabold text-slate-900 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-md flex items-center gap-1 hover:bg-white transition-colors"
+                      title="View reviews on Google Maps"
+                    >
+                      <span className="text-amber-500">★</span>
+                      <span>{googleMeta.rating.toFixed(1)}</span>
+                      {googleMeta.userRatingsTotal && (
+                        <span className="text-slate-500 font-semibold text-[10px]">
+                          ({googleMeta.userRatingsTotal} on Google)
+                        </span>
+                      )}
+                    </a>
+                  )}
+
+                  {googleMeta.isOpenNow !== undefined && (
+                    <span
+                      className={`text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-md ${
+                        googleMeta.isOpenNow
+                          ? 'bg-emerald-950/85 text-emerald-200 border border-emerald-400/40'
+                          : 'bg-slate-950/85 text-slate-300 border border-white/20'
+                      }`}
+                    >
+                      {googleMeta.isOpenNow ? '🟢 Open Now' : '🔴 Closed Now'}
                     </span>
                   )}
-                  <span className="text-xs text-slate-500 font-medium">
-                    📍 {place.area_en || place.area || place.prefecture_en || place.prefecture}
-                  </span>
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 truncate">
-                  {place.name}
-                </h2>
-                {place.name_ja && (
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-xs text-slate-500 font-medium">🇯🇵 {place.name_ja}</span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(place.name_ja || '');
-                        showToast(t.copied_toast, '📋');
-                      }}
-                      className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 inline-flex items-center gap-1 cursor-pointer transition-colors"
-                      title="Copy Japanese name to show to staff or taxi"
-                    >
-                      <span>{t.copy_taxi}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
 
-              <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                {/* Wishlist Button */}
-                <button
-                  onClick={handleToggleSave}
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full border transition-colors ${
-                    isSaved
-                      ? 'bg-rose-50 border-rose-200 text-rose-700'
-                      : 'bg-slate-100 border-slate-200/80 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                  </svg>
-                  <span>{isSaved ? t.btn_saved : t.btn_save}</span>
-                </button>
-
-                {/* Instagram Button */}
-                {place.instagram_url && (
-                  <a
-                    href={place.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-700 border border-pink-200 hover:bg-pink-100/40 transition-colors"
-                  >
-                    <span>📷</span>
-                    <span>{place.instagram_id || 'Instagram'}</span>
-                  </a>
-                )}
-
-                {/* Google Maps Directions */}
-                <a
-                  href={googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors"
-                  title="Directions in Google Maps"
-                >
-                  <span>{t.btn_directions}</span>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                </a>
-
-                {/* Collapse */}
+                {/* Close Button */}
                 <button
                   onClick={() => setIsExpanded(false)}
-                  className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                  className="w-8 h-8 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
                   aria-label="Collapse"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  ✕
                 </button>
+              </div>
+
+              {/* Photo Thumbnails Strip (Overlay at bottom of hero) */}
+              {allPhotos.length > 1 && (
+                <div className="absolute inset-x-3 bottom-3 flex items-center justify-between pointer-events-auto">
+                  <div className="flex items-center gap-1.5 overflow-x-auto max-w-[80%] scrollbar-hide py-0.5">
+                    {allPhotos.slice(0, 6).map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActivePhotoIndex(idx)}
+                        className={`w-11 h-9 rounded-xl overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${
+                          activePhotoIndex === idx
+                            ? 'border-emerald-400 scale-105 shadow-md ring-2 ring-emerald-400/40'
+                            : 'border-white/50 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                    {allPhotos.length > 6 && (
+                      <button
+                        onClick={() => setActivePhoto(heroImage)}
+                        className="text-[10px] font-bold text-white bg-black/60 px-2 py-1.5 rounded-xl border border-white/30 backdrop-blur-md shrink-0"
+                      >
+                        +{allPhotos.length - 6}
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setActivePhoto(heroImage)}
+                    className="bg-black/60 hover:bg-black/80 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl backdrop-blur-md border border-white/20 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <span>Enlarge</span>
+                    <span>↗</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Place Title & Quick Action Strip */}
+            <div className="px-6 py-4 border-b border-black/[0.05] bg-white">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        is100Vegan
+                          ? 'text-emerald-800 bg-emerald-50 border-emerald-200/60'
+                          : 'text-amber-800 bg-amber-50 border-amber-200/60'
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'
+                        }`}
+                      />
+                      {is100Vegan ? t.tag_100vegan : t.tag_options}
+                    </span>
+                    {(place.genre_en || place.genre) && (
+                      <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                        {genreEmoji} {place.genre_en || place.genre}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-900 truncate">
+                    {place.name}
+                  </h2>
+                  {place.name_ja && (
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-xs text-slate-500 font-medium">🇯🇵 {place.name_ja}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(place.name_ja || '');
+                          showToast(t.copied_toast, '📋');
+                        }}
+                        className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Copy Japanese name to show to staff or taxi"
+                      >
+                        <span>{t.copy_taxi}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                  {/* Wishlist */}
+                  <button
+                    onClick={handleToggleSave}
+                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-full border transition-colors ${
+                      isSaved
+                        ? 'bg-rose-50 border-rose-200 text-rose-700'
+                        : 'bg-slate-100 border-slate-200/80 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill={isSaved ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                    >
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>{isSaved ? t.btn_saved : t.btn_save}</span>
+                  </button>
+
+                  {/* Share */}
+                  <button
+                    onClick={handleShare}
+                    className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                    title="Share place"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                    >
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                  </button>
+
+                  {/* Directions */}
+                  <a
+                    href={googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
+                    title="Directions in Google Maps"
+                  >
+                    <span>{t.btn_directions}</span>
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                    >
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                  </a>
+                </div>
               </div>
             </div>
 
             {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-5 bg-slate-50/50 space-y-6">
+            <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-5 bg-slate-50/50 space-y-5">
               {/* Feature Tags & Profile Block */}
-              <div className="bg-white rounded-3xl p-5 border border-black/[0.06] shadow-xs max-w-3xl mx-auto">
+              <div className="bg-white rounded-3xl p-5 border border-black/[0.06] shadow-2xs space-y-4">
                 {/* Dietary Advisory Banner */}
-                <div className={`p-4 rounded-2xl border mb-4 ${
-                  is100Vegan
-                    ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
-                    : 'bg-amber-50/80 border-amber-200/80 text-amber-950'
-                }`}>
+                <div
+                  className={`p-4 rounded-2xl border ${
+                    is100Vegan
+                      ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
+                      : 'bg-amber-50/80 border-amber-200/80 text-amber-950'
+                  }`}
+                >
                   <div className="flex items-start gap-2.5">
                     <span className="text-xl shrink-0">{is100Vegan ? '🌱' : '⚠️'}</span>
                     <div>
@@ -426,14 +597,14 @@ export default function BottomSheet({
                         {is100Vegan ? (
                           <button
                             onClick={() => onOpenToolkit?.('why_us')}
-                            className="text-[11px] font-bold text-emerald-800 bg-white/80 hover:bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            className="text-[11px] font-bold text-emerald-800 bg-white/80 hover:bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-colors"
                           >
                             <span>{t.btn_pre_audited}</span>
                           </button>
                         ) : (
                           <button
                             onClick={() => onOpenToolkit?.('passport')}
-                            className="text-[11px] font-bold text-amber-900 bg-white/90 hover:bg-white px-2.5 py-1 rounded-lg border border-amber-300 shadow-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            className="text-[11px] font-bold text-amber-900 bg-white/90 hover:bg-white px-2.5 py-1 rounded-lg border border-amber-300 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-colors"
                           >
                             <span>{t.btn_show_chef_card}</span>
                           </button>
@@ -443,8 +614,9 @@ export default function BottomSheet({
                   </div>
                 </div>
 
+                {/* Features Tags */}
                 {(place.features_en || place.features) && (
-                  <div className="flex flex-wrap gap-1.5 mb-3">
+                  <div className="flex flex-wrap gap-1.5">
                     {(place.features_en || place.features)!.map((feat, i) => (
                       <span
                         key={i}
@@ -455,14 +627,51 @@ export default function BottomSheet({
                     ))}
                   </div>
                 )}
+
+                {/* Profile Description */}
                 {(place.profile_text_en || place.profile_text) && (
                   <p className="text-sm text-slate-700 leading-relaxed font-normal bg-slate-50/60 p-4 rounded-2xl border border-slate-100">
                     {place.profile_text_en || place.profile_text}
                   </p>
                 )}
 
+                {/* Contact & Links Quick Strip */}
+                <div className="pt-2 border-t border-slate-100 flex items-center gap-3 text-xs text-slate-600 flex-wrap">
+                  {googleMeta.phoneNumber && (
+                    <a
+                      href={`tel:${googleMeta.phoneNumber}`}
+                      className="inline-flex items-center gap-1 hover:text-emerald-700 font-medium"
+                    >
+                      <span>📞</span>
+                      <span>{googleMeta.phoneNumber}</span>
+                    </a>
+                  )}
+                  {googleMeta.website && (
+                    <a
+                      href={googleMeta.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 hover:text-emerald-700 font-medium"
+                    >
+                      <span>🌐</span>
+                      <span>Website</span>
+                    </a>
+                  )}
+                  {place.instagram_url && (
+                    <a
+                      href={place.instagram_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-pink-700 hover:text-pink-800 font-medium"
+                    >
+                      <span>📷</span>
+                      <span>{place.instagram_id || 'Instagram'}</span>
+                    </a>
+                  )}
+                </div>
+
                 {/* Community Love & Gratitude Box */}
-                <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-rose-50/70 via-amber-50/50 to-emerald-50/50 border border-rose-200/80 space-y-3">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-50/70 via-amber-50/50 to-emerald-50/50 border border-rose-200/80 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
@@ -494,12 +703,17 @@ export default function BottomSheet({
                       </span>
                       <div className="space-y-1.5">
                         {gratitudeNotes.slice(0, 2).map((note: any) => (
-                          <div key={note.id} className="bg-white/85 p-2.5 rounded-xl border border-rose-100 text-xs">
+                          <div
+                            key={note.id}
+                            className="bg-white/85 p-2.5 rounded-xl border border-rose-100 text-xs"
+                          >
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-bold text-slate-900 flex items-center gap-1">
                                 <span>{note.stampEmoji}</span>
                                 <span>{note.stampTitleEn}</span>
-                                <span className="text-[10px] text-slate-400 font-normal">({note.stampTitleJa})</span>
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  ({note.stampTitleJa})
+                                </span>
                               </span>
                               <span className="text-[10px] text-slate-500 font-medium shrink-0">
                                 {note.senderCountry}
@@ -520,8 +734,8 @@ export default function BottomSheet({
                   )}
                 </div>
 
-                {/* Verification & Friendly Edit Suggestion Footer */}
-                <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs flex-wrap gap-2 text-slate-500">
+                {/* Verified Footer */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs flex-wrap gap-2 text-slate-500">
                   <div className="flex items-center gap-1.5 text-[11px]">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                     <span className="font-medium text-slate-600">{t.verified_2026}</span>
@@ -536,13 +750,13 @@ export default function BottomSheet({
               </div>
 
               {/* Photo Section Header */}
-              <div className="max-w-3xl mx-auto flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2">
                 <div>
-                  <h4 className="text-base font-bold text-slate-900 tracking-tight">{t.community_photos}</h4>
+                  <h4 className="text-base font-bold text-slate-900 tracking-tight">
+                    {t.community_photos}
+                  </h4>
                   <p className="text-xs text-slate-500">
-                    {place.posts.length > 0
-                      ? `${place.posts.length} photos`
-                      : t.no_photos_yet}
+                    {allPhotos.length} {t.community_photos}
                   </p>
                 </div>
                 {onOpenUpload && (
@@ -551,88 +765,42 @@ export default function BottomSheet({
                       setIsExpanded(false);
                       onOpenUpload(place);
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
                   >
                     <span>📸 {t.btn_plant_photo}</span>
                   </button>
                 )}
               </div>
 
-              {/* Photo Stream or Empty State */}
-              {place.posts.length === 0 ? (
-                <div className="bg-white rounded-3xl p-8 border border-dashed border-emerald-200 text-center max-w-3xl mx-auto">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-3">
-                    🌱
-                  </div>
-                  <h4 className="text-base font-bold text-slate-900 mb-1">
-                    {t.be_first_photo}
-                  </h4>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
-                    {t.be_first_desc}
-                  </p>
-                  {onOpenUpload && (
-                    <button
-                      onClick={() => {
-                        setIsExpanded(false);
-                        onOpenUpload(place);
-                      }}
-                      className="inline-flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
-                    >
-                      <span>📸 {t.btn_add_first_photo}</span>
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
-                  {place.posts.map((post) => (
-                    <motion.div
-                      key={post.id}
-                      className="group relative bg-white rounded-3xl overflow-hidden border border-black/[0.06] shadow-sm hover:shadow-photo-card transition-all duration-300 cursor-pointer"
-                      onClick={() => setActivePhoto(post.image_url)}
-                      whileHover={{ y: -3 }}
-                    >
-                      <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden">
-                        <img
-                          src={post.image_url}
-                          alt={post.short_text || place.name}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                          }}
-                        />
-                        {isMyPost(post.id) && (
-                          <span className="absolute top-3 right-3 text-[10px] font-bold bg-slate-900/85 text-white px-2.5 py-1 rounded-full backdrop-blur-md">
-                            Planted by you
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="p-4">
-                        {post.short_text ? (
-                          <p className="text-sm font-normal text-slate-800 leading-relaxed line-clamp-3">
-                            {post.short_text}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-slate-400 italic">No traveler notes attached</p>
-                        )}
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-medium">
-                          <span>{formatDate(post.created_at)}</span>
-                          <span className="text-emerald-700 font-semibold group-hover:underline">
-                            Enlarge photo ↗
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+              {/* Gallery Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {allPhotos.map((photoUrl, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="group relative bg-white rounded-2xl overflow-hidden border border-black/[0.06] shadow-2xs hover:shadow-photo-card transition-all cursor-pointer aspect-[4/3]"
+                    onClick={() => setActivePhoto(photoUrl)}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <img
+                      src={photoUrl}
+                      alt={place.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white text-xs font-bold bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                        Zoom ↗
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Fullscreen Lightbox */}
+      {/* ─── Fullscreen Lightbox ─── */}
       <AnimatePresence>
         {activePhoto && (
           <motion.div
@@ -655,7 +823,7 @@ export default function BottomSheet({
               />
               <button
                 onClick={() => setActivePhoto(null)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition-colors"
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
                 aria-label="Close lightbox"
               >
                 ✕

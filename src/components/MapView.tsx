@@ -7,6 +7,7 @@ import {
   Map,
   AdvancedMarker,
   useMap,
+  useMapsLibrary,
 } from '@vis.gl/react-google-maps';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +22,7 @@ import TravelerToolkitModal, { ToolkitTab } from './TravelerToolkitModal';
 import GratitudeModal from './GratitudeModal';
 import ToastContainer from './Toast';
 import LanguageSelector from './LanguageSelector';
+import SpotCardCarousel from './SpotCardCarousel';
 import { SupportedLanguage, TRANSLATIONS, LANGUAGES } from '@/lib/i18n';
 
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
@@ -91,6 +93,7 @@ interface InnerMapViewProps {
 function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
   const map = useMap();
+  const placesLibrary = useMapsLibrary('places');
   const [places, setPlaces] = useState<PlaceWithPosts[]>(INITIAL_MASTER_PLACES);
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -361,13 +364,21 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
       .slice(0, 5);
   }, [places, searchQuery]);
 
+  const handleSelectPlace = useCallback(
+    (place: PlaceWithPosts) => {
+      setSelectedPlace(place);
+      dismissHint();
+      if (map) {
+        map.panTo({ lat: place.lat, lng: place.lng });
+        map.setZoom(15);
+      }
+    },
+    [map, dismissHint]
+  );
+
   const handleSelectSuggestion = (place: PlaceWithPosts) => {
-    setSelectedPlace(place);
+    handleSelectPlace(place);
     setSearchFocused(false);
-    if (map) {
-      map.panTo({ lat: place.lat, lng: place.lng });
-      map.setZoom(15);
-    }
   };
 
   const openToolkitWithTab = (tab: ToolkitTab) => {
@@ -390,10 +401,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           <AdvancedMarker
             key={place.google_place_id}
             position={{ lat: place.lat, lng: place.lng }}
-            onClick={() => {
-              setSelectedPlace(place);
-              dismissHint();
-            }}
+            onClick={() => handleSelectPlace(place)}
           >
             <PlantMarker
               count={place.posts.length}
@@ -719,11 +727,22 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         )}
       </AnimatePresence>
 
+      {/* ─── Trending / Featured Food Photo Carousel (Reel) ─── */}
+      {!selectedPlace && (
+        <SpotCardCarousel
+          places={visiblePlaces}
+          currentLang={currentLang}
+          onSelectPlace={handleSelectPlace}
+        />
+      )}
+
       {/* ─── Place Detail Bottom Sheet ─── */}
       {selectedPlace && (
         <BottomSheet
           place={selectedPlace}
           currentLang={currentLang}
+          placesLibrary={placesLibrary}
+          map={map}
           onClose={() => setSelectedPlace(null)}
           onOpenUpload={(target) => {
             setUploadTargetPlace(target);
