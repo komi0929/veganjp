@@ -42,8 +42,6 @@ const GENRE_EMOJIS: Record<string, string> = {
   'Plant-Based Bistro': '🌿',
 };
 
-import { GENRE_PHOTOS } from '@/lib/place-photos';
-
 export default function PlantMarker({ count, imageUrl, name, genre, genre_en, dietary_type = '100%_vegan', onClick }: PlantMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -51,10 +49,7 @@ export default function PlantMarker({ count, imageUrl, name, genre, genre_en, di
   const currentGenre = genre_en || genre || '';
   const emoji = GENRE_EMOJIS[currentGenre] || (genre && GENRE_EMOJIS[genre]) || '🌱';
   const isPureVegan = dietary_type === '100%_vegan';
-  
-  // Real culinary photography fallback so pins always show delicious food
-  const fallbackPhoto = (genre_en && GENRE_PHOTOS[genre_en]?.[0]) || (genre && GENRE_PHOTOS[genre]?.[0]);
-  const displayPhoto = imageUrl || fallbackPhoto;
+  const displayPhoto = imageUrl || null;
 
   return (
     <motion.div

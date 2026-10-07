@@ -6,7 +6,7 @@ import type { PlaceWithPosts } from '@/lib/types';
 import { isMyPost } from '@/lib/local-posts';
 import { isPlaceSaved, toggleSavePlaceId } from '@/lib/saved-places';
 import { SupportedLanguage, TRANSLATIONS } from '@/lib/i18n';
-import { useGooglePlaceDetails, getCuratedPhotosForPlace } from '@/lib/place-photos';
+import { useGooglePlaceDetails } from '@/lib/place-photos';
 import { showToast } from './Toast';
 
 interface BottomSheetProps {
@@ -52,7 +52,6 @@ const GENRE_EMOJIS: Record<string, string> = {
 export default function BottomSheet({
   place,
   currentLang = 'en',
-  placesLibrary,
   map,
   onClose,
   onOpenUpload,
@@ -66,16 +65,15 @@ export default function BottomSheet({
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [gratitudeNotes, setGratitudeNotes] = useState<any[]>([]);
 
-  // ─── 2026 Google Places Live Meta (Photos, Star Rating, Open Status) ───
-  const googleMeta = useGooglePlaceDetails(place, placesLibrary || null, map || null);
-  const curatedPhotos = useMemo(() => getCuratedPhotosForPlace(place), [place]);
+  // ─── 2026 Google Places Live Meta (Real Diner/Owner Google Photos, Star Rating, Open Status) ───
+  const googleMeta = useGooglePlaceDetails(place, map || null);
 
   const allPhotos = useMemo(() => {
     const userPhotos = place.posts.map((p) => p.image_url).filter(Boolean);
     const gPhotos = googleMeta.photos || [];
-    const list = Array.from(new Set([...userPhotos, ...gPhotos, ...curatedPhotos]));
+    const list = Array.from(new Set([...userPhotos, ...gPhotos]));
     return list.filter(Boolean);
-  }, [place, googleMeta.photos, curatedPhotos]);
+  }, [place, googleMeta.photos]);
 
   const heroImage = allPhotos[activePhotoIndex] || allPhotos[0];
 
@@ -363,14 +361,26 @@ export default function BottomSheet({
             </div>
 
             {/* ─── Grand Culinary Hero Photo Showcase (Magazine Gallery) ─── */}
-            <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full bg-slate-900 overflow-hidden shrink-0 group">
-              <img
-                src={heroImage}
-                alt={place.name}
-                className="w-full h-full object-cover transition-all duration-500 cursor-pointer"
-                onClick={() => setActivePhoto(heroImage)}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30 pointer-events-none" />
+            <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full bg-slate-900 overflow-hidden shrink-0 group flex items-center justify-center">
+              {heroImage ? (
+                <>
+                  <img
+                    src={heroImage}
+                    alt={place.name}
+                    className="w-full h-full object-cover transition-all duration-500 cursor-pointer"
+                    onClick={() => setActivePhoto(heroImage)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30 pointer-events-none" />
+                </>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-950 via-slate-900 to-black text-white p-6 text-center">
+                  <span className="text-4xl mb-1 select-none">{genreEmoji}</span>
+                  <h3 className="text-lg font-bold text-white tracking-tight">{place.name}</h3>
+                  <span className="text-[11px] text-emerald-400 font-medium mt-0.5">
+                    {place.genre_en || place.genre} · Verified Spot
+                  </span>
+                </div>
+              )}
 
               {/* Floating Top Header Badges */}
               <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2 pointer-events-auto">
@@ -772,29 +782,50 @@ export default function BottomSheet({
                 )}
               </div>
 
-              {/* Gallery Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                {allPhotos.map((photoUrl, idx) => (
-                  <motion.div
-                    key={idx}
-                    className="group relative bg-white rounded-2xl overflow-hidden border border-black/[0.06] shadow-2xs hover:shadow-photo-card transition-all cursor-pointer aspect-[4/3]"
-                    onClick={() => setActivePhoto(photoUrl)}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <img
-                      src={photoUrl}
-                      alt={place.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-white text-xs font-bold bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-xs">
-                        Zoom ↗
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              {/* Gallery Grid or Friendly Empty State */}
+              {allPhotos.length === 0 ? (
+                <div className="bg-white rounded-3xl p-6 border border-dashed border-emerald-200 text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-1">
+                    📸
+                  </div>
+                  <h5 className="text-sm font-bold text-slate-900">{t.be_first_photo}</h5>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">{t.be_first_desc}</p>
+                  {onOpenUpload && (
+                    <button
+                      onClick={() => {
+                        setIsExpanded(false);
+                        onOpenUpload(place);
+                      }}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer mt-2"
+                    >
+                      <span>📸 {t.btn_add_first_photo}</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {allPhotos.map((photoUrl, idx) => (
+                    <motion.div
+                      key={idx}
+                      className="group relative bg-white rounded-2xl overflow-hidden border border-black/[0.06] shadow-2xs hover:shadow-photo-card transition-all cursor-pointer aspect-[4/3]"
+                      onClick={() => setActivePhoto(photoUrl)}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <img
+                        src={photoUrl}
+                        alt={place.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-white text-xs font-bold bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                          Zoom ↗
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         )}

@@ -1,178 +1,214 @@
-// 2026 World-Class Culinary Photography Engine for vegan.jp
-// Combines Google Places live photo fetch + curated ultra-high-definition plant-based food imagery
+// 2026 Modern Google Places API (New) Real Photography & Meta Engine for vegan.jp
+// Powered by google.maps.places.Place.searchByText & Place.fetchFields
 
 import { useState, useEffect } from 'react';
 import type { PlaceWithPosts } from './types';
 
-// Curated high-resolution plant-based cuisine photography bank
-// Each photo is hand-selected to look appetizing, professional, and authentic to Japan's dining scene
-export const GENRE_PHOTOS: Record<string, string[]> = {
-  'ラーメン': [
-    'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Ramen': [
-    'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1591814468924-caf88d1232e1?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1552611052-33e04de081de?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'カフェ': [
-    'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Cafe & Bakery': [
-    'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=85',
-  ],
-  '和食・精進': [
-    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Traditional / Shojin Washoku': [
-    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Traditional Shojin & Washoku': [
-    'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'バーガー': [
-    'https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Burgers & Casual': [
-    'https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Burgers & Casual Dining': [
-    'https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'カレー': [
-    'https://images.unsplash.com/photo-1631292784640-2b24be784d5d?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Curry & Spice': [
-    'https://images.unsplash.com/photo-1631292784640-2b24be784d5d?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'イタリアン・ピザ': [
-    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Pizza & Italian': [
-    'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&fit=crop&w=1000&q=85',
-  ],
-  '中華・台湾素食': [
-    'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Asian & Dim Sum': [
-    'https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'マクロビ・オーガニック': [
-    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'Macrobiotic & Organic': [
-    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=1000&q=85',
-  ],
-  'ホテル': [
-    'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=85',
-  ],
-  '居酒屋・バー': [
-    'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1000&q=85',
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=85',
-  ],
-};
-
-// Hand-curated standout spot photos
-export const SPOT_FEATURED_PHOTOS: Record<string, string[]> = {
-  'soystories-yakuin': [
-    'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=1000&q=85', // Craft ice cream
-    'https://images.unsplash.com/photo-1562376552-0d160a2f238d?auto=format&fit=crop&w=1000&q=85', // Waffles
-    'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=85', // Cafe cozy
-  ],
-};
-
-const DEFAULT_FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1000&q=85';
-
-/**
- * Returns a stable curated list of photos for any place
- */
-export function getCuratedPhotosForPlace(place: PlaceWithPosts): string[] {
-  // 1. If community or user uploaded posts exist, use those first
-  const uploaded = place.posts.map(p => p.image_url).filter(Boolean);
-  if (uploaded.length > 0) {
-    return uploaded;
-  }
-
-  // 2. Specific standout place photos
-  if (SPOT_FEATURED_PHOTOS[place.google_place_id]) {
-    return SPOT_FEATURED_PHOTOS[place.google_place_id];
-  }
-
-  // 3. Match by genre
-  const genreKey = place.genre_en || place.genre || '';
-  if (GENRE_PHOTOS[genreKey] && GENRE_PHOTOS[genreKey].length > 0) {
-    return GENRE_PHOTOS[genreKey];
-  }
-
-  if (place.genre && GENRE_PHOTOS[place.genre]) {
-    return GENRE_PHOTOS[place.genre];
-  }
-
-  return [DEFAULT_FALLBACK_PHOTO];
-}
-
-/**
- * Live Google Places Details & Photos hook
- * Fetches real-time photos, star ratings, and open status directly from Google Places API
- */
 export interface GooglePlaceMeta {
+  placeId?: string;
+  displayName?: string;
   photos: string[];
   rating?: number;
   userRatingsTotal?: number;
   isOpenNow?: boolean;
-  weekdayHours?: string[];
   phoneNumber?: string;
   website?: string;
   loading: boolean;
 }
 
-const memoryCache = new Map<string, GooglePlaceMeta>();
+const MEMORY_CACHE = new Map<string, GooglePlaceMeta>();
+const LOCAL_STORAGE_KEY = 'vegan_jp_google_place_cache_v3';
 
+// Load existing cache from localStorage if available
+function loadPersistentCache(): Record<string, Partial<GooglePlaceMeta>> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function savePersistentCache(key: string, data: GooglePlaceMeta) {
+  if (typeof window === 'undefined') return;
+  try {
+    const current = loadPersistentCache();
+    current[key] = {
+      placeId: data.placeId,
+      displayName: data.displayName,
+      photos: data.photos,
+      rating: data.rating,
+      userRatingsTotal: data.userRatingsTotal,
+      isOpenNow: data.isOpenNow,
+      phoneNumber: data.phoneNumber,
+      website: data.website,
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(current));
+  } catch (e) {}
+}
+
+let placesPromise: Promise<any> | null = null;
+
+export async function ensureGooglePlaces(): Promise<any> {
+  if (typeof window === 'undefined') return null;
+  if ((window as any).google?.maps?.importLibrary) {
+    try {
+      const { Place } = await (window as any).google.maps.importLibrary('places');
+      return Place;
+    } catch (e) {
+      console.warn('Error importing places library', e);
+    }
+  }
+
+  if (placesPromise) return placesPromise;
+
+  placesPromise = new Promise((resolve) => {
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      if ((window as any).google?.maps?.importLibrary) {
+        clearInterval(interval);
+        try {
+          const { Place } = await (window as any).google.maps.importLibrary('places');
+          resolve(Place);
+        } catch (e) {
+          resolve(null);
+        }
+      } else if (attempts > 50) {
+        clearInterval(interval);
+        resolve(null);
+      }
+    }, 200);
+  });
+
+  return placesPromise;
+}
+
+export function cleanSearchName(name: string): string {
+  // Remove parenthetical noise like （完全菜食） or （ヴィーガン対応）
+  return name.replace(/（.*?）|\(.*?\)/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Fetch real Google Place details using the modern Places API (New)
+ */
+export async function fetchGooglePlaceMeta(place: PlaceWithPosts): Promise<GooglePlaceMeta> {
+  const cacheKey = place.google_place_id || place.id;
+  
+  // 1. Check memory cache (only if it has valid photos or was successfully fetched)
+  if (MEMORY_CACHE.has(cacheKey)) {
+    return MEMORY_CACHE.get(cacheKey)!;
+  }
+
+  // 2. Check localStorage cache
+  const disk = loadPersistentCache();
+  if (disk[cacheKey] && disk[cacheKey].photos && disk[cacheKey].photos!.length > 0) {
+    const cached: GooglePlaceMeta = {
+      ...disk[cacheKey],
+      photos: disk[cacheKey].photos!,
+      loading: false,
+    };
+    MEMORY_CACHE.set(cacheKey, cached);
+    return cached;
+  }
+
+  // 3. User uploaded posts if present
+  const userPhotos = place.posts.map(p => p.image_url).filter(Boolean);
+
+  try {
+    const Place = await ensureGooglePlaces();
+    if (!Place) {
+      return { photos: userPhotos, loading: false };
+    }
+
+    let googlePlace: any = null;
+
+    // A. If place.google_place_id is a real Google Place ID (e.g. starts with ChIJ)
+    if (place.google_place_id && place.google_place_id.startsWith('ChIJ')) {
+      const p = new Place({ id: place.google_place_id });
+      await p.fetchFields({
+        fields: ['id', 'displayName', 'photos', 'rating', 'userRatingCount', 'currentOpeningHours', 'websiteURI', 'nationalPhoneNumber'],
+      });
+      googlePlace = p;
+    } else {
+      // B. Search by clean text query with location bias
+      const cleaned = cleanSearchName(place.name);
+      const query = `${cleaned} ${place.area || place.prefecture || ''}`.trim();
+      
+      const request: any = {
+        textQuery: query,
+        fields: ['id', 'displayName', 'photos', 'rating', 'userRatingCount', 'currentOpeningHours', 'websiteURI', 'nationalPhoneNumber'],
+        maxResultCount: 1,
+      };
+
+      if (place.lat && place.lng) {
+        request.locationBias = { lat: place.lat, lng: place.lng };
+      }
+
+      const { places } = await Place.searchByText(request);
+      if (places && places.length > 0) {
+        googlePlace = places[0];
+      }
+    }
+
+    if (googlePlace) {
+      const realPhotos: string[] = [];
+      if (googlePlace.photos && Array.isArray(googlePlace.photos)) {
+        for (const photo of googlePlace.photos.slice(0, 8)) {
+          try {
+            const uri = photo.getURI({ maxWidth: 1200, maxHeight: 900 });
+            if (uri) realPhotos.push(uri);
+          } catch (e) {}
+        }
+      }
+
+      const finalPhotos = Array.from(new Set([...userPhotos, ...realPhotos]));
+
+      const meta: GooglePlaceMeta = {
+        placeId: googlePlace.id,
+        displayName: googlePlace.displayName,
+        photos: finalPhotos,
+        rating: googlePlace.rating,
+        userRatingsTotal: googlePlace.userRatingCount,
+        isOpenNow: googlePlace.currentOpeningHours?.openNow,
+        phoneNumber: googlePlace.nationalPhoneNumber,
+        website: googlePlace.websiteURI,
+        loading: false,
+      };
+
+      MEMORY_CACHE.set(cacheKey, meta);
+      savePersistentCache(cacheKey, meta);
+      return meta;
+    }
+  } catch (err) {
+    console.warn('Google Places API (New) fetch error for', place.name, err);
+  }
+
+  const fallback: GooglePlaceMeta = {
+    photos: userPhotos,
+    loading: false,
+  };
+  return fallback;
+}
+
+/**
+ * Hook to get real-time Google details for the selected place in BottomSheet
+ */
 export function useGooglePlaceDetails(
   place: PlaceWithPosts | null,
-  placesLibrary: google.maps.PlacesLibrary | null,
-  map: google.maps.Map | null
+  map?: google.maps.Map | null
 ): GooglePlaceMeta {
   const [meta, setMeta] = useState<GooglePlaceMeta>(() => {
     if (!place) return { photos: [], loading: false };
-    const cached = memoryCache.get(place.google_place_id);
-    if (cached) return cached;
-    return { photos: getCuratedPhotosForPlace(place), loading: true };
+    const cacheKey = place.google_place_id || place.id;
+    if (MEMORY_CACHE.has(cacheKey)) return MEMORY_CACHE.get(cacheKey)!;
+    const disk = loadPersistentCache();
+    if (disk[cacheKey]?.photos?.length) {
+      return { ...disk[cacheKey], photos: disk[cacheKey].photos!, loading: false };
+    }
+    const userPhotos = place.posts.map(p => p.image_url).filter(Boolean);
+    return { photos: userPhotos, loading: true };
   });
 
   useEffect(() => {
@@ -181,98 +217,58 @@ export function useGooglePlaceDetails(
       return;
     }
 
-    // Check memory cache
-    const cached = memoryCache.get(place.google_place_id);
-    if (cached) {
-      setMeta(cached);
+    let active = true;
+    const cacheKey = place.google_place_id || place.id;
+
+    if (MEMORY_CACHE.has(cacheKey)) {
+      setMeta(MEMORY_CACHE.get(cacheKey)!);
       return;
     }
 
-    const fallbackPhotos = getCuratedPhotosForPlace(place);
-    setMeta({ photos: fallbackPhotos, loading: true });
-
-    if (!placesLibrary || typeof google === 'undefined' || !google.maps || !google.maps.places) {
-      setMeta({ photos: fallbackPhotos, loading: false });
-      return;
-    }
-
-    try {
-      const dummyDiv = document.createElement('div');
-      const service = new placesLibrary.PlacesService(map || dummyDiv);
-
-      const handleDetailsResult = (result: any, status: any) => {
-        if ((status === 'OK' || status === placesLibrary.PlacesServiceStatus.OK) && result) {
-          const googlePhotos: string[] = [];
-          if (result.photos && result.photos.length > 0) {
-            for (const p of result.photos.slice(0, 8)) {
-              try {
-                const url = typeof p.getUrl === 'function' ? p.getUrl({ maxWidth: 1200, maxHeight: 900 }) : p.url;
-                if (url) googlePhotos.push(url);
-              } catch (e) {}
-            }
-          }
-
-          const combinedPhotos = googlePhotos.length > 0 ? googlePhotos : fallbackPhotos;
-          const newMeta: GooglePlaceMeta = {
-            photos: combinedPhotos,
-            rating: result.rating,
-            userRatingsTotal: result.user_ratings_total,
-            isOpenNow: result.opening_hours?.isOpen ? result.opening_hours.isOpen() : undefined,
-            weekdayHours: result.opening_hours?.weekday_text,
-            phoneNumber: result.formatted_phone_number,
-            website: result.website,
-            loading: false,
-          };
-
-          memoryCache.set(place.google_place_id, newMeta);
-          setMeta(newMeta);
-        } else {
-          // Fallback to curated
-          const fallbackMeta: GooglePlaceMeta = {
-            photos: fallbackPhotos,
-            loading: false,
-          };
-          memoryCache.set(place.google_place_id, fallbackMeta);
-          setMeta(fallbackMeta);
-        }
-      };
-
-      // If place.google_place_id is a real Google Place ID (starts with ChIJ)
-      if (place.google_place_id && place.google_place_id.startsWith('ChIJ')) {
-        service.getDetails(
-          {
-            placeId: place.google_place_id,
-            fields: ['photos', 'rating', 'user_ratings_total', 'opening_hours', 'formatted_phone_number', 'website'],
-          },
-          handleDetailsResult
-        );
-      } else {
-        // Search by query (Name + Area)
-        const query = `${place.name} ${place.area || ''} ${place.prefecture || ''}`.trim();
-        service.findPlaceFromQuery(
-          {
-            query,
-            fields: ['place_id', 'photos', 'rating', 'user_ratings_total', 'opening_hours'],
-          },
-          (results: any, status: any) => {
-            if ((status === 'OK' || status === placesLibrary.PlacesServiceStatus.OK) && results && results[0]?.place_id) {
-              service.getDetails(
-                {
-                  placeId: results[0].place_id,
-                  fields: ['photos', 'rating', 'user_ratings_total', 'opening_hours', 'formatted_phone_number', 'website'],
-                },
-                handleDetailsResult
-              );
-            } else {
-              handleDetailsResult(null, status);
-            }
-          }
-        );
+    fetchGooglePlaceMeta(place).then((res) => {
+      if (active) {
+        setMeta(res);
       }
-    } catch (e) {
-      setMeta({ photos: fallbackPhotos, loading: false });
-    }
-  }, [place?.google_place_id, placesLibrary, map]);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [place?.google_place_id, place?.name]);
 
   return meta;
+}
+
+/**
+ * Hook for carousel and markers to fetch and display the real Google photo
+ */
+export function useRealPlacePhoto(place: PlaceWithPosts): string | null {
+  const cacheKey = place.google_place_id || place.id;
+  const userPhoto = place.posts[0]?.image_url;
+
+  const [photo, setPhoto] = useState<string | null>(() => {
+    if (userPhoto) return userPhoto;
+    if (MEMORY_CACHE.has(cacheKey)) {
+      return MEMORY_CACHE.get(cacheKey)?.photos[0] || null;
+    }
+    const disk = loadPersistentCache();
+    return disk[cacheKey]?.photos?.[0] || null;
+  });
+
+  useEffect(() => {
+    if (photo && photo !== userPhoto) return;
+    let active = true;
+
+    fetchGooglePlaceMeta(place).then((meta) => {
+      if (active && meta.photos.length > 0) {
+        setPhoto(meta.photos[0]);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [cacheKey, place]);
+
+  return photo;
 }

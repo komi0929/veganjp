@@ -5,7 +5,7 @@ import { Place } from './types';
 export const MASTER_PLACES: Place[] = [
   {
     "id": "soystories-yakuin",
-    "google_place_id": "soystories-yakuin",
+    "google_place_id": "ChIJL8ZEXViRQTURgeN1wM_GJ6E",
     "name": "SoyStories（ソイストーリーズ）薬院",
     "name_ja": "SoyStories（ソイストーリーズ）薬院",
     "lat": 33.5824,

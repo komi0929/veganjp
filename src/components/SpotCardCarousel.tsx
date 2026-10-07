@@ -3,13 +3,90 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
-import { getCuratedPhotosForPlace } from '@/lib/place-photos';
-import { SupportedLanguage, TRANSLATIONS } from '@/lib/i18n';
+import { useRealPlacePhoto } from '@/lib/place-photos';
+import { SupportedLanguage } from '@/lib/i18n';
 
 interface SpotCardCarouselProps {
   places: PlaceWithPosts[];
   currentLang?: SupportedLanguage;
   onSelectPlace: (place: PlaceWithPosts) => void;
+}
+
+function SpotCarouselCard({
+  place,
+  onSelectPlace,
+}: {
+  place: PlaceWithPosts;
+  onSelectPlace: (place: PlaceWithPosts) => void;
+}) {
+  const realPhoto = useRealPlacePhoto(place);
+  const is100Vegan = place.dietary_type === '100%_vegan';
+
+  return (
+    <motion.div
+      key={place.google_place_id}
+      onClick={() => onSelectPlace(place)}
+      className="snap-start shrink-0 w-[240px] sm:w-[270px] bg-white/95 backdrop-blur-2xl rounded-3xl p-2.5 shadow-glass-md hover:shadow-photo-card border border-black/[0.08] cursor-pointer group transition-all"
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {/* Food Photo Frame */}
+      <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center">
+        {realPhoto ? (
+          <img
+            src={realPhoto}
+            alt={place.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50 via-slate-50 to-amber-50 text-slate-400 p-3 text-center">
+            <span className="text-3xl mb-1">🌱</span>
+            <span className="text-[11px] font-bold text-slate-700 truncate w-full">
+              {place.name}
+            </span>
+            <span className="text-[9px] font-medium text-slate-400 mt-0.5">
+              {place.genre_en || place.genre}
+            </span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+
+        {/* Badge Overlay */}
+        <div className="absolute top-2 left-2 flex items-center gap-1">
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md border ${
+              is100Vegan
+                ? 'bg-emerald-950/80 text-emerald-200 border-emerald-400/30'
+                : 'bg-amber-950/80 text-amber-200 border-amber-400/30'
+            }`}
+          >
+            {is100Vegan ? '🌱 100% Vegan' : '🥗 Options'}
+          </span>
+        </div>
+      </div>
+
+      {/* Spot Info */}
+      <div className="mt-2.5 px-1">
+        <div className="flex items-center justify-between gap-1 text-[11px] text-slate-500 font-medium">
+          <span className="truncate">{place.area_en || place.area}</span>
+          {(place.genre_en || place.genre) && (
+            <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded-md shrink-0">
+              {place.genre_en || place.genre}
+            </span>
+          )}
+        </div>
+        <h4 className="text-xs font-bold text-slate-900 truncate mt-0.5 group-hover:text-emerald-700 transition-colors">
+          {place.name}
+        </h4>
+        {place.name_ja && place.name_ja !== place.name && (
+          <p className="text-[10px] text-slate-400 truncate mt-0.5">
+            {place.name_ja}
+          </p>
+        )}
+      </div>
+    </motion.div>
+  );
 }
 
 export default function SpotCardCarousel({
@@ -18,9 +95,8 @@ export default function SpotCardCarousel({
   onSelectPlace,
 }: SpotCardCarouselProps) {
   const [isMinimized, setIsMinimized] = useState(false);
-  const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
 
-  // Take the top 15 most interesting spots in the current view
+  // Take the top 15 spots
   const displayPlaces = places.slice(0, 15);
 
   if (displayPlaces.length === 0) return null;
@@ -39,7 +115,7 @@ export default function SpotCardCarousel({
             exit={{ y: 20, opacity: 0 }}
           >
             <span>✨</span>
-            <span>{currentLang === 'ja' ? 'おすすめ店舗フォトを見る' : 'Browse Featured Spots Photos'}</span>
+            <span>{currentLang === 'ja' ? '店舗フォトを見る' : 'Browse Spots Photos'}</span>
             <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-[10px]">
               {displayPlaces.length}
             </span>
@@ -60,7 +136,7 @@ export default function SpotCardCarousel({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full border border-black/[0.06] shadow-2xs">
                   <span>📸</span>
-                  <span>{currentLang === 'ja' ? '厳選ヴィーガンフード' : 'Featured Plant-Based Spots'}</span>
+                  <span>{currentLang === 'ja' ? '店舗フォト' : 'Featured Spots'}</span>
                   <span className="text-emerald-700 font-bold text-[10px]">({displayPlaces.length})</span>
                 </span>
               </div>
@@ -76,71 +152,13 @@ export default function SpotCardCarousel({
 
             {/* Horizontal Snap Reel */}
             <div className="flex items-center gap-3.5 overflow-x-auto scrollbar-hide py-1 px-1 snap-x snap-mandatory">
-              {displayPlaces.map((place) => {
-                const photos = getCuratedPhotosForPlace(place);
-                const heroPhoto = photos[0];
-                const is100Vegan = place.dietary_type === '100%_vegan';
-
-                return (
-                  <motion.div
-                    key={place.google_place_id}
-                    onClick={() => onSelectPlace(place)}
-                    className="snap-start shrink-0 w-[240px] sm:w-[270px] bg-white/95 backdrop-blur-2xl rounded-3xl p-2.5 shadow-glass-md hover:shadow-photo-card border border-black/[0.08] cursor-pointer group transition-all"
-                    whileHover={{ y: -4, scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {/* Food Photo Frame */}
-                    <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-slate-100">
-                      <img
-                        src={heroPhoto}
-                        alt={place.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-
-                      {/* Badge Overlay */}
-                      <div className="absolute top-2 left-2 flex items-center gap-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md border ${
-                          is100Vegan
-                            ? 'bg-emerald-950/80 text-emerald-200 border-emerald-400/30'
-                            : 'bg-amber-950/80 text-amber-200 border-amber-400/30'
-                        }`}>
-                          {is100Vegan ? '🌱 100% Vegan' : '🥗 Options'}
-                        </span>
-                      </div>
-
-                      {/* Photo Counter */}
-                      {photos.length > 1 && (
-                        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                          <span>📷</span>
-                          <span>{photos.length}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Spot Info */}
-                    <div className="mt-2.5 px-1">
-                      <div className="flex items-center justify-between gap-1 text-[11px] text-slate-500 font-medium">
-                        <span className="truncate">{place.area_en || place.area}</span>
-                        {(place.genre_en || place.genre) && (
-                          <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded-md shrink-0">
-                            {place.genre_en || place.genre}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-xs font-bold text-slate-900 truncate mt-0.5 group-hover:text-emerald-700 transition-colors">
-                        {place.name}
-                      </h4>
-                      {place.name_ja && place.name_ja !== place.name && (
-                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                          {place.name_ja}
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {displayPlaces.map((place) => (
+                <SpotCarouselCard
+                  key={place.google_place_id}
+                  place={place}
+                  onSelectPlace={onSelectPlace}
+                />
+              ))}
             </div>
           </motion.div>
         )}
