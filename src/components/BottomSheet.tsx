@@ -15,16 +15,31 @@ interface BottomSheetProps {
 
 const GENRE_EMOJIS: Record<string, string> = {
   'ラーメン': '🍜',
+  'Ramen': '🍜',
   'カフェ': '☕',
+  'Cafe & Bakery': '☕',
+  'Cafe & Sweets': '☕',
+  'Cafe & Craft Ice Cream': '🍨',
   '和食・精進': '🍱',
+  'Traditional / Shojin Washoku': '🍱',
+  'Traditional Shojin & Washoku': '🍱',
   'バーガー': '🍔',
+  'Burgers & Casual Dining': '🍔',
+  'Burgers & Casual': '🍔',
   'カレー': '🍛',
+  'Curry & Spice': '🍛',
   'イタリアン・ピザ': '🍕',
+  'Pizza & Italian': '🍕',
   '中華・台湾素食': '🥟',
+  'Asian & Dim Sum': '🥟',
   'マクロビ・オーガニック': '🥗',
+  'Macrobiotic & Organic': '🥗',
   'ホテル': '🏨',
+  'Hotel & Fine Dining': '🏨',
   '居酒屋・バー': '🍶',
+  'Izakaya & Bar': '🍶',
   'レストラン': '🌿',
+  'Plant-Based Bistro': '🌿',
 };
 
 export default function BottomSheet({ place, onClose, onOpenUpload }: BottomSheetProps) {
@@ -151,16 +166,16 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
                       : 'text-amber-800 bg-amber-50 border-amber-200/60'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    {is100Vegan ? '🌱 100% Vegan' : '🥗 Vegan Options'}
+                    {is100Vegan ? '🌱 100% Vegan Dedicated' : '🥗 Vegan Options Available'}
                   </span>
-                  {place.genre && (
+                  {(place.genre_en || place.genre) && (
                     <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                      {place.genre}
+                      {place.genre_en || place.genre}
                     </span>
                   )}
-                  {place.area && (
+                  {(place.area_en || place.area) && (
                     <span className="text-[10px] text-slate-500 font-medium">
-                      📍 {place.area}
+                      📍 {place.area_en || place.area}
                     </span>
                   )}
                 </div>
@@ -272,22 +287,35 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
                       : 'text-amber-800 bg-amber-50 border-amber-200/60'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    {is100Vegan ? '🌱 100% Vegan (完全ヴィーガン専門店)' : '🥗 Vegan Options (ヴィーガン対応・一般飲食店)'}
+                    {is100Vegan ? '🌱 100% VEGAN (Dedicated Animal-Free)' : '🥗 VEGAN OPTIONS (Serves Meat/Fish)'}
                   </span>
-                  {place.genre && (
+                  {(place.genre_en || place.genre) && (
                     <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                      {genreEmoji} {place.genre}
+                      {genreEmoji} {place.genre_en || place.genre}
                     </span>
                   )}
-                  {place.prefecture && (
-                    <span className="text-xs text-slate-500 font-medium">
-                      📍 {place.prefecture} {place.area ? `(${place.area})` : ''}
-                    </span>
-                  )}
+                  <span className="text-xs text-slate-500 font-medium">
+                    📍 {place.area_en || place.area || place.prefecture_en || place.prefecture}
+                  </span>
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 truncate">
                   {place.name}
                 </h2>
+                {place.name_ja && (
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-xs text-slate-500 font-medium">🇯🇵 {place.name_ja}</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(place.name_ja || '');
+                        showToast('Copied Japanese name for staff/taxi!', '📋');
+                      }}
+                      className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Copy Japanese name to show to staff or taxi"
+                    >
+                      <span>Copy for Staff / Taxi</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
@@ -353,9 +381,30 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
             <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-5 bg-slate-50/50 space-y-6">
               {/* Feature Tags & Profile Block */}
               <div className="bg-white rounded-3xl p-5 border border-black/[0.06] shadow-xs max-w-3xl mx-auto">
-                {place.features && place.features.length > 0 && (
+                {/* Dietary Advisory Banner */}
+                <div className={`p-4 rounded-2xl border mb-4 ${
+                  is100Vegan
+                    ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
+                    : 'bg-amber-50/80 border-amber-200/80 text-amber-950'
+                }`}>
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-xl shrink-0">{is100Vegan ? '🌱' : '⚠️'}</span>
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider">
+                        {is100Vegan ? '100% Plant-Based Guarantee' : 'Mixed Kitchen Advisory'}
+                      </h4>
+                      <p className="text-xs mt-0.5 leading-relaxed">
+                        {is100Vegan
+                          ? 'All dishes and ingredients are 100% plant-based. Free from meat, poultry, seafood, fish-flake dashi broth, dairy, and eggs.'
+                          : 'This restaurant prepares meat or fish dishes. Vegan items are prepared to order or offered as a dedicated set. Please inform staff of dietary requirements.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {(place.features_en || place.features) && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {place.features.map((feat, i) => (
+                    {(place.features_en || place.features)!.map((feat, i) => (
                       <span
                         key={i}
                         className="text-xs font-medium px-2.5 py-1 rounded-xl bg-slate-50 text-slate-700 border border-slate-200/70"
@@ -365,9 +414,9 @@ export default function BottomSheet({ place, onClose, onOpenUpload }: BottomShee
                     ))}
                   </div>
                 )}
-                {place.profile_text && (
+                {(place.profile_text_en || place.profile_text) && (
                   <p className="text-sm text-slate-700 leading-relaxed font-normal bg-slate-50/60 p-4 rounded-2xl border border-slate-100">
-                    {place.profile_text}
+                    {place.profile_text_en || place.profile_text}
                   </p>
                 )}
               </div>

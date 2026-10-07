@@ -8,29 +8,46 @@ interface PlantMarkerProps {
   imageUrl?: string;
   name?: string;
   genre?: string;
+  genre_en?: string;
   dietary_type?: '100%_vegan' | 'vegan_friendly';
   onClick?: () => void;
 }
 
 const GENRE_EMOJIS: Record<string, string> = {
   'ラーメン': '🍜',
+  'Ramen': '🍜',
   'カフェ': '☕',
+  'Cafe & Bakery': '☕',
+  'Cafe & Sweets': '☕',
+  'Cafe & Craft Ice Cream': '🍨',
   '和食・精進': '🍱',
+  'Traditional / Shojin Washoku': '🍱',
+  'Traditional Shojin & Washoku': '🍱',
   'バーガー': '🍔',
+  'Burgers & Casual Dining': '🍔',
+  'Burgers & Casual': '🍔',
   'カレー': '🍛',
+  'Curry & Spice': '🍛',
   'イタリアン・ピザ': '🍕',
+  'Pizza & Italian': '🍕',
   '中華・台湾素食': '🥟',
+  'Asian & Dim Sum': '🥟',
   'マクロビ・オーガニック': '🥗',
+  'Macrobiotic & Organic': '🥗',
   'ホテル': '🏨',
+  'Hotel & Fine Dining': '🏨',
   '居酒屋・バー': '🍶',
+  'Izakaya & Bar': '🍶',
   'レストラン': '🌿',
+  'Plant-Based Bistro': '🌿',
 };
 
-export default function PlantMarker({ count, imageUrl, name, genre, dietary_type = '100%_vegan', onClick }: PlantMarkerProps) {
+export default function PlantMarker({ count, imageUrl, name, genre, genre_en, dietary_type = '100%_vegan', onClick }: PlantMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const isBloom = count >= 5;
-  const emoji = (genre && GENRE_EMOJIS[genre]) || '🌱';
+  const currentGenre = genre_en || genre || '';
+  const emoji = GENRE_EMOJIS[currentGenre] || (genre && GENRE_EMOJIS[genre]) || '🌱';
   const isPureVegan = dietary_type === '100%_vegan';
 
   return (
@@ -103,10 +120,9 @@ export default function PlantMarker({ count, imageUrl, name, genre, dietary_type
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
               <div className="flex items-center gap-1.5">
-                <p className="text-xs font-semibold text-slate-900 tracking-tight">{name}</p>
-                {genre && (
+                {(genre_en || genre) && (
                   <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-600">
-                    {genre}
+                    {genre_en || genre}
                   </span>
                 )}
               </div>

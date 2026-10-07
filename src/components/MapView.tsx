@@ -36,16 +36,16 @@ const CITIES = [
 
 const CATEGORIES = [
   { id: 'all', label: 'All Foods' },
-  { id: '100vegan', label: '🌱 100% Vegan (専門店)', is100: true },
-  { id: 'options', label: '🥗 Vegan Options (一般店)', isOption: true },
-  { id: 'ramen', label: '🍜 Ramen', genre: 'ラーメン' },
-  { id: 'cafe', label: '☕ Cafe & Sweets', genre: 'カフェ' },
-  { id: 'washoku', label: '🍱 Shojin / Washoku', genre: '和食・精進' },
-  { id: 'burger', label: '🍔 Burger', genre: 'バーガー' },
-  { id: 'curry', label: '🍛 Curry', genre: 'カレー' },
-  { id: 'italian', label: '🍕 Italian / Pizza', genre: 'イタリアン・ピザ' },
-  { id: 'chinese', label: '🥟 Chinese / Asian', genre: '中華・台湾素食' },
-  { id: 'macro', label: '🥗 Macrobiotic', genre: 'マクロビ・オーガニック' },
+  { id: '100vegan', label: '🌱 100% Vegan Dedicated', is100: true },
+  { id: 'options', label: '🥗 Vegan Options Available', isOption: true },
+  { id: 'ramen', label: '🍜 Ramen', genre: 'ラーメン', genreEn: 'Ramen' },
+  { id: 'cafe', label: '☕ Cafe & Bakery', genre: 'カフェ', genreEn: 'Cafe & Bakery' },
+  { id: 'washoku', label: '🍱 Traditional / Shojin', genre: '和食・精進', genreEn: 'Traditional Shojin & Washoku' },
+  { id: 'burger', label: '🍔 Burgers & Casual', genre: 'バーガー', genreEn: 'Burgers & Casual Dining' },
+  { id: 'curry', label: '🍛 Curry & Spice', genre: 'カレー', genreEn: 'Curry & Spice' },
+  { id: 'italian', label: '🍕 Pizza & Italian', genre: 'イタリアン・ピザ', genreEn: 'Pizza & Italian' },
+  { id: 'chinese', label: '🥟 Asian & Dim Sum', genre: '中華・台湾素食', genreEn: 'Asian & Dim Sum' },
+  { id: 'macro', label: '🥗 Macrobiotic & Organic', genre: 'マクロビ・オーガニック', genreEn: 'Macrobiotic & Organic' },
 ];
 
 const INITIAL_MASTER_PLACES: PlaceWithPosts[] = MASTER_PLACES.map((p) => ({
@@ -200,7 +200,7 @@ function InnerMapView() {
             p.dietary_type === 'vegan_friendly' || (!p.dietary_type && !p.features?.some((f) => f.includes('100%植物性') || f.includes('全メニューヴィーガン')))
           );
         } else if (cat.genre) {
-          result = result.filter((p) => p.genre === cat.genre);
+          result = result.filter((p) => p.genre === cat.genre || (cat.genreEn && p.genre_en === cat.genreEn));
         }
       }
     }
@@ -232,6 +232,7 @@ function InnerMapView() {
               imageUrl={place.posts[0]?.image_url}
               name={place.name}
               genre={place.genre}
+              genre_en={place.genre_en}
               dietary_type={place.dietary_type}
             />
           </AdvancedMarker>
@@ -284,19 +285,20 @@ function InnerMapView() {
 
           {/* Navigation Items */}
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
+              title="Show Japanese Vegan Phrase Card to waitstaff"
+            >
+              <span>🗣️</span>
+              <span className="hidden sm:inline">Phrase Card</span>
+            </button>
             <Link
               href="/articles"
-              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded-full hover:bg-black/5 transition-colors"
+              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2.5 py-1 rounded-full hover:bg-black/5 transition-colors"
             >
               Guides
             </Link>
-            <button
-              onClick={() => setShowOnboarding(true)}
-              className="w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-slate-600 text-xs font-semibold transition-colors"
-              title="About & Guide"
-            >
-              ?
-            </button>
           </div>
         </div>
       </motion.header>
@@ -450,7 +452,7 @@ export default function MapView() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
   return (
-    <APIProvider apiKey={apiKey} libraries={['places']}>
+    <APIProvider apiKey={apiKey} libraries={['places']} language="en" region="JP">
       <InnerMapView />
     </APIProvider>
   );
