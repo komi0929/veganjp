@@ -18,9 +18,7 @@ import UploadModal from './UploadModal';
 import PlantMarker from './PlantMarker';
 import OnboardingModal from './OnboardingModal';
 import TravelerToolkitModal, { ToolkitTab } from './TravelerToolkitModal';
-import SpotReportModal from './SpotReportModal';
-import B2BWholesaleModal from './B2BWholesaleModal';
-import SoyStoriesPerkModal from './SoyStoriesPerkModal';
+import GratitudeModal from './GratitudeModal';
 import ToastContainer from './Toast';
 
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
@@ -80,9 +78,10 @@ function InnerMapView() {
   const [savedFilterOnly, setSavedFilterOnly] = useState(false);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [locating, setLocating] = useState(false);
-  const [reportTargetPlace, setReportTargetPlace] = useState<PlaceWithPosts | null>(null);
-  const [b2bTargetPlace, setB2bTargetPlace] = useState<PlaceWithPosts | null>(null);
-  const [showPerkModal, setShowPerkModal] = useState(false);
+  const [gratitudeTarget, setGratitudeTarget] = useState<{
+    place: PlaceWithPosts;
+    mode: 'gratitude' | 'update';
+  } | null>(null);
 
   // Instant Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -464,26 +463,6 @@ function InnerMapView() {
               <span>Konbini</span>
             </button>
 
-            {/* SoyStories VIP Traveler Perk (B2C Funnel) */}
-            <button
-              onClick={() => setShowPerkModal(true)}
-              className="flex items-center gap-1 text-xs font-bold text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title="Exclusive Traveler VIP Perk at SoyStories Yakuin"
-            >
-              <span>🍨</span>
-              <span className="hidden sm:inline">VIP Perk</span>
-            </button>
-
-            {/* B2B Wholesale Link for Chefs & Venue Owners */}
-            <button
-              onClick={() => setB2bTargetPlace(null)}
-              className="hidden xl:flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title="For Restaurant Owners: SoyStories Wholesale Partnership"
-            >
-              <span>🤝</span>
-              <span>B2B Wholesale</span>
-            </button>
-
             <Link
               href="/articles"
               className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded-full hover:bg-black/5 transition-colors hidden sm:inline"
@@ -717,9 +696,9 @@ function InnerMapView() {
             setShowUpload(true);
           }}
           onOpenToolkit={(tab) => openToolkitWithTab(tab || 'passport')}
-          onOpenReport={(p) => setReportTargetPlace(p)}
-          onOpenB2B={(p) => setB2bTargetPlace(p)}
-          onOpenPerk={() => setShowPerkModal(true)}
+          onOpenGratitude={(place, mode) =>
+            setGratitudeTarget({ place, mode: mode || 'gratitude' })
+          }
         />
       )}
 
@@ -749,29 +728,15 @@ function InnerMapView() {
         onClose={() => setShowToolkit(false)}
       />
 
-      {/* ─── Community Status & Verification Modal (CGM) ─── */}
-      {reportTargetPlace && (
-        <SpotReportModal
-          isOpen={!!reportTargetPlace}
-          place={reportTargetPlace}
-          onClose={() => setReportTargetPlace(null)}
+      {/* ─── Community Gratitude & Friendly Update Modal ─── */}
+      {gratitudeTarget && (
+        <GratitudeModal
+          isOpen={!!gratitudeTarget}
+          place={gratitudeTarget.place}
+          initialMode={gratitudeTarget.mode}
+          onClose={() => setGratitudeTarget(null)}
         />
       )}
-
-      {/* ─── B2B Wholesale Partnership Modal ─── */}
-      {b2bTargetPlace !== null && (
-        <B2BWholesaleModal
-          isOpen={true}
-          place={b2bTargetPlace}
-          onClose={() => setB2bTargetPlace(null)}
-        />
-      )}
-
-      {/* ─── SoyStories Inbound VIP Perk Modal (B2C Funnel) ─── */}
-      <SoyStoriesPerkModal
-        isOpen={showPerkModal}
-        onClose={() => setShowPerkModal(false)}
-      />
 
       <ToastContainer />
     </div>
