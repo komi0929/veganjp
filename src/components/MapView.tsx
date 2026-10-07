@@ -20,48 +20,76 @@ import OnboardingModal from './OnboardingModal';
 import TravelerToolkitModal, { ToolkitTab } from './TravelerToolkitModal';
 import GratitudeModal from './GratitudeModal';
 import ToastContainer from './Toast';
+import LanguageSelector from './LanguageSelector';
+import { SupportedLanguage, TRANSLATIONS, LANGUAGES } from '@/lib/i18n';
 
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
-
-const CITIES = [
-  { id: 'all', label: 'All Japan', lat: 36.2048, lng: 138.2529, zoom: 6 },
-  { id: 'tokyo', label: 'Tokyo', lat: 35.6812, lng: 139.7671, zoom: 12 },
-  { id: 'kyoto', label: 'Kyoto', lat: 35.0116, lng: 135.7681, zoom: 13 },
-  { id: 'osaka', label: 'Osaka', lat: 34.6937, lng: 135.5023, zoom: 13 },
-  { id: 'fukuoka', label: 'Fukuoka', lat: 33.5904, lng: 130.4017, zoom: 13 },
-  { id: 'nagoya', label: 'Nagoya', lat: 35.1802, lng: 136.9066, zoom: 13 },
-  { id: 'sapporo', label: 'Sapporo', lat: 43.0642, lng: 141.3469, zoom: 13 },
-  { id: 'okinawa', label: 'Okinawa', lat: 26.2124, lng: 127.6809, zoom: 11 },
-  { id: 'sendai', label: 'Sendai', lat: 38.2682, lng: 140.8694, zoom: 13 },
-  { id: 'hiroshima', label: 'Hiroshima', lat: 34.3966, lng: 132.4596, zoom: 13 },
-];
-
-const DIETARY_FILTERS = [
-  { id: 'all', label: 'All Diets' },
-  { id: '100vegan', label: '🌱 100% Dedicated Vegan', is100: true },
-  { id: 'gluten_free', label: '🌾 Gluten-Free' },
-  { id: 'gokun', label: '🧅 Oriental Vegan (五葷抜)' },
-  { id: 'organic', label: '🌿 Organic & Macro' },
-  { id: 'options', label: '🥗 Vegan Options (Mixed)', isOption: true },
-];
-
-const CUISINES = [
-  { id: 'all', label: 'All Cuisines' },
-  { id: 'ramen', label: '🍜 Ramen', genre: 'ラーメン', genreEn: 'Ramen' },
-  { id: 'cafe', label: '☕ Cafe & Bakery', genre: 'カフェ', genreEn: 'Cafe & Bakery' },
-  { id: 'washoku', label: '🍱 Traditional Washoku', genre: '和食・精進', genreEn: 'Traditional Shojin & Washoku' },
-  { id: 'burger', label: '🍔 Burgers & Casual', genre: 'バーガー', genreEn: 'Burgers & Casual Dining' },
-  { id: 'curry', label: '🍛 Curry & Spice', genre: 'カレー', genreEn: 'Curry & Spice' },
-  { id: 'italian', label: '🍕 Pizza & Italian', genre: 'イタリアン・ピザ', genreEn: 'Pizza & Italian' },
-  { id: 'chinese', label: '🥟 Asian & Dim Sum', genre: '中華・台湾素食', genreEn: 'Asian & Dim Sum' },
-];
 
 const INITIAL_MASTER_PLACES: PlaceWithPosts[] = MASTER_PLACES.map((p) => ({
   ...p,
   posts: [],
 }));
 
-function InnerMapView() {
+function getInitialLang(): SupportedLanguage {
+  if (typeof window === 'undefined') return 'en';
+  try {
+    const saved = localStorage.getItem('vegan_jp_lang') as SupportedLanguage | null;
+    if (saved && TRANSLATIONS[saved]) return saved;
+    const browserLang = (navigator.language || '').toLowerCase();
+    if (browserLang.startsWith('zh-tw') || browserLang.startsWith('zh-hk')) return 'zh-TW';
+    if (browserLang.startsWith('zh')) return 'zh-CN';
+    if (browserLang.startsWith('ko')) return 'ko';
+    if (browserLang.startsWith('fr')) return 'fr';
+    if (browserLang.startsWith('de')) return 'de';
+    if (browserLang.startsWith('es')) return 'es';
+    if (browserLang.startsWith('ja')) return 'ja';
+  } catch (e) {}
+  return 'en';
+}
+
+interface CityConfig {
+  id: string;
+  nameKey: string;
+  lat: number;
+  lng: number;
+  zoom: number;
+}
+
+const CITIES_CONFIG: CityConfig[] = [
+  { id: 'all', nameKey: 'city_all', lat: 36.2048, lng: 138.2529, zoom: 6 },
+  { id: 'tokyo', nameKey: 'city_tokyo', lat: 35.6812, lng: 139.7671, zoom: 12 },
+  { id: 'kyoto', nameKey: 'city_kyoto', lat: 35.0116, lng: 135.7681, zoom: 13 },
+  { id: 'osaka', nameKey: 'city_osaka', lat: 34.6937, lng: 135.5023, zoom: 13 },
+  { id: 'fukuoka', nameKey: 'city_fukuoka', lat: 33.5904, lng: 130.4017, zoom: 13 },
+];
+
+const CUISINES_CONFIG = [
+  { id: 'all', nameKey: 'cuisine_all' },
+  { id: 'ramen', nameKey: 'cuisine_ramen', genre: 'ラーメン', genreEn: 'Ramen' },
+  { id: 'cafe', nameKey: 'cuisine_cafe', genre: 'カフェ', genreEn: 'Cafe & Bakery' },
+  { id: 'washoku', nameKey: 'cuisine_washoku', genre: '和食・精進', genreEn: 'Traditional Shojin & Washoku' },
+  { id: 'burger', nameKey: 'cuisine_burger', genre: 'バーガー', genreEn: 'Burgers & Casual Dining' },
+  { id: 'curry', nameKey: 'cuisine_curry', genre: 'カレー', genreEn: 'Curry & Spice' },
+  { id: 'italian', nameKey: 'cuisine_italian', genre: 'イタリアン・ピザ', genreEn: 'Pizza & Italian' },
+  { id: 'chinese', nameKey: 'cuisine_chinese', genre: '中華・台湾素食', genreEn: 'Asian & Dim Sum' },
+];
+
+const DIETARY_CONFIG = [
+  { id: 'all', nameKey: 'diet_all' },
+  { id: '100vegan', nameKey: 'diet_100vegan', is100: true },
+  { id: 'gluten_free', nameKey: 'diet_gluten_free' },
+  { id: 'gokun', nameKey: 'diet_gokun' },
+  { id: 'organic', nameKey: 'diet_organic' },
+  { id: 'options', nameKey: 'diet_options', isOption: true },
+];
+
+interface InnerMapViewProps {
+  currentLang: SupportedLanguage;
+  onSelectLang: (lang: SupportedLanguage) => void;
+}
+
+function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
+  const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
   const map = useMap();
   const [places, setPlaces] = useState<PlaceWithPosts[]>(INITIAL_MASTER_PLACES);
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
@@ -186,7 +214,7 @@ function InnerMapView() {
   }, [fetchPlaces]);
 
   // Handle City Quick-Jump
-  const handleCitySelect = (city: typeof CITIES[number]) => {
+  const handleCitySelect = (city: CityConfig) => {
     setActiveCity(city.id);
     if (map) {
       map.panTo({ lat: city.lat, lng: city.lng });
@@ -274,7 +302,7 @@ function InnerMapView() {
 
     // 3. Cuisine Genre Filter
     if (activeCategory !== 'all') {
-      const cat = CUISINES.find((c) => c.id === activeCategory);
+      const cat = CUISINES_CONFIG.find((c) => c.id === activeCategory);
       if (cat?.genre) {
         result = result.filter(
           (p) => p.genre === cat.genre || (cat.genreEn && p.genre_en === cat.genreEn)
@@ -400,7 +428,7 @@ function InnerMapView() {
           {/* Live Verified Spots Count */}
           <div className="flex items-center gap-1 text-xs font-semibold text-slate-700 shrink-0">
             <span className="text-emerald-700 font-bold">{visiblePlaces.length}</span>
-            <span className="text-slate-500 hidden sm:inline">spots</span>
+            <span className="text-slate-500 hidden sm:inline">{t.verified_spots}</span>
           </div>
 
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
@@ -413,7 +441,7 @@ function InnerMapView() {
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
             }`}
-            title="Filter by saved places"
+            title={t.wishlist}
           >
             <svg
               width="12"
@@ -425,7 +453,7 @@ function InnerMapView() {
             >
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
-            <span className="hidden sm:inline">Wishlist</span>
+            <span className="hidden sm:inline">{t.wishlist}</span>
             {savedIds.length > 0 && <span className="text-[10px]">({savedIds.length})</span>}
           </button>
 
@@ -437,38 +465,43 @@ function InnerMapView() {
             <button
               onClick={() => openToolkitWithTab('passport')}
               className="flex items-center gap-1 text-xs font-bold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 border border-amber-300/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title="Show Japanese Dietary Card to Chef / Waitstaff"
+              title={t.chef_card_title}
             >
               <span>🗣️</span>
-              <span className="hidden sm:inline">Chef Card</span>
+              <span className="hidden sm:inline">{t.chef_card}</span>
             </button>
 
             {/* Why Not Google Maps? (Direct Objection Solver) */}
             <button
               onClick={() => openToolkitWithTab('why_us')}
               className="hidden md:flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title="Why Google Maps fails for vegans in Japan (Dashi & Review traps)"
+              title={t.why_not_google_title}
             >
               <span>🛡️</span>
-              <span>Why Not Google?</span>
+              <span>{t.why_not_google}</span>
             </button>
 
             {/* Konbini Guide */}
             <button
               onClick={() => openToolkitWithTab('konbini')}
               className="hidden lg:flex items-center gap-1 text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title="Late-night convenience store survival guide"
+              title={t.konbini_title}
             >
               <span>🏪</span>
-              <span>Konbini</span>
+              <span>{t.konbini}</span>
             </button>
 
             <Link
               href="/articles"
               className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded-full hover:bg-black/5 transition-colors hidden sm:inline"
             >
-              Guides
+              {t.guides}
             </Link>
+
+            <span className="w-px h-3.5 bg-black/10 shrink-0" />
+
+            {/* Language Selector */}
+            <LanguageSelector currentLang={currentLang} onSelectLang={onSelectLang} />
           </div>
         </div>
       </motion.header>
@@ -492,7 +525,7 @@ function InnerMapView() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
-              placeholder="Search 500+ spots, ramen, gluten-free, Tokyo..."
+              placeholder={t.search_placeholder}
               className="w-full text-xs font-medium text-slate-800 placeholder:text-slate-400 bg-transparent outline-none"
             />
             {searchQuery && (
@@ -515,7 +548,7 @@ function InnerMapView() {
                 exit={{ opacity: 0, y: -4 }}
               >
                 <div className="px-3 py-1 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Verified Matches ({searchSuggestions.length})
+                  {t.verified_matches} ({searchSuggestions.length})
                 </div>
                 {searchSuggestions.map((place) => (
                   <div
@@ -547,7 +580,7 @@ function InnerMapView() {
                           : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      {place.dietary_type === '100%_vegan' ? '🌱 100% Vegan' : '🥗 Options'}
+                      {place.dietary_type === '100%_vegan' ? t.tag_100vegan : t.tag_options}
                     </span>
                   </div>
                 ))}
@@ -558,7 +591,7 @@ function InnerMapView() {
 
         {/* Dietary Requirement Pills (The Non-Negotiables for Vegans) */}
         <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
-          {DIETARY_FILTERS.map((d) => (
+          {DIETARY_CONFIG.map((d) => (
             <button
               key={d.id}
               onClick={() => setActiveDietary(d.id)}
@@ -568,7 +601,7 @@ function InnerMapView() {
                   : 'bg-white/90 text-slate-700 border-black/[0.08] hover:bg-white hover:text-slate-900'
               }`}
             >
-              {d.label}
+              {t[d.nameKey] || d.id}
             </button>
           ))}
         </div>
@@ -577,7 +610,7 @@ function InnerMapView() {
         <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
           {/* City Chips */}
           <div className="flex items-center gap-1 bg-white/80 backdrop-blur-md p-0.5 rounded-full border border-black/[0.06] shrink-0">
-            {CITIES.slice(0, 5).map((c) => (
+            {CITIES_CONFIG.map((c) => (
               <button
                 key={c.id}
                 onClick={() => handleCitySelect(c)}
@@ -587,7 +620,7 @@ function InnerMapView() {
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                {c.label}
+                {t[c.nameKey] || c.id}
               </button>
             ))}
           </div>
@@ -595,7 +628,7 @@ function InnerMapView() {
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
           {/* Cuisine Chips */}
-          {CUISINES.map((cat) => (
+          {CUISINES_CONFIG.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
@@ -605,7 +638,7 @@ function InnerMapView() {
                   : 'bg-white/85 text-slate-600 border-black/[0.06] hover:bg-white hover:text-slate-900'
               }`}
             >
-              {cat.label}
+              {t[cat.nameKey] || cat.id}
             </button>
           ))}
         </div>
@@ -690,6 +723,7 @@ function InnerMapView() {
       {selectedPlace && (
         <BottomSheet
           place={selectedPlace}
+          currentLang={currentLang}
           onClose={() => setSelectedPlace(null)}
           onOpenUpload={(target) => {
             setUploadTargetPlace(target);
@@ -745,10 +779,24 @@ function InnerMapView() {
 
 export default function MapView() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const [currentLang, setCurrentLang] = useState<SupportedLanguage>('en');
+
+  useEffect(() => {
+    setCurrentLang(getInitialLang());
+  }, []);
+
+  const handleSelectLang = (newLang: SupportedLanguage) => {
+    setCurrentLang(newLang);
+    try {
+      localStorage.setItem('vegan_jp_lang', newLang);
+    } catch (e) {}
+  };
+
+  const googleMapsCode = LANGUAGES.find((l) => l.code === currentLang)?.googleMapsCode || 'en';
 
   return (
-    <APIProvider apiKey={apiKey} libraries={['places']} language="en" region="JP">
-      <InnerMapView />
+    <APIProvider apiKey={apiKey} libraries={['places']} language={googleMapsCode} region="JP">
+      <InnerMapView currentLang={currentLang} onSelectLang={handleSelectLang} />
     </APIProvider>
   );
 }

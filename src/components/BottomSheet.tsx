@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
 import { isMyPost } from '@/lib/local-posts';
 import { isPlaceSaved, toggleSavePlaceId } from '@/lib/saved-places';
+import { SupportedLanguage, TRANSLATIONS } from '@/lib/i18n';
 import { showToast } from './Toast';
 
 interface BottomSheetProps {
   place: PlaceWithPosts;
+  currentLang?: SupportedLanguage;
   onClose: () => void;
   onOpenUpload?: (place: PlaceWithPosts) => void;
   onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'konbini' | 'phrases') => void;
@@ -46,11 +48,13 @@ const GENRE_EMOJIS: Record<string, string> = {
 
 export default function BottomSheet({
   place,
+  currentLang = 'en',
   onClose,
   onOpenUpload,
   onOpenToolkit,
   onOpenGratitude,
 }: BottomSheetProps) {
+  const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
@@ -188,7 +192,7 @@ export default function BottomSheet({
                       : 'text-amber-800 bg-amber-50 border-amber-200/60'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    {is100Vegan ? '🌱 100% Vegan Dedicated' : '🥗 Vegan Options Available'}
+                    {is100Vegan ? t.tag_100vegan : t.tag_options}
                   </span>
                   {(place.genre_en || place.genre) && (
                     <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
@@ -205,7 +209,7 @@ export default function BottomSheet({
                   {place.name}
                 </h3>
                 <p className="text-xs text-slate-500 font-medium truncate mt-0.5 flex items-center gap-1">
-                  <span>View details & photos</span>
+                  <span>{t.view_details}</span>
                   <span className="text-emerald-600 font-semibold">↑</span>
                 </p>
               </div>
@@ -220,7 +224,7 @@ export default function BottomSheet({
                       ? 'bg-rose-50 text-rose-600 border border-rose-200'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                   }`}
-                  title={isSaved ? 'Saved in Wishlist' : 'Save to Wishlist'}
+                  title={isSaved ? t.btn_saved : t.btn_save}
                   aria-label="Wishlist toggle"
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
@@ -309,7 +313,7 @@ export default function BottomSheet({
                       : 'text-amber-800 bg-amber-50 border-amber-200/60'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${is100Vegan ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    {is100Vegan ? '🌱 100% VEGAN (Dedicated Animal-Free)' : '🥗 VEGAN OPTIONS (Serves Meat/Fish)'}
+                    {is100Vegan ? t.tag_100vegan : t.tag_options}
                   </span>
                   {(place.genre_en || place.genre) && (
                     <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
@@ -329,12 +333,12 @@ export default function BottomSheet({
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(place.name_ja || '');
-                        showToast('Copied Japanese name for staff/taxi!', '📋');
+                        showToast(t.copied_toast, '📋');
                       }}
                       className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 inline-flex items-center gap-1 cursor-pointer transition-colors"
                       title="Copy Japanese name to show to staff or taxi"
                     >
-                      <span>Copy for Staff / Taxi</span>
+                      <span>{t.copy_taxi}</span>
                     </button>
                   </div>
                 )}
@@ -353,7 +357,7 @@ export default function BottomSheet({
                   <svg width="14" height="14" viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
-                  <span>{isSaved ? 'Saved' : 'Wishlist'}</span>
+                  <span>{isSaved ? t.btn_saved : t.btn_save}</span>
                 </button>
 
                 {/* Instagram Button */}
@@ -377,7 +381,7 @@ export default function BottomSheet({
                   className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors"
                   title="Directions in Google Maps"
                 >
-                  <span>Directions</span>
+                  <span>{t.btn_directions}</span>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                     <polyline points="15 3 21 3 21 9" />
@@ -413,12 +417,10 @@ export default function BottomSheet({
                     <span className="text-xl shrink-0">{is100Vegan ? '🌱' : '⚠️'}</span>
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-wider">
-                        {is100Vegan ? '100% Plant-Based Guarantee' : 'Mixed Kitchen Advisory'}
+                        {is100Vegan ? t.guarantee_100_title : t.advisory_options_title}
                       </h4>
                       <p className="text-xs mt-0.5 leading-relaxed">
-                        {is100Vegan
-                          ? 'All dishes and ingredients are 100% plant-based. Free from meat, poultry, seafood, fish-flake dashi broth, dairy, and eggs.'
-                          : 'This restaurant prepares meat or fish dishes. Vegan items are prepared to order or offered as a dedicated set. Please inform staff of dietary requirements.'}
+                        {is100Vegan ? t.guarantee_100_desc : t.advisory_options_desc}
                       </p>
                       <div className="mt-2.5 flex items-center gap-2 flex-wrap">
                         {is100Vegan ? (
@@ -426,14 +428,14 @@ export default function BottomSheet({
                             onClick={() => onOpenToolkit?.('why_us')}
                             className="text-[11px] font-bold text-emerald-800 bg-white/80 hover:bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
                           >
-                            <span>🛡️ Pre-Audited (No Dashi Trap)</span>
+                            <span>{t.btn_pre_audited}</span>
                           </button>
                         ) : (
                           <button
                             onClick={() => onOpenToolkit?.('passport')}
                             className="text-[11px] font-bold text-amber-900 bg-white/90 hover:bg-white px-2.5 py-1 rounded-lg border border-amber-300 shadow-xs inline-flex items-center gap-1 cursor-pointer transition-colors"
                           >
-                            <span>🗣️ Show Chef Card for Dashi-Free Order</span>
+                            <span>{t.btn_show_chef_card}</span>
                           </button>
                         )}
                       </div>
@@ -465,7 +467,7 @@ export default function BottomSheet({
                     <div>
                       <div className="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
                         <span>💌</span>
-                        <span>Send Love & Gratitude to the Kitchen</span>
+                        <span>{t.send_love_title}</span>
                         {gratitudeNotes.length > 0 && (
                           <span className="text-[10px] bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">
                             {gratitudeNotes.length} cheers
@@ -473,14 +475,14 @@ export default function BottomSheet({
                         )}
                       </div>
                       <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
-                        Had a wonderful meal here? Let the chef and staff know how much their vegan options made your Japan trip!
+                        {t.send_love_desc}
                       </p>
                     </div>
                     <button
                       onClick={() => onOpenGratitude?.(place, 'gratitude')}
                       className="shrink-0 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-xs inline-flex items-center gap-1"
                     >
-                      <span>Send Love 💚</span>
+                      <span>{t.btn_send_love}</span>
                     </button>
                   </div>
 
@@ -488,7 +490,7 @@ export default function BottomSheet({
                   {gratitudeNotes.length > 0 && (
                     <div className="pt-2 border-t border-rose-200/50 space-y-2">
                       <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">
-                        Recent Traveler Notes (最近届いた感謝の声)
+                        {t.recent_notes_title}
                       </span>
                       <div className="space-y-1.5">
                         {gratitudeNotes.slice(0, 2).map((note: any) => (
@@ -522,13 +524,13 @@ export default function BottomSheet({
                 <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs flex-wrap gap-2 text-slate-500">
                   <div className="flex items-center gap-1.5 text-[11px]">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="font-medium text-slate-600">Verified for 2026</span>
+                    <span className="font-medium text-slate-600">{t.verified_2026}</span>
                   </div>
                   <button
                     onClick={() => onOpenGratitude?.(place, 'update')}
                     className="text-[11px] text-slate-500 hover:text-emerald-700 font-medium underline underline-offset-2 cursor-pointer flex items-center gap-1"
                   >
-                    <span>✏️ Suggest info or menu update</span>
+                    <span>{t.suggest_update}</span>
                   </button>
                 </div>
               </div>
@@ -536,11 +538,11 @@ export default function BottomSheet({
               {/* Photo Section Header */}
               <div className="max-w-3xl mx-auto flex items-center justify-between">
                 <div>
-                  <h4 className="text-base font-bold text-slate-900 tracking-tight">Community Photos</h4>
+                  <h4 className="text-base font-bold text-slate-900 tracking-tight">{t.community_photos}</h4>
                   <p className="text-xs text-slate-500">
                     {place.posts.length > 0
-                      ? `${place.posts.length} traveler photos shared`
-                      : 'No photos uploaded yet'}
+                      ? `${place.posts.length} photos`
+                      : t.no_photos_yet}
                   </p>
                 </div>
                 {onOpenUpload && (
@@ -551,7 +553,7 @@ export default function BottomSheet({
                     }}
                     className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
                   >
-                    <span>📸 Plant a Photo</span>
+                    <span>📸 {t.btn_plant_photo}</span>
                   </button>
                 )}
               </div>
@@ -563,10 +565,10 @@ export default function BottomSheet({
                     🌱
                   </div>
                   <h4 className="text-base font-bold text-slate-900 mb-1">
-                    Be the first to plant a photo here!
+                    {t.be_first_photo}
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
-                    Have you enjoyed food here? Snap a photo and help fellow travelers discover plant-based options in Japan.
+                    {t.be_first_desc}
                   </p>
                   {onOpenUpload && (
                     <button
@@ -576,7 +578,7 @@ export default function BottomSheet({
                       }}
                       className="inline-flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
                     >
-                      <span>📸 Add the First Photo</span>
+                      <span>📸 {t.btn_add_first_photo}</span>
                     </button>
                   )}
                 </div>
