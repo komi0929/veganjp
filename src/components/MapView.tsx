@@ -489,16 +489,6 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
               <span>{t.why_not_google}</span>
             </button>
 
-            {/* Konbini Guide */}
-            <button
-              onClick={() => openToolkitWithTab('konbini')}
-              className="hidden lg:flex items-center gap-1 text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title={t.konbini_title}
-            >
-              <span>🏪</span>
-              <span>{t.konbini}</span>
-            </button>
-
             <Link
               href="/articles"
               className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded-full hover:bg-black/5 transition-colors hidden sm:inline"

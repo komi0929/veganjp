@@ -16,7 +16,7 @@ interface BottomSheetProps {
   map?: google.maps.Map | null;
   onClose: () => void;
   onOpenUpload?: (place: PlaceWithPosts) => void;
-  onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'konbini' | 'phrases') => void;
+  onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'phrases') => void;
   onOpenGratitude?: (place: PlaceWithPosts, mode?: 'gratitude' | 'update') => void;
 }
 

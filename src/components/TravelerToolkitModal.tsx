@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { showToast } from './Toast';
 
-export type ToolkitTab = 'passport' | 'why_us' | 'konbini' | 'phrases';
+export type ToolkitTab = 'passport' | 'why_us' | 'phrases';
 
 interface TravelerToolkitModalProps {
   isOpen?: boolean;
@@ -132,17 +132,6 @@ ${restrictions.map((r) => `❌ ${r}`).join('\n')}
             >
               <span>🛡️</span>
               <span>Why Not Google Maps?</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('konbini')}
-              className={`px-3 py-2 rounded-t-xl transition-all shrink-0 flex items-center gap-1.5 border-b-2 ${
-                activeTab === 'konbini'
-                  ? 'bg-white text-emerald-800 border-emerald-600 shadow-xs'
-                  : 'text-slate-600 border-transparent hover:text-slate-900'
-              }`}
-            >
-              <span>🏪</span>
-              <span>Konbini Guide</span>
             </button>
             <button
               onClick={() => setActiveTab('phrases')}
@@ -347,95 +336,7 @@ ${restrictions.map((r) => `❌ ${r}`).join('\n')}
               </div>
             )}
 
-            {/* ─── TAB 3: Konbini Survival Guide ─── */}
-            {activeTab === 'konbini' && (
-              <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-xs text-blue-950">
-                  <h3 className="font-bold text-sm mb-1 text-blue-900">
-                    Late Night Emergency? Eat at Convenience Stores!
-                  </h3>
-                  <p className="leading-relaxed">
-                    Most vegan restaurants close early (around 3 PM or 8 PM). Here is your foolproof survival cheat sheet for 7-Eleven, FamilyMart, and Lawson.
-                  </p>
-                </div>
-
-                {/* 7-Eleven */}
-                <div className="border border-slate-200 rounded-2xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs bg-red-600 text-white px-2 py-0.5 rounded">7-Eleven</span>
-                    <span className="text-xs font-semibold text-slate-700">Top Safe Items</span>
-                  </div>
-                  <ul className="text-xs text-slate-600 space-y-1.5 pl-1">
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">🍙</span>
-                      <div>
-                        <strong>塩むすび (Shio Musubi / Salt Rice):</strong> 100% plant-based rice and salt. Zero dashi. Safest choice!
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">🍙</span>
-                      <div>
-                        <strong>納豆巻き (Natto Roll):</strong> Fermented soy roll. <em>Tip: Avoid the included dashi soy sauce packet if it lists bonito.</em>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">🥢</span>
-                      <div>
-                        <strong>冷凍枝豆 (Frozen Edamame):</strong> Naturally vegan protein snack available in the freezer section.
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">🍠</span>
-                      <div>
-                        <strong>干し芋 (Dried Sweet Potato) & 甘栗 (Chestnuts):</strong> 100% natural, sweet, and filling.
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* FamilyMart & Lawson */}
-                <div className="border border-slate-200 rounded-2xl p-3.5 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs bg-emerald-600 text-white px-2 py-0.5 rounded">FamilyMart / Lawson</span>
-                    <span className="text-xs font-semibold text-slate-700">Top Safe Items</span>
-                  </div>
-                  <ul className="text-xs text-slate-600 space-y-1.5 pl-1">
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">🍙</span>
-                      <div>
-                        <strong>塩おにぎり (Plain Salt Rice Ball):</strong> Available at both chains.
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">🍫</span>
-                      <div>
-                        <strong>SOYJOY Plant-Based (ソイジョイ プラントベース):</strong> Clearly labeled &quot;Plant-Based&quot; (White chocolate & banana flavor).
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-1.5">
-                      <span className="text-emerald-600 font-bold">🥛</span>
-                      <div>
-                        <strong>無調整豆乳 (Plain Unsweetened Soy Milk) & アーモンド効果 (Almond Breeze):</strong> Great plant milk options in beverage chiller.
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Hidden Traps to Avoid */}
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs space-y-1">
-                  <div className="font-bold text-rose-900">⚠️ Common Konbini Traps to Avoid:</div>
-                  <p className="text-rose-800">
-                    • <strong>Kombu (Kelp) Onigiri</strong>: Almost always cooked in fish broth (かつおだし).
-                    <br />
-                    • <strong>Inari Sushi</strong>: Fried tofu skin is usually simmered in bonito dashi.
-                    <br />
-                    • <strong>Miso Soup Cups</strong>: 98% contain powdered bonito or clam extract.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* ─── TAB 4: Useful Japanese Phrases ─── */}
+            {/* ─── TAB 3: Useful Japanese Phrases ─── */}
             {activeTab === 'phrases' && (
               <div className="space-y-3">
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
