@@ -588,7 +588,7 @@ export default function BottomSheet({
                   className={`p-4 rounded-2xl border ${
                     is100Vegan
                       ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
-                      : 'bg-amber-50/80 border-amber-200/80 text-amber-950'
+                      : 'bg-amber-50/90 border-amber-300 text-amber-950 shadow-2xs'
                   }`}
                 >
                   <div className="flex items-start gap-2.5">
@@ -597,21 +597,21 @@ export default function BottomSheet({
                       <h4 className="text-xs font-bold uppercase tracking-wider">
                         {is100Vegan ? t.guarantee_100_title : t.advisory_options_title}
                       </h4>
-                      <p className="text-xs mt-0.5 leading-relaxed">
+                      <p className="text-xs mt-1 leading-relaxed text-slate-700">
                         {is100Vegan ? t.guarantee_100_desc : t.advisory_options_desc}
                       </p>
-                      <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                      <div className="mt-3 flex items-center gap-2 flex-wrap">
                         {is100Vegan ? (
                           <button
                             onClick={() => onOpenToolkit?.('why_us')}
-                            className="text-[11px] font-bold text-emerald-800 bg-white/80 hover:bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            className="text-[11px] font-bold text-emerald-800 bg-white/90 hover:bg-white px-3 py-1.5 rounded-xl border border-emerald-300 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-all active:scale-95"
                           >
                             <span>{t.btn_pre_audited}</span>
                           </button>
                         ) : (
                           <button
                             onClick={() => onOpenToolkit?.('passport')}
-                            className="text-[11px] font-bold text-amber-900 bg-white/90 hover:bg-white px-2.5 py-1 rounded-lg border border-amber-300 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            className="text-[12px] font-bold text-amber-950 bg-white hover:bg-amber-100/60 px-3.5 py-1.5 rounded-xl border-2 border-amber-400 shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
                           >
                             <span>{t.btn_show_chef_card}</span>
                           </button>

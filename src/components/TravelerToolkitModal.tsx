@@ -313,9 +313,9 @@ ${restrictions.map((r) => `❌ ${r}`).join('\n')}
                     <span className="text-emerald-700">vegan.jp</span>
                   </div>
                   <div className="grid grid-cols-3 p-2.5 border-t border-slate-100 text-center items-center">
-                    <span className="font-semibold text-left">Bonito Dashi Audit</span>
+                    <span className="font-semibold text-left">Bonito Dashi Trap</span>
                     <span className="text-rose-500">❌ Blind to fish</span>
-                    <span className="text-emerald-600 font-bold">✅ 100% Pre-Audited</span>
+                    <span className="text-emerald-600 font-bold">✅ Dashi-Free Curated</span>
                   </div>
                   <div className="grid grid-cols-3 p-2.5 border-t border-slate-100 text-center items-center bg-slate-50/50">
                     <span className="font-semibold text-left">100% Kitchen Filter</span>

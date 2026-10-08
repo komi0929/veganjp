@@ -62,7 +62,7 @@ function SpotCarouselCard({
                 : 'bg-amber-950/80 text-amber-200 border-amber-400/30'
             }`}
           >
-            {is100Vegan ? '🌱 100% Vegan' : '🥗 Options'}
+            {is100Vegan ? '🌱 100% Vegan' : '🥗 Shared Kitchen'}
           </span>
           {meta.rating && (
             <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full backdrop-blur-md bg-slate-900/80 text-amber-300 border border-white/10 flex items-center gap-0.5 shadow-xs">
