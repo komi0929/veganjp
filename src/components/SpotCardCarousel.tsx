@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
-import { useRealPlacePhoto } from '@/lib/place-photos';
+import { useGooglePlaceDetails } from '@/lib/place-photos';
 import { SupportedLanguage } from '@/lib/i18n';
 
 interface SpotCardCarouselProps {
@@ -19,7 +19,8 @@ function SpotCarouselCard({
   place: PlaceWithPosts;
   onSelectPlace: (place: PlaceWithPosts) => void;
 }) {
-  const realPhoto = useRealPlacePhoto(place);
+  const meta = useGooglePlaceDetails(place);
+  const realPhoto = meta.photos[0] || null;
   const is100Vegan = place.dietary_type === '100%_vegan';
 
   return (
@@ -52,8 +53,8 @@ function SpotCarouselCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
-        {/* Badge Overlay */}
-        <div className="absolute top-2 left-2 flex items-center gap-1">
+        {/* Badge Overlay: Dietary + Star Rating */}
+        <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md border ${
               is100Vegan
@@ -63,6 +64,12 @@ function SpotCarouselCard({
           >
             {is100Vegan ? '🌱 100% Vegan' : '🥗 Options'}
           </span>
+          {meta.rating && (
+            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full backdrop-blur-md bg-slate-900/80 text-amber-300 border border-white/10 flex items-center gap-0.5 shadow-xs">
+              <span>★</span>
+              <span>{meta.rating.toFixed(1)}</span>
+            </span>
+          )}
         </div>
       </div>
 

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
-import { isMyPost } from '@/lib/local-posts';
 import { isPlaceSaved, toggleSavePlaceId } from '@/lib/saved-places';
 import { SupportedLanguage, TRANSLATIONS } from '@/lib/i18n';
 import { useGooglePlaceDetails } from '@/lib/place-photos';
@@ -15,7 +14,6 @@ interface BottomSheetProps {
   placesLibrary?: google.maps.PlacesLibrary | null;
   map?: google.maps.Map | null;
   onClose: () => void;
-  onOpenUpload?: (place: PlaceWithPosts) => void;
   onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'phrases') => void;
   onOpenGratitude?: (place: PlaceWithPosts, mode?: 'gratitude' | 'update') => void;
 }
@@ -54,7 +52,6 @@ export default function BottomSheet({
   currentLang = 'en',
   map,
   onClose,
-  onOpenUpload,
   onOpenToolkit,
   onOpenGratitude,
 }: BottomSheetProps) {
@@ -766,41 +763,32 @@ export default function BottomSheet({
                     {t.community_photos}
                   </h4>
                   <p className="text-xs text-slate-500">
-                    {allPhotos.length} {t.community_photos}
+                    {allPhotos.length > 0 ? `${allPhotos.length} Photos` : 'Google Places Photos'}
                   </p>
                 </div>
-                {onOpenUpload && (
+                {onOpenGratitude && (
                   <button
                     onClick={() => {
                       setIsExpanded(false);
-                      onOpenUpload(place);
+                      onOpenGratitude(place, 'gratitude');
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 shadow-2xs transition-all cursor-pointer"
                   >
-                    <span>📸 {t.btn_plant_photo}</span>
+                    <span>💌 {t.btn_send_love}</span>
                   </button>
                 )}
               </div>
 
-              {/* Gallery Grid or Friendly Empty State */}
+              {/* Gallery Grid or Friendly Fallback */}
               {allPhotos.length === 0 ? (
-                <div className="bg-white rounded-3xl p-6 border border-dashed border-emerald-200 text-center space-y-2">
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 text-center space-y-2">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-1">
-                    📸
+                    🌱
                   </div>
-                  <h5 className="text-sm font-bold text-slate-900">{t.be_first_photo}</h5>
-                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">{t.be_first_desc}</p>
-                  {onOpenUpload && (
-                    <button
-                      onClick={() => {
-                        setIsExpanded(false);
-                        onOpenUpload(place);
-                      }}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer mt-2"
-                    >
-                      <span>📸 {t.btn_add_first_photo}</span>
-                    </button>
-                  )}
+                  <h5 className="text-sm font-bold text-slate-900">{place.name}</h5>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                    {place.genre_en || place.genre} • {place.area_en || place.area}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">

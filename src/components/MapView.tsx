@@ -10,14 +10,11 @@ import {
   useMapsLibrary,
 } from '@vis.gl/react-google-maps';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
 import type { PlaceWithPosts } from '@/lib/types';
 import { MASTER_PLACES } from '@/lib/places-master';
 import { getSavedPlaceIds } from '@/lib/saved-places';
 import BottomSheet from './BottomSheet';
-import UploadModal from './UploadModal';
 import PlantMarker from './PlantMarker';
-import OnboardingModal from './OnboardingModal';
 import TravelerToolkitModal, { ToolkitTab } from './TravelerToolkitModal';
 import GratitudeModal from './GratitudeModal';
 import ToastContainer from './Toast';
@@ -94,15 +91,10 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
   const map = useMap();
   const placesLibrary = useMapsLibrary('places');
-  const [places, setPlaces] = useState<PlaceWithPosts[]>(INITIAL_MASTER_PLACES);
+  const [places] = useState<PlaceWithPosts[]>(INITIAL_MASTER_PLACES);
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
-  const [showUpload, setShowUpload] = useState(false);
-  const [uploadTargetPlace, setUploadTargetPlace] = useState<PlaceWithPosts | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [showToolkit, setShowToolkit] = useState(false);
   const [toolkitTab, setToolkitTab] = useState<ToolkitTab>('passport');
-  const [showAmbientHint, setShowAmbientHint] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [activeCity, setActiveCity] = useState('all');
   const [activeDietary, setActiveDietary] = useState('all');
   const [activeCategory, setActiveCategory] = useState('all');
@@ -130,12 +122,23 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
     return () => window.removeEventListener('vegan_jp_saved_changed', syncSaved);
   }, [syncSaved]);
 
+  // Handle URL deep link (?place=...)
   useEffect(() => {
-    const hasSeenHint = localStorage.getItem('vegan_jp_hint_dismissed');
-    if (!hasSeenHint) {
-      setShowAmbientHint(true);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const placeId = params.get('place');
+      if (placeId) {
+        const target = places.find(
+          (p) => p.google_place_id === placeId || p.id === placeId
+        );
+        if (target) {
+          setSelectedPlace(target);
+          map?.panTo({ lat: target.lat, lng: target.lng });
+          map?.setZoom(15);
+        }
+      }
     }
-  }, []);
+  }, [map, places]);
 
   // Close search suggestions on click outside
   useEffect(() => {
@@ -147,74 +150,6 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const dismissHint = useCallback(() => {
-    setShowAmbientHint(false);
-    localStorage.setItem('vegan_jp_hint_dismissed', 'true');
-  }, []);
-
-  // Fetch community posts and merge with master places
-  const fetchPlaces = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: postsData } = await supabase
-        .from('posts')
-        .select('*, place:places(*)')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-
-      // Create a map starting with MASTER_PLACES
-      const placeMap = new globalThis.Map<string, PlaceWithPosts>();
-      for (const master of MASTER_PLACES) {
-        placeMap.set(master.google_place_id, { ...master, posts: [] });
-      }
-
-      if (postsData && postsData.length > 0) {
-        for (const post of postsData) {
-          const place = post.place as any;
-          if (!place) continue;
-          const pid = place.google_place_id;
-
-          if (!placeMap.has(pid)) {
-            placeMap.set(pid, { ...place, posts: [] });
-          }
-
-          placeMap.get(pid)!.posts.push({
-            id: post.id,
-            google_place_id: post.google_place_id,
-            image_url: post.image_url,
-            short_text: post.short_text,
-            created_at: post.created_at,
-          });
-        }
-      }
-
-      const placesList = Array.from(placeMap.values());
-      setPlaces(placesList);
-
-      // Deep link support (?place=vegan-ramen-01)
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const placeId = params.get('place');
-        if (placeId) {
-          const target = placesList.find((p) => p.google_place_id === placeId);
-          if (target) {
-            setSelectedPlace(target);
-            map?.panTo({ lat: target.lat, lng: target.lng });
-            map?.setZoom(15);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Failed to sync posts:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [map]);
-
-  useEffect(() => {
-    fetchPlaces();
-  }, [fetchPlaces]);
 
   // Handle City Quick-Jump
   const handleCitySelect = (city: CityConfig) => {
@@ -303,21 +238,25 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
       }
     }
 
-    // 3. Cuisine Genre Filter
+    // 3. Category / Cuisine Filter
     if (activeCategory !== 'all') {
-      const cat = CUISINES_CONFIG.find((c) => c.id === activeCategory);
-      if (cat?.genre) {
-        result = result.filter(
-          (p) => p.genre === cat.genre || (cat.genreEn && p.genre_en === cat.genreEn)
-        );
+      const targetCuisine = CUISINES_CONFIG.find((c) => c.id === activeCategory);
+      if (targetCuisine && (targetCuisine.genre || targetCuisine.genreEn)) {
+        result = result.filter((p) => {
+          return (
+            p.genre === targetCuisine.genre ||
+            p.genre_en === targetCuisine.genreEn ||
+            (p.genre && targetCuisine.genre && p.genre.includes(targetCuisine.genre))
+          );
+        });
       }
     }
 
-    // 4. Free-Text Omni Search Query
-    if (searchQuery.trim().length > 0) {
+    // 4. Instant Search Query
+    if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter((p) => {
-        const textBlob = [
+        const text = [
           p.name,
           p.name_ja,
           p.genre,
@@ -328,55 +267,50 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           p.prefecture_en,
           ...(p.features || []),
           ...(p.features_en || []),
-          p.profile_text,
-          p.profile_text_en,
         ]
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
-        return textBlob.includes(q);
+        return text.includes(q);
       });
     }
 
     return result;
   }, [places, savedFilterOnly, savedIds, activeDietary, activeCategory, searchQuery]);
 
-  // Top autocomplete suggestions for live search
+  // Autocomplete Suggestions for Search Bar
   const searchSuggestions = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (!searchQuery.trim() || !searchFocused) return [];
     const q = searchQuery.toLowerCase().trim();
     return places
       .filter((p) => {
-        const textBlob = [
-          p.name,
-          p.name_ja,
-          p.genre,
-          p.genre_en,
-          p.area,
-          p.area_en,
-          ...(p.features || []),
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return textBlob.includes(q);
+        const name = (p.name || '').toLowerCase();
+        const ja = (p.name_ja || '').toLowerCase();
+        const area = (p.area || '').toLowerCase();
+        const areaEn = (p.area_en || '').toLowerCase();
+        const genre = (p.genre || '').toLowerCase();
+        const genreEn = (p.genre_en || '').toLowerCase();
+        return (
+          name.includes(q) ||
+          ja.includes(q) ||
+          area.includes(q) ||
+          areaEn.includes(q) ||
+          genre.includes(q) ||
+          genreEn.includes(q)
+        );
       })
       .slice(0, 5);
-  }, [places, searchQuery]);
+  }, [places, searchQuery, searchFocused]);
 
-  const handleSelectPlace = useCallback(
-    (place: PlaceWithPosts) => {
-      setSelectedPlace(place);
-      dismissHint();
-      if (map) {
-        map.panTo({ lat: place.lat, lng: place.lng });
-        map.setZoom(15);
-      }
-    },
-    [map, dismissHint]
-  );
+  const handleSelectPlace = (place: PlaceWithPosts) => {
+    setSelectedPlace(place);
+    if (map) {
+      map.panTo({ lat: place.lat, lng: place.lng });
+      map.setZoom(16);
+    }
+  };
 
-  const handleSelectSuggestion = (place: PlaceWithPosts) => {
+  const handleSuggestionClick = (place: PlaceWithPosts) => {
     handleSelectPlace(place);
     setSearchFocused(false);
   };
@@ -415,17 +349,17 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         ))}
       </Map>
 
-      {/* ─── Floating Dynamic Island Header ─── */}
+      {/* ─── Floating Dynamic Island Header (Ultra-clean, High Contrast) ─── */}
       <motion.header
         className="absolute top-3 inset-x-0 z-30 pointer-events-none flex justify-center px-3"
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 350, damping: 26 }}
       >
-        <div className="pointer-events-auto glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2.5 shadow-glass-md border border-black/[0.06] bg-white/95 backdrop-blur-xl">
-          {/* Brand */}
+        <div className="pointer-events-auto glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2.5 shadow-glass-md border border-black/[0.08] bg-white/95 backdrop-blur-2xl">
+          {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-1.5 group shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 transition-transform group-hover:scale-125" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 transition-transform group-hover:scale-125 shadow-xs" />
             <span className="text-sm font-bold tracking-tight text-slate-900 font-sans">
               vegan<span className="text-emerald-600">.jp</span>
             </span>
@@ -441,66 +375,43 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
 
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
-          {/* Wishlist Toggle */}
+          {/* Wishlist Toggle Button */}
           <button
             onClick={() => setSavedFilterOnly(!savedFilterOnly)}
-            className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
+            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
               savedFilterOnly
-                ? 'bg-emerald-600 text-white shadow-sm'
+                ? 'bg-rose-500 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
             }`}
             title={t.wishlist}
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill={savedFilterOnly ? 'currentColor' : 'none'}
-              stroke="currentColor"
-              strokeWidth="2.4"
-            >
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
+            <span className="text-xs">{savedFilterOnly ? '❤️' : '🤍'}</span>
             <span className="hidden sm:inline">{t.wishlist}</span>
-            {savedIds.length > 0 && <span className="text-[10px]">({savedIds.length})</span>}
+            {savedIds.length > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 rounded-full ${
+                savedFilterOnly ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
+              }`}>
+                {savedIds.length}
+              </span>
+            )}
           </button>
 
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
-          {/* Survival Kit Triggers */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Chef Card */}
-            <button
-              onClick={() => openToolkitWithTab('passport')}
-              className="flex items-center gap-1 text-xs font-bold text-amber-900 bg-amber-100/80 hover:bg-amber-200/80 border border-amber-300/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title={t.chef_card_title}
-            >
-              <span>🗣️</span>
-              <span className="hidden sm:inline">{t.chef_card}</span>
-            </button>
+          {/* Master Chef Card & Survival Kit (Unified, High-Visibility Button) */}
+          <button
+            onClick={() => openToolkitWithTab('passport')}
+            className="flex items-center gap-1.5 text-xs font-bold text-amber-950 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-100 hover:from-amber-200 hover:to-amber-300 border border-amber-300/90 px-3 py-1 rounded-full shadow-2xs transition-all cursor-pointer shrink-0"
+            title={t.chef_card_title}
+          >
+            <span>🗣️</span>
+            <span>{t.chef_card}</span>
+          </button>
 
-            {/* Why Not Google Maps? (Direct Objection Solver) */}
-            <button
-              onClick={() => openToolkitWithTab('why_us')}
-              className="hidden md:flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-              title={t.why_not_google_title}
-            >
-              <span>🛡️</span>
-              <span>{t.why_not_google}</span>
-            </button>
+          <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
-            <Link
-              href="/articles"
-              className="text-xs font-medium text-slate-600 hover:text-slate-900 px-2 py-1 rounded-full hover:bg-black/5 transition-colors hidden sm:inline"
-            >
-              {t.guides}
-            </Link>
-
-            <span className="w-px h-3.5 bg-black/10 shrink-0" />
-
-            {/* Language Selector */}
-            <LanguageSelector currentLang={currentLang} onSelectLang={onSelectLang} />
-          </div>
+          {/* Language Selector */}
+          <LanguageSelector currentLang={currentLang} onSelectLang={onSelectLang} />
         </div>
       </motion.header>
 
@@ -529,7 +440,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="text-slate-400 hover:text-slate-600 text-xs px-1"
+                className="text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -538,35 +449,29 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
 
           {/* Autocomplete Dropdown */}
           <AnimatePresence>
-            {searchFocused && searchSuggestions.length > 0 && (
+            {searchSuggestions.length > 0 && (
               <motion.div
-                className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden divide-y divide-slate-100 z-50 max-h-72 overflow-y-auto"
+                className="absolute top-full left-0 right-0 mt-1.5 bg-white/98 backdrop-blur-xl rounded-2xl shadow-glass-lg border border-black/[0.08] overflow-hidden z-50 divide-y divide-slate-100"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
               >
-                <div className="px-3 py-1 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  {t.verified_matches} ({searchSuggestions.length})
+                <div className="px-3 py-1.5 bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  <span>{t.verified_matches}</span>
+                  <span className="text-emerald-700">{searchSuggestions.length}</span>
                 </div>
                 {searchSuggestions.map((place) => (
                   <div
                     key={place.google_place_id}
-                    onClick={() => handleSelectSuggestion(place)}
-                    className="p-2.5 hover:bg-emerald-50/60 cursor-pointer flex items-center justify-between gap-2 transition-colors"
+                    onClick={() => handleSuggestionClick(place)}
+                    className="p-2.5 hover:bg-emerald-50/60 cursor-pointer transition-colors flex items-center justify-between gap-2"
                   >
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-bold text-slate-900 truncate">
-                          {place.name}
-                        </span>
-                        {place.name_ja && (
-                          <span className="text-[10px] text-slate-400 truncate">
-                            {place.name_ja}
-                          </span>
-                        )}
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {place.name}
                       </div>
-                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-500">
-                        <span>📍 {place.area_en || place.area}</span>
+                      <div className="text-[10px] text-slate-500 truncate flex items-center gap-1.5">
+                        <span>{place.area_en || place.area}</span>
                         <span>•</span>
                         <span>{place.genre_en || place.genre}</span>
                       </div>
@@ -614,7 +519,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
                 onClick={() => handleCitySelect(c)}
                 className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all shrink-0 cursor-pointer ${
                   activeCity === c.id
-                    ? 'bg-emerald-700 text-white'
+                    ? 'bg-emerald-700 text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -642,9 +547,8 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         </div>
       </motion.div>
 
-      {/* ─── Floating Utilities (GPS + Add Post) ─── */}
+      {/* ─── Floating Utilities: GPS Locate Button ─── */}
       <div className="absolute right-4 bottom-24 z-30 flex flex-col gap-2.5 pointer-events-auto">
-        {/* GPS Locate Button */}
         <button
           onClick={handleLocateMe}
           disabled={locating}
@@ -669,53 +573,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
             <line x1="19" y1="12" x2="23" y2="12" />
           </svg>
         </button>
-
-        {/* Plant Photo (Primary FAB) */}
-        <motion.button
-          onClick={() => {
-            setUploadTargetPlace(null);
-            setShowUpload(true);
-          }}
-          className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all border-2 border-white cursor-pointer"
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          title="Plant a Photo"
-          aria-label="Add photo"
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </motion.button>
       </div>
-
-      {/* ─── Ambient Onboarding Tooltip ─── */}
-      <AnimatePresence>
-        {showAmbientHint && (
-          <motion.div
-            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto bg-slate-900/90 text-white px-4 py-2.5 rounded-full text-xs backdrop-blur-md shadow-glass-lg flex items-center gap-2 border border-white/10"
-            initial={{ opacity: 0, y: 12, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-          >
-            <span>🌱 500+ verified vegan spots across Japan. Tap any pin for details.</span>
-            <button
-              onClick={dismissHint}
-              className="text-white/60 hover:text-white font-bold ml-1 cursor-pointer"
-            >
-              ✕
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ─── Trending / Featured Food Photo Carousel (Reel) ─── */}
       {!selectedPlace && (
@@ -734,35 +592,12 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           placesLibrary={placesLibrary}
           map={map}
           onClose={() => setSelectedPlace(null)}
-          onOpenUpload={(target) => {
-            setUploadTargetPlace(target);
-            setShowUpload(true);
-          }}
           onOpenToolkit={(tab) => openToolkitWithTab(tab || 'passport')}
           onOpenGratitude={(place, mode) =>
             setGratitudeTarget({ place, mode: mode || 'gratitude' })
           }
         />
       )}
-
-      {/* ─── Photo Upload Modal ─── */}
-      {showUpload && (
-        <UploadModal
-          initialPlace={uploadTargetPlace}
-          onClose={() => {
-            setShowUpload(false);
-            setUploadTargetPlace(null);
-          }}
-          onSuccess={() => {
-            setShowUpload(false);
-            setUploadTargetPlace(null);
-            fetchPlaces();
-          }}
-        />
-      )}
-
-      {/* ─── First-time Onboarding Modal ─── */}
-      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
 
       {/* ─── Comprehensive Traveler Survival Toolkit Modal ─── */}
       <TravelerToolkitModal
