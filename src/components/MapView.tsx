@@ -622,7 +622,9 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
 }
 
 export default function MapView() {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const apiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    'AIzaSyBXyY0Hxu72DchKbMm-bJGdfl5YXqA7fs0';
   const [currentLang, setCurrentLang] = useState<SupportedLanguage>('en');
 
   useEffect(() => {
