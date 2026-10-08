@@ -41,7 +41,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     diet_gluten_free: '🌾 Gluten-Free',
     diet_gokun: '🧅 Oriental Vegan (No Alliums)',
     diet_organic: '🌿 Organic & Macro',
-    diet_options: '🥗 Vegan Options (Mixed)',
+    diet_options: '🥗 Vegan Options',
 
     // Cuisines
     cuisine_all: 'All Cuisines',
@@ -62,7 +62,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
 
     // Bottom Sheet Card
     tag_100vegan: '🌱 100% Vegan Dedicated',
-    tag_options: '🥗 Vegan Options (Shared Kitchen)',
+    tag_options: '🥗 Vegan Options Available',
     view_details: 'View details & photos',
     copy_taxi: 'Copy for Staff / Taxi',
     copied_toast: 'Copied Japanese name for staff/taxi!',
@@ -124,8 +124,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     city_osaka: '大阪',
     city_fukuoka: '福岡',
 
-    tag_100vegan: '🌱 100%純素專門店 (全植物性)',
-    tag_options: '🥗 葷素共用廚房 (提供素食菜單)',
+    tag_100vegan: '🌱 100% 純素專門店',
+    tag_options: '🥗 提供素食選項',
     view_details: '查看詳情與照片',
     copy_taxi: '複製日語店名（給店員/計程車）',
     copied_toast: '已複製日文店名，可直接出示！',
@@ -186,8 +186,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     city_osaka: '大阪',
     city_fukuoka: '福冈',
 
-    tag_100vegan: '🌱 100%纯素专门店 (全植物性)',
-    tag_options: '🥗 荤素共用厨房 (提供素食菜单)',
+    tag_100vegan: '🌱 100% 纯素专门店',
+    tag_options: '🥗 提供素食选项',
     view_details: '查看详情与照片',
     copy_taxi: '复制日语店名（给店员/出租车）',
     copied_toast: '已复制日文店名，可直接出示！',
@@ -248,8 +248,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     city_osaka: '오사카',
     city_fukuoka: '후쿠오카',
 
-    tag_100vegan: '🌱 100% 완전 비건 전문점',
-    tag_options: '🥗 비건 옵션 (혼합 주방・조리기구 공용)',
+    tag_100vegan: '🌱 100% 완전 비건',
+    tag_options: '🥗 비건 메뉴 제공',
     view_details: '상세 정보 및 사진 보기',
     copy_taxi: '일본어 이름 복사 (택시/직원 제시용)',
     copied_toast: '일본어 가게 이름이 복사되었습니다!',
@@ -311,7 +311,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     city_fukuoka: 'Fukuoka',
 
     tag_100vegan: '🌱 100% Dédié Vegan',
-    tag_options: '🥗 Options Vegan (Cuisine mixte)',
+    tag_options: '🥗 Options Vegan Disponibles',
     view_details: 'Voir détails & photos',
     copy_taxi: 'Copier en japonais (Taxi / Serveur)',
     copied_toast: 'Nom japonais copié !',
@@ -373,7 +373,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     city_fukuoka: 'Fukuoka',
 
     tag_100vegan: '🌱 100% Rein Vegan',
-    tag_options: '🥗 Vegane Optionen (Gemischte Küche)',
+    tag_options: '🥗 Vegane Optionen verfügbar',
     view_details: 'Details & Fotos ansehen',
     copy_taxi: 'Auf Japanisch kopieren (Taxi / Personal)',
     copied_toast: 'Japanischer Name kopiert!',
@@ -434,8 +434,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     city_osaka: 'Osaka',
     city_fukuoka: 'Fukuoka',
 
-    tag_100vegan: '🌱 100% Vegano Exclusivo',
-    tag_options: '🥗 Opciones Veganas (Cocina mixta)',
+    tag_100vegan: '🌱 100% Exclusivo Vegano',
+    tag_options: '🥗 Opciones Veganas Disponibles',
     view_details: 'Ver detalles y fotos',
     copy_taxi: 'Copiar en japonés (Taxi / Personal)',
     copied_toast: '¡Nombre en japonés copiado!',
@@ -479,7 +479,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     diet_gluten_free: '🌾 グルテンフリー対応',
     diet_gokun: '🧅 オリエンタルヴィーガン（五葷抜き）',
     diet_organic: '🌿 オーガニック・マクロビ',
-    diet_options: '🥗 ヴィーガン対応・一般店',
+    diet_options: '🥗 ヴィーガン対応あり',
 
     cuisine_all: 'すべての料理ジャンル',
     cuisine_ramen: '🍜 ラーメン',
@@ -496,8 +496,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     city_osaka: '大阪',
     city_fukuoka: '福岡',
 
-    tag_100vegan: '🌱 100%植物性・完全ヴィーガン専門店',
-    tag_options: '🥗 ヴィーガン対応（一般厨房・器具共用）',
+    tag_100vegan: '🌱 100% 完全ヴィーガン',
+    tag_options: '🥗 ヴィーガンメニューあり',
     view_details: '詳細と写真を見る',
     copy_taxi: '店名コピー（タクシー・道案内用）',
     copied_toast: '日本語の店名をコピーしました！',

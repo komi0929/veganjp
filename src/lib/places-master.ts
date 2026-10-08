@@ -83,18 +83,17 @@ export const MASTER_PLACES: Place[] = [
     "area_en": "福岡市港, Fukuoka",
     "prefecture": "福岡県",
     "prefecture_en": "Fukuoka",
-    "profile_text": "福岡市中央区港の鮨名店。ランチ限定で植物性素材のみで仕込んだ「ヴィーガン濃厚豚骨風ラーメン」を提供。寿司厨房での調理のため、交差汚染に配慮が必要です。",
-    "profile_text_en": "Renowned traditional sushi restaurant in Fukuoka offering a special vegan tonkotsu-style ramen for lunch. Prepared in a shared sushi kitchen (cross-contact possible).",
+    "profile_text": "福岡市中央区港の鮨名店がランチ限定で仕込む話題の「ヴィーガンOK濃厚豚骨風ラーメン」。豆乳と香味野菜の極上出汁スープが外国人旅行者やヴィーガンに大好評。",
+    "profile_text_en": "Renowned sushi restaurant in Fukuoka offering a special lunch vegan tonkotsu-style ramen, crafted with rich soy milk and aromatic vegetable broth.",
     "features": [
       "ランチ限定ヴィーガンラーメン",
       "豆乳香味野菜スープ",
-      "要予約",
-      "寿司店一般厨房"
+      "要予約"
     ],
     "features_en": [
-      "Vegan Ramen Option",
-      "Shared Sushi Kitchen",
-      "Chef Card Recommended"
+      "Lunch Vegan Ramen",
+      "Soy Milk Veggie Broth",
+      "Reservation Recommended"
     ],
     "dietary_type": "vegan_friendly",
     "instagram_id": "@sushi_shima_fukuoka",

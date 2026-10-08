@@ -583,44 +583,6 @@ export default function BottomSheet({
             <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-5 bg-slate-50/50 space-y-5">
               {/* Feature Tags & Profile Block */}
               <div className="bg-white rounded-3xl p-5 border border-black/[0.06] shadow-2xs space-y-4">
-                {/* Dietary Advisory Banner */}
-                <div
-                  className={`p-4 rounded-2xl border ${
-                    is100Vegan
-                      ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
-                      : 'bg-amber-50/90 border-amber-300 text-amber-950 shadow-2xs'
-                  }`}
-                >
-                  <div className="flex items-start gap-2.5">
-                    <span className="text-xl shrink-0">{is100Vegan ? '🌱' : '⚠️'}</span>
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider">
-                        {is100Vegan ? t.guarantee_100_title : t.advisory_options_title}
-                      </h4>
-                      <p className="text-xs mt-1 leading-relaxed text-slate-700">
-                        {is100Vegan ? t.guarantee_100_desc : t.advisory_options_desc}
-                      </p>
-                      <div className="mt-3 flex items-center gap-2 flex-wrap">
-                        {is100Vegan ? (
-                          <button
-                            onClick={() => onOpenToolkit?.('why_us')}
-                            className="text-[11px] font-bold text-emerald-800 bg-white/90 hover:bg-white px-3 py-1.5 rounded-xl border border-emerald-300 shadow-2xs inline-flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-                          >
-                            <span>{t.btn_pre_audited}</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => onOpenToolkit?.('passport')}
-                            className="text-[12px] font-bold text-amber-950 bg-white hover:bg-amber-100/60 px-3.5 py-1.5 rounded-xl border-2 border-amber-400 shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
-                          >
-                            <span>{t.btn_show_chef_card}</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Features Tags */}
                 {(place.features_en || place.features) && (
                   <div className="flex flex-wrap gap-1.5">
