@@ -15,7 +15,6 @@ import { MASTER_PLACES } from '@/lib/places-master';
 import { getSavedPlaceIds } from '@/lib/saved-places';
 import BottomSheet from './BottomSheet';
 import PlantMarker from './PlantMarker';
-import TravelerToolkitModal, { ToolkitTab } from './TravelerToolkitModal';
 import GratitudeModal from './GratitudeModal';
 import ToastContainer from './Toast';
 import LanguageSelector from './LanguageSelector';
@@ -93,8 +92,6 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
   const placesLibrary = useMapsLibrary('places');
   const [places] = useState<PlaceWithPosts[]>(INITIAL_MASTER_PLACES);
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
-  const [showToolkit, setShowToolkit] = useState(false);
-  const [toolkitTab, setToolkitTab] = useState<ToolkitTab>('passport');
   const [activeCity, setActiveCity] = useState('all');
   const [activeDietary, setActiveDietary] = useState('all');
   const [activeCategory, setActiveCategory] = useState('all');
@@ -315,11 +312,6 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
     setSearchFocused(false);
   };
 
-  const openToolkitWithTab = (tab: ToolkitTab) => {
-    setToolkitTab(tab);
-    setShowToolkit(true);
-  };
-
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#F8FAF8]">
       {/* ─── Map Layer: Real Google Maps with English Locale ─── */}
@@ -394,18 +386,6 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
                 {savedIds.length}
               </span>
             )}
-          </button>
-
-          <span className="w-px h-3.5 bg-black/10 shrink-0" />
-
-          {/* Master Chef Card & Survival Kit (Unified, High-Visibility Button) */}
-          <button
-            onClick={() => openToolkitWithTab('passport')}
-            className="flex items-center gap-1.5 text-xs font-bold text-amber-950 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-100 hover:from-amber-200 hover:to-amber-300 border border-amber-300/90 px-3 py-1 rounded-full shadow-2xs transition-all cursor-pointer shrink-0"
-            title={t.chef_card_title}
-          >
-            <span>🗣️</span>
-            <span>{t.chef_card}</span>
           </button>
 
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
@@ -592,19 +572,11 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           placesLibrary={placesLibrary}
           map={map}
           onClose={() => setSelectedPlace(null)}
-          onOpenToolkit={(tab) => openToolkitWithTab(tab || 'passport')}
           onOpenGratitude={(place, mode) =>
             setGratitudeTarget({ place, mode: mode || 'gratitude' })
           }
         />
       )}
-
-      {/* ─── Comprehensive Traveler Survival Toolkit Modal ─── */}
-      <TravelerToolkitModal
-        isOpen={showToolkit}
-        initialTab={toolkitTab}
-        onClose={() => setShowToolkit(false)}
-      />
 
       {/* ─── Community Gratitude & Friendly Update Modal ─── */}
       {gratitudeTarget && (

@@ -14,7 +14,6 @@ interface BottomSheetProps {
   placesLibrary?: google.maps.PlacesLibrary | null;
   map?: google.maps.Map | null;
   onClose: () => void;
-  onOpenToolkit?: (tab?: 'passport' | 'why_us' | 'phrases') => void;
   onOpenGratitude?: (place: PlaceWithPosts, mode?: 'gratitude' | 'update') => void;
 }
 
@@ -52,7 +51,6 @@ export default function BottomSheet({
   currentLang = 'en',
   map,
   onClose,
-  onOpenToolkit,
   onOpenGratitude,
 }: BottomSheetProps) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
