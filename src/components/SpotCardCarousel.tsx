@@ -14,14 +14,20 @@ interface SpotCardCarouselProps {
 
 function SpotCarouselCard({
   place,
+  currentLang = 'en',
   onSelectPlace,
 }: {
   place: PlaceWithPosts;
+  currentLang?: SupportedLanguage;
   onSelectPlace: (place: PlaceWithPosts) => void;
 }) {
   const meta = useGooglePlaceDetails(place);
   const realPhoto = meta.photos[0] || null;
   const is100Vegan = place.dietary_type === '100%_vegan';
+
+  const badgeText = is100Vegan
+    ? (currentLang === 'ja' ? '🌱 100% 完全ヴィーガン' : '🌱 100% Vegan')
+    : (currentLang === 'ja' ? '🥗 ヴィーガン対応' : '🥗 Vegan Options');
 
   return (
     <motion.div
@@ -62,7 +68,7 @@ function SpotCarouselCard({
                 : 'bg-amber-950/80 text-amber-200 border-amber-400/30'
             }`}
           >
-            {is100Vegan ? '🌱 100% Vegan' : '🥗 Vegan Options'}
+            {badgeText}
           </span>
           {meta.rating && (
             <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full backdrop-blur-md bg-slate-900/80 text-amber-300 border border-white/10 flex items-center gap-0.5 shadow-xs">
@@ -76,10 +82,10 @@ function SpotCarouselCard({
       {/* Spot Info */}
       <div className="mt-2.5 px-1">
         <div className="flex items-center justify-between gap-1 text-[11px] text-slate-500 font-medium">
-          <span className="truncate">{place.area_en || place.area}</span>
+          <span className="truncate">{currentLang === 'ja' ? (place.area || place.area_en) : (place.area_en || place.area)}</span>
           {(place.genre_en || place.genre) && (
             <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded-md shrink-0">
-              {place.genre_en || place.genre}
+              {currentLang === 'ja' ? (place.genre || place.genre_en) : (place.genre_en || place.genre)}
             </span>
           )}
         </div>
@@ -163,6 +169,7 @@ export default function SpotCardCarousel({
                 <SpotCarouselCard
                   key={place.google_place_id}
                   place={place}
+                  currentLang={currentLang}
                   onSelectPlace={onSelectPlace}
                 />
               ))}

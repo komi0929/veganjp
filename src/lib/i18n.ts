@@ -9,17 +9,18 @@ export interface LanguageOption {
   label: string;
   flag: string;
   googleMapsCode: string;
+  regionCode: string;
 }
 
 export const LANGUAGES: LanguageOption[] = [
-  { code: 'en', label: 'English', flag: '🇬🇧', googleMapsCode: 'en' },
-  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼', googleMapsCode: 'zh-TW' },
-  { code: 'zh-CN', label: '简体中文', flag: '🇨🇳', googleMapsCode: 'zh-CN' },
-  { code: 'ko', label: '한국어', flag: '🇰🇷', googleMapsCode: 'ko' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷', googleMapsCode: 'fr' },
-  { code: 'de', label: 'Deutsch', flag: '🇩🇪', googleMapsCode: 'de' },
-  { code: 'es', label: 'Español', flag: '🇪🇸', googleMapsCode: 'es' },
-  { code: 'ja', label: '日本語', flag: '🇯🇵', googleMapsCode: 'ja' },
+  { code: 'en', label: 'English', flag: '🇬🇧', googleMapsCode: 'en', regionCode: 'US' },
+  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼', googleMapsCode: 'zh-TW', regionCode: 'TW' },
+  { code: 'zh-CN', label: '简体中文', flag: '🇨🇳', googleMapsCode: 'zh-CN', regionCode: 'CN' },
+  { code: 'ko', label: '한국어', flag: '🇰🇷', googleMapsCode: 'ko', regionCode: 'KR' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷', googleMapsCode: 'fr', regionCode: 'FR' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪', googleMapsCode: 'de', regionCode: 'DE' },
+  { code: 'es', label: 'Español', flag: '🇪🇸', googleMapsCode: 'es', regionCode: 'ES' },
+  { code: 'ja', label: '日本語', flag: '🇯🇵', googleMapsCode: 'ja', regionCode: 'JP' },
 ];
 
 export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {

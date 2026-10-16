@@ -31,6 +31,10 @@ const INITIAL_MASTER_PLACES: PlaceWithPosts[] = MASTER_PLACES.map((p) => ({
 function getInitialLang(): SupportedLanguage {
   if (typeof window === 'undefined') return 'en';
   try {
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get('lang') as SupportedLanguage | null;
+    if (urlLang && TRANSLATIONS[urlLang]) return urlLang;
+
     const saved = localStorage.getItem('vegan_jp_lang') as SupportedLanguage | null;
     if (saved && TRANSLATIONS[saved]) return saved;
     const browserLang = (navigator.language || '').toLowerCase();
@@ -118,6 +122,22 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
     window.addEventListener('vegan_jp_saved_changed', syncSaved);
     return () => window.removeEventListener('vegan_jp_saved_changed', syncSaved);
   }, [syncSaved]);
+
+  // Restore map center & zoom if switching languages
+  useEffect(() => {
+    if (!map) return;
+    try {
+      const savedCenter = sessionStorage.getItem('vegan_jp_map_center');
+      if (savedCenter) {
+        const parsed = JSON.parse(savedCenter);
+        if (parsed.lat && parsed.lng) {
+          map.panTo({ lat: parsed.lat, lng: parsed.lng });
+          if (parsed.zoom) map.setZoom(parsed.zoom);
+        }
+        sessionStorage.removeItem('vegan_jp_map_center');
+      }
+    } catch (e) {}
+  }, [map]);
 
   // Handle URL deep link (?place=...)
   useEffect(() => {
@@ -312,6 +332,22 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
     setSearchFocused(false);
   };
 
+  const handleLanguageChange = (newLang: SupportedLanguage) => {
+    if (map) {
+      try {
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        if (center) {
+          sessionStorage.setItem(
+            'vegan_jp_map_center',
+            JSON.stringify({ lat: center.lat(), lng: center.lng(), zoom })
+          );
+        }
+      } catch (e) {}
+    }
+    onSelectLang(newLang);
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#F8FAF8]">
       {/* ─── Map Layer: Real Google Maps with English Locale ─── */}
@@ -391,7 +427,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
           {/* Language Selector */}
-          <LanguageSelector currentLang={currentLang} onSelectLang={onSelectLang} />
+          <LanguageSelector currentLang={currentLang} onSelectLang={handleLanguageChange} />
         </div>
       </motion.header>
 
@@ -597,23 +633,46 @@ export default function MapView() {
   const apiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
     'AIzaSyBXyY0Hxu72DchKbMm-bJGdfl5YXqA7fs0';
-  const [currentLang, setCurrentLang] = useState<SupportedLanguage>('en');
+  const [currentLang, setCurrentLang] = useState<SupportedLanguage | null>(null);
 
   useEffect(() => {
-    setCurrentLang(getInitialLang());
+    const lang = getInitialLang();
+    setCurrentLang(lang);
+    try {
+      localStorage.setItem('vegan_jp_lang', lang);
+    } catch (e) {}
   }, []);
 
   const handleSelectLang = (newLang: SupportedLanguage) => {
-    setCurrentLang(newLang);
     try {
       localStorage.setItem('vegan_jp_lang', newLang);
     } catch (e) {}
+
+    // Google Maps JavaScript API cannot dynamically re-render tile fonts/labels once loaded.
+    // Seamlessly reload with ?lang=newLang so Google Maps API loads map tiles and labels in the selected language:
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', newLang);
+    window.location.href = url.toString();
   };
 
-  const googleMapsCode = LANGUAGES.find((l) => l.code === currentLang)?.googleMapsCode || 'en';
+  if (!currentLang) {
+    return (
+      <div className="w-full h-full bg-[#F8FAF8] flex items-center justify-center">
+        <span className="w-3 h-3 rounded-full bg-emerald-600 animate-ping" />
+      </div>
+    );
+  }
+
+  const currentOption = LANGUAGES.find((l) => l.code === currentLang) || LANGUAGES[0];
 
   return (
-    <APIProvider apiKey={apiKey} libraries={['places']} language={googleMapsCode} region="JP">
+    <APIProvider
+      key={currentOption.googleMapsCode}
+      apiKey={apiKey}
+      libraries={['places']}
+      language={currentOption.googleMapsCode}
+      region={currentOption.regionCode}
+    >
       <InnerMapView currentLang={currentLang} onSelectLang={handleSelectLang} />
     </APIProvider>
   );
