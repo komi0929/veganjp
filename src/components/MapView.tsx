@@ -464,6 +464,18 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
             )}
           </button>
 
+          {/* Guide / LP / FAQ Link */}
+          <Link
+            href="/guide"
+            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors shrink-0"
+            title="How It Works & Anti-Spoofing FAQ / 使い方・店舗向けLP・Q&A"
+          >
+            <span>❓</span>
+            <span className="hidden sm:inline">
+              {currentLang === 'ja' ? '使い方・Q&A' : 'Guide & FAQ'}
+            </span>
+          </Link>
+
           {/* Partner Portal Link (For Restaurant Owners) */}
           <Link
             href="/partner"

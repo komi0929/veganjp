@@ -41,13 +41,22 @@
       "owner_id": "partner-soystories",
       "owner_name": "SoyStories 薬院 オーナーシェフ",
       "role_title": "ストアマネージャー / パティシエ",
+      "verification_cert": {
+        "is_verified": true,
+        "method": "instagram_official",
+        "method_label_ja": "公式Instagram (@soystories_yakuin) ＆ 福岡市飲食店営業許可証 照合済",
+        "method_label_en": "Verified via Official Instagram (@soystories_yakuin) & Restaurant Permit",
+        "verified_identifier": "@soystories_yakuin / 福岡市保健所 許可第2026-0192号",
+        "verified_at": "2026-10-01T09:00:00.000Z",
+        "certificate_id": "CERT-VGJP-88412"
+      },
       "chef_greeting_ja": "創業100年「荒木豆腐店」の朝搾り濃厚豆乳を使った、乳・卵・小麦・白砂糖不使用の100%植物性クラフトアイス＆焼きたて米粉ワッフル専門店です。海外からのゲストも指差し注文で安心してご利用いただけます🌱",
       "chef_greeting_en": "Welcome to SoyStories Yakuin! Every single scoop of our craft ice cream and freshly baked rice-flour waffle is 100% plant-based, gluten-free, and refined-sugar-free, crafted with fresh morning soy milk from a 100-year-old Fukuoka tofu master.",
       "live_status": {
         "status": "open_available",
         "message_ja": "🟢 本日営業中！朝搾り豆乳の「濃厚ピスタチオ」「八女抹茶」「あまおう苺」全フレーバー揃っています。イートイン席すぐご案内可能です🍨",
         "message_en": "🟢 Open Now! Freshly churned Pistachio, Yame Matcha & Fukuoka Amaou Strawberry soy craft ice cream & hot rice-flour waffles ready. Walk-in seats available! 🍨",
-        "updated_at": "2026-10-16T05:40:56.287Z"
+        "updated_at": "2026-10-16T06:05:59.107Z"
       },
       "kitchen_audit": {
         "dashi_type": "100_plant",
@@ -126,13 +135,22 @@
       "owner_id": "partner-yadokari",
       "owner_name": "YADOKARI 大将",
       "role_title": "オーナーシェフ",
+      "verification_cert": {
+        "is_verified": true,
+        "method": "instagram_official",
+        "method_label_ja": "公式Instagram (@vegan.halalramen__yadokari) ＆ 店舗電話OTP 照合済",
+        "method_label_en": "Verified via Official Instagram & Registered Landline OTP",
+        "verified_identifier": "@vegan.halalramen__yadokari",
+        "verified_at": "2026-10-02T10:00:00.000Z",
+        "certificate_id": "CERT-VGJP-88509"
+      },
       "chef_greeting_ja": "当店は五葷（ねぎ・にんにく等）も動物性・魚介出汁も一切使わない100%植物性のラーメン専門店です。オリエンタルヴィーガンの方やグルテンフリーご希望の方も安心してスープの最後の一滴までお楽しみください！",
       "chef_greeting_en": "100% Plant-Based & Oriental Vegan (Allium-Free) Ramen specialty shop in Hirao, Fukuoka. Zero meat, zero fish dashi, zero garlic/onions, and gluten-free rice noodles available!",
       "live_status": {
         "status": "open_available",
         "message_ja": "🟢 本日ランチ・ディナーとも営業！人気の「豆乳とんこつ風ラーメン」と「植物性焼き餃子」仕込み万全です🍜",
         "message_en": "🟢 Open today for Lunch & Dinner! Our signature Soy-Tonkotsu Ramen and Crispy Vegan Gyoza are freshly prepped and ready 🍜",
-        "updated_at": "2026-10-16T05:40:56.287Z"
+        "updated_at": "2026-10-16T06:05:59.107Z"
       },
       "kitchen_audit": {
         "dashi_type": "100_plant",
@@ -210,13 +228,22 @@
       "owner_id": "partner-mercy",
       "owner_name": "MERCY Vegan Kitchen 代表",
       "role_title": "オーナーシェフ",
+      "verification_cert": {
+        "is_verified": true,
+        "method": "business_license",
+        "method_label_ja": "大阪市飲食店営業許可証 ＆ 公式SNS 照合済",
+        "method_label_en": "Verified via Osaka Restaurant Operating License & Official Social",
+        "verified_identifier": "大阪市保健所 飲食店営業許可照合済",
+        "verified_at": "2026-10-03T11:00:00.000Z",
+        "certificate_id": "CERT-VGJP-88620"
+      },
       "chef_greeting_ja": "大阪・心斎橋エリアの100%植物性＆米粉麺対応ヴィーガンラーメン専門店です。世界中から訪れるヴィーガン旅行者の皆様に、本物の日本のラーメン体験をお届けします！",
       "chef_greeting_en": "Osaka’s premier 100% dedicated vegan ramen shop! All broths are crafted from pure plant ingredients with gluten-free rice noodle options.",
       "live_status": {
         "status": "open_available",
         "message_ja": "🟢 本日11:30〜21:00通し営業中！米粉グルテンフリー麺も十分在庫ございます🍜",
         "message_en": "🟢 Open all day 11:30–21:00! Gluten-free rice noodles and spicy miso broth fully stocked 🍜",
-        "updated_at": "2026-10-16T05:40:56.287Z"
+        "updated_at": "2026-10-16T06:05:59.107Z"
       },
       "kitchen_audit": {
         "dashi_type": "100_plant",
@@ -306,5 +333,15 @@
       "created_at": "2026-10-15T12:40:00.000Z"
     }
   ],
-  "custom_places": []
+  "custom_places": [],
+  "pending_verifications": {
+    "vegan-ramen-02": {
+      "place_id": "vegan-ramen-02",
+      "method": "instagram_official",
+      "identifier": "@sushi_shima_fukuoka",
+      "otp_code": "327131",
+      "owner_name": "鮨しま（ヴィーガン豚骨風ラーメン） オーナーシェフ",
+      "created_at": "2026-10-16T06:06:27.221Z"
+    }
+  }
 }

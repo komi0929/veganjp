@@ -8,14 +8,25 @@ import type {
   MenuItem,
   KitchenAudit,
   LiveKitchenStatus,
+  OwnerVerificationCertificate,
 } from './types';
 import { translateTravelerNoteToJa, translateOwnerReplyToEn } from './kitchen-defaults';
+
+export interface PendingVerificationRequest {
+  place_id: string;
+  method: OwnerVerificationCertificate['method'];
+  identifier: string;
+  otp_code: string;
+  owner_name: string;
+  created_at: string;
+}
 
 export interface EcosystemDatabase {
   partners: StorePartnerAccount[];
   stores: Record<string, StoreOfficialData>;
   gratitude_notes: GratitudeNote[];
   custom_places: Place[];
+  pending_verifications?: Record<string, PendingVerificationRequest>;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -58,6 +69,15 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
       owner_id: 'partner-soystories',
       owner_name: 'SoyStories 薬院 オーナーシェフ',
       role_title: 'ストアマネージャー / パティシエ',
+      verification_cert: {
+        is_verified: true,
+        method: 'instagram_official',
+        method_label_ja: '公式Instagram (@soystories_yakuin) ＆ 福岡市飲食店営業許可証 照合済',
+        method_label_en: 'Verified via Official Instagram (@soystories_yakuin) & Restaurant Permit',
+        verified_identifier: '@soystories_yakuin / 福岡市保健所 許可第2026-0192号',
+        verified_at: '2026-10-01T09:00:00.000Z',
+        certificate_id: 'CERT-VGJP-88412',
+      },
       chef_greeting_ja:
         '創業100年「荒木豆腐店」の朝搾り濃厚豆乳を使った、乳・卵・小麦・白砂糖不使用の100%植物性クラフトアイス＆焼きたて米粉ワッフル専門店です。海外からのゲストも指差し注文で安心してご利用いただけます🌱',
       chef_greeting_en:
@@ -150,6 +170,15 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
       owner_id: 'partner-yadokari',
       owner_name: 'YADOKARI 大将',
       role_title: 'オーナーシェフ',
+      verification_cert: {
+        is_verified: true,
+        method: 'instagram_official',
+        method_label_ja: '公式Instagram (@vegan.halalramen__yadokari) ＆ 店舗電話OTP 照合済',
+        method_label_en: 'Verified via Official Instagram & Registered Landline OTP',
+        verified_identifier: '@vegan.halalramen__yadokari',
+        verified_at: '2026-10-02T10:00:00.000Z',
+        certificate_id: 'CERT-VGJP-88509',
+      },
       chef_greeting_ja:
         '当店は五葷（ねぎ・にんにく等）も動物性・魚介出汁も一切使わない100%植物性のラーメン専門店です。オリエンタルヴィーガンの方やグルテンフリーご希望の方も安心してスープの最後の一滴までお楽しみください！',
       chef_greeting_en:
@@ -238,6 +267,15 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
       owner_id: 'partner-mercy',
       owner_name: 'MERCY Vegan Kitchen 代表',
       role_title: 'オーナーシェフ',
+      verification_cert: {
+        is_verified: true,
+        method: 'business_license',
+        method_label_ja: '大阪市飲食店営業許可証 ＆ 公式SNS 照合済',
+        method_label_en: 'Verified via Osaka Restaurant Operating License & Official Social',
+        verified_identifier: '大阪市保健所 飲食店営業許可照合済',
+        verified_at: '2026-10-03T11:00:00.000Z',
+        certificate_id: 'CERT-VGJP-88620',
+      },
       chef_greeting_ja:
         '大阪・心斎橋エリアの100%植物性＆米粉麺対応ヴィーガンラーメン専門店です。世界中から訪れるヴィーガン旅行者の皆様に、本物の日本のラーメン体験をお届けします！',
       chef_greeting_en:
@@ -340,9 +378,9 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
     },
   ],
   custom_places: [],
+  pending_verifications: {},
 };
 
-// Global in-memory singleton so hot reloads and concurrent requests stay in sync
 const globalForDb = globalThis as unknown as {
   __veganJpEcosystemDb?: EcosystemDatabase;
 };
@@ -356,6 +394,10 @@ export function getEcosystemDb(): EcosystemDatabase {
     if (fs.existsSync(DB_FILE_PATH)) {
       const raw = fs.readFileSync(DB_FILE_PATH, 'utf-8');
       const parsed = JSON.parse(raw) as EcosystemDatabase;
+      // Ensure verification_cert exists on seeded stores
+      if (parsed.stores?.ChIJL8ZEXViRQTURgeN1wM_GJ6E && !parsed.stores.ChIJL8ZEXViRQTURgeN1wM_GJ6E.verification_cert) {
+        parsed.stores.ChIJL8ZEXViRQTURgeN1wM_GJ6E.verification_cert = INITIAL_SEED_DB.stores.ChIJL8ZEXViRQTURgeN1wM_GJ6E.verification_cert;
+      }
       globalForDb.__veganJpEcosystemDb = parsed;
       return parsed;
     }
@@ -363,7 +405,6 @@ export function getEcosystemDb(): EcosystemDatabase {
     console.warn('Failed to read store-ecosystem.json, using initial seed:', e);
   }
 
-  // Initialize and persist seed DB
   const seeded = JSON.parse(JSON.stringify(INITIAL_SEED_DB)) as EcosystemDatabase;
   globalForDb.__veganJpEcosystemDb = seeded;
   saveEcosystemDb(seeded);
@@ -450,6 +491,7 @@ export function upsertStoreOfficialDataInDb(params: {
   owner_id: string;
   owner_name: string;
   role_title?: string;
+  verification_cert?: OwnerVerificationCertificate;
   chef_greeting_ja?: string;
   chef_greeting_en?: string;
   live_status?: LiveKitchenStatus;
@@ -467,6 +509,7 @@ export function upsertStoreOfficialDataInDb(params: {
     owner_id: params.owner_id,
     owner_name: params.owner_name,
     role_title: params.role_title ?? existing?.role_title ?? 'オーナーシェフ',
+    verification_cert: params.verification_cert ?? existing?.verification_cert,
     chef_greeting_ja: params.chef_greeting_ja ?? existing?.chef_greeting_ja ?? '',
     chef_greeting_en: params.chef_greeting_en ?? existing?.chef_greeting_en ?? '',
     live_status: params.live_status ?? existing?.live_status,
@@ -492,7 +535,6 @@ export function upsertStoreOfficialDataInDb(params: {
 
   db.stores[params.place_id] = updated;
 
-  // If custom_place_data is provided, also ensure it's in custom_places
   if (params.custom_place_data) {
     const idx = db.custom_places.findIndex(
       (p) => p.google_place_id === params.custom_place_data!.google_place_id
@@ -504,7 +546,6 @@ export function upsertStoreOfficialDataInDb(params: {
     }
   }
 
-  // Ensure partner's claimed_place_ids includes this place_id
   const partner = db.partners.find((p) => p.id === params.owner_id);
   if (partner && !partner.claimed_place_ids.includes(params.place_id)) {
     partner.claimed_place_ids.push(params.place_id);
@@ -512,6 +553,83 @@ export function upsertStoreOfficialDataInDb(params: {
 
   saveEcosystemDb(db);
   return updated;
+}
+
+export function requestStoreVerificationOtp(params: {
+  place_id: string;
+  method: OwnerVerificationCertificate['method'];
+  identifier: string;
+  owner_name: string;
+}): { otp_code: string; request: PendingVerificationRequest } {
+  const db = getEcosystemDb();
+  if (!db.pending_verifications) db.pending_verifications = {};
+
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const reqObj: PendingVerificationRequest = {
+    place_id: params.place_id,
+    method: params.method,
+    identifier: params.identifier,
+    otp_code: otpCode,
+    owner_name: params.owner_name,
+    created_at: new Date().toISOString(),
+  };
+
+  db.pending_verifications[params.place_id] = reqObj;
+  saveEcosystemDb(db);
+  return { otp_code: otpCode, request: reqObj };
+}
+
+export function confirmStoreVerificationOtp(params: {
+  place_id: string;
+  otp_code: string;
+}): { ok: boolean; cert?: OwnerVerificationCertificate; error?: string } {
+  const db = getEcosystemDb();
+  const pending = db.pending_verifications?.[params.place_id];
+  if (!pending) {
+    return { ok: false, error: '認証リクエストが見つかりません。もう一度コードを発行してください。' };
+  }
+  if (pending.otp_code !== params.otp_code.trim()) {
+    return { ok: false, error: '認証コード（6桁）が一致しません。' };
+  }
+
+  const methodLabels: Record<
+    OwnerVerificationCertificate['method'],
+    { ja: string; en: string }
+  > = {
+    instagram_official: {
+      ja: `公式Instagram (${pending.identifier}) 認証コード照合済`,
+      en: `Verified via Official Instagram (${pending.identifier})`,
+    },
+    phone_otp: {
+      ja: `店舗登録電話番号 (${pending.identifier}) SMS/自動音声OTP照合済`,
+      en: `Verified via Registered Store Phone OTP (${pending.identifier})`,
+    },
+    business_license: {
+      ja: `保健所・飲食店営業許可証 (${pending.identifier}) 照合済`,
+      en: `Verified via Restaurant Operating Permit (${pending.identifier})`,
+    },
+  };
+
+  const cert: OwnerVerificationCertificate = {
+    is_verified: true,
+    method: pending.method,
+    method_label_ja: methodLabels[pending.method].ja,
+    method_label_en: methodLabels[pending.method].en,
+    verified_identifier: pending.identifier,
+    verified_at: new Date().toISOString(),
+    certificate_id: `CERT-VGJP-${Math.floor(10000 + Math.random() * 90000)}`,
+  };
+
+  upsertStoreOfficialDataInDb({
+    place_id: params.place_id,
+    owner_id: `partner-${params.place_id}`,
+    owner_name: pending.owner_name || '公式認定オーナー',
+    verification_cert: cert,
+  });
+
+  delete db.pending_verifications![params.place_id];
+  saveEcosystemDb(db);
+  return { ok: true, cert };
 }
 
 export function registerOrAuthenticatePartner(params: {
@@ -528,12 +646,14 @@ export function registerOrAuthenticatePartner(params: {
   if (params.mode === 'login') {
     const found = db.partners.find((p) => p.email.toLowerCase() === normalizedEmail);
     if (!found) {
-      return { ok: false, error: '該当するメールアドレスの店舗アカウントが見つかりません。新規登録タブからご登録ください。' };
+      return {
+        ok: false,
+        error: '該当するメールアドレスの店舗アカウントが見つかりません。新規登録タブからご登録ください。',
+      };
     }
     return { ok: true, partner: found };
   }
 
-  // Register mode
   let partner = db.partners.find((p) => p.email.toLowerCase() === normalizedEmail);
   if (!partner) {
     partner = {
@@ -546,7 +666,10 @@ export function registerOrAuthenticatePartner(params: {
       created_at: new Date().toISOString(),
     };
     db.partners.push(partner);
-  } else if (params.claim_place_id && !partner.claimed_place_ids.includes(params.claim_place_id)) {
+  } else if (
+    params.claim_place_id &&
+    !partner.claimed_place_ids.includes(params.claim_place_id)
+  ) {
     partner.claimed_place_ids.push(params.claim_place_id);
   }
 

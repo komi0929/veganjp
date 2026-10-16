@@ -56,6 +56,16 @@ export interface GratitudeNote {
   created_at: string;
 }
 
+export interface OwnerVerificationCertificate {
+  is_verified: boolean;
+  method: 'instagram_official' | 'phone_otp' | 'business_license';
+  method_label_ja: string;
+  method_label_en: string;
+  verified_identifier: string;
+  verified_at: string;
+  certificate_id: string;
+}
+
 export interface StorePartnerAccount {
   id: string;
   email: string;
@@ -72,6 +82,7 @@ export interface StoreOfficialData {
   owner_id: string;
   owner_name: string;
   role_title?: string;
+  verification_cert?: OwnerVerificationCertificate;
   chef_greeting_ja?: string;
   chef_greeting_en?: string;
   live_status?: LiveKitchenStatus;

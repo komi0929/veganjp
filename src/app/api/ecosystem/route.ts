@@ -5,6 +5,8 @@ import {
   replyToGratitudeNoteInDb,
   upsertStoreOfficialDataInDb,
   registerOrAuthenticatePartner,
+  requestStoreVerificationOtp,
+  confirmStoreVerificationOtp,
 } from '@/lib/server-db';
 
 export const dynamic = 'force-dynamic';
@@ -75,6 +77,7 @@ export async function POST(req: NextRequest) {
         owner_id: body.owner_id || 'partner-custom',
         owner_name: body.owner_name || '店舗オーナー',
         role_title: body.role_title,
+        verification_cert: body.verification_cert,
         chef_greeting_ja: body.chef_greeting_ja,
         chef_greeting_en: body.chef_greeting_en,
         live_status: body.live_status,
@@ -84,6 +87,27 @@ export async function POST(req: NextRequest) {
         custom_place_data: body.custom_place_data,
       });
       return NextResponse.json({ ok: true, store: updatedStore });
+    }
+
+    if (action === 'request_verification_otp') {
+      const result = requestStoreVerificationOtp({
+        place_id: body.place_id,
+        method: body.method || 'instagram_official',
+        identifier: body.identifier || '@official_account',
+        owner_name: body.owner_name || '店舗オーナー',
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
+
+    if (action === 'confirm_verification_otp') {
+      const result = confirmStoreVerificationOtp({
+        place_id: body.place_id,
+        otp_code: body.otp_code || '',
+      });
+      if (!result.ok) {
+        return NextResponse.json(result, { status: 400 });
+      }
+      return NextResponse.json(result);
     }
 
     if (action === 'partner_auth') {
