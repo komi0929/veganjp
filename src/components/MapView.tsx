@@ -10,7 +10,12 @@ import {
   useMapsLibrary,
 } from '@vis.gl/react-google-maps';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlaceWithPosts } from '@/lib/types';
+import type {
+  PlaceWithPosts,
+  StoreOfficialData,
+  GratitudeNote,
+  Place,
+} from '@/lib/types';
 import { MASTER_PLACES } from '@/lib/places-master';
 import { getSavedPlaceIds } from '@/lib/saved-places';
 import BottomSheet from './BottomSheet';
@@ -94,7 +99,22 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
   const t = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
   const map = useMap();
   const placesLibrary = useMapsLibrary('places');
-  const [places] = useState<PlaceWithPosts[]>(INITIAL_MASTER_PLACES);
+  const [customPlaces, setCustomPlaces] = useState<Place[]>([]);
+  const [ecosystemStores, setEcosystemStores] = useState<Record<string, StoreOfficialData>>({});
+  const [ecosystemNotes, setEcosystemNotes] = useState<GratitudeNote[]>([]);
+
+  const places = useMemo<PlaceWithPosts[]>(() => {
+    const customWithPosts: PlaceWithPosts[] = customPlaces.map((p) => ({
+      ...p,
+      posts: [],
+    }));
+    const existingIds = new Set(customWithPosts.map((c) => c.google_place_id));
+    return [
+      ...customWithPosts,
+      ...INITIAL_MASTER_PLACES.filter((p) => !existingIds.has(p.google_place_id)),
+    ];
+  }, [customPlaces]);
+
   const [selectedPlace, setSelectedPlace] = useState<PlaceWithPosts | null>(null);
   const [activeCity, setActiveCity] = useState('all');
   const [activeDietary, setActiveDietary] = useState('all');
@@ -105,12 +125,32 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
   const [gratitudeTarget, setGratitudeTarget] = useState<{
     place: PlaceWithPosts;
     mode: 'gratitude' | 'update';
+    orderedDishes?: string[];
   } | null>(null);
 
   // Instant Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Sync Ecosystem Data from Real Server API
+  const fetchEcosystem = useCallback(async () => {
+    try {
+      const res = await fetch('/api/ecosystem', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.stores) setEcosystemStores(data.stores);
+        if (data.gratitude_notes) setEcosystemNotes(data.gratitude_notes);
+        if (data.custom_places) setCustomPlaces(data.custom_places);
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    fetchEcosystem();
+    window.addEventListener('vegan_jp_ecosystem_updated', fetchEcosystem);
+    return () => window.removeEventListener('vegan_jp_ecosystem_updated', fetchEcosystem);
+  }, [fetchEcosystem]);
 
   // Sync saved wishlist IDs
   const syncSaved = useCallback(() => {
@@ -424,6 +464,18 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
             )}
           </button>
 
+          {/* Partner Portal Link (For Restaurant Owners) */}
+          <Link
+            href="/partner"
+            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 transition-colors shrink-0"
+            title="Store Owner Portal / 飲食店オーナー登録・管理画面"
+          >
+            <span>🏪</span>
+            <span className="hidden sm:inline">
+              {currentLang === 'ja' ? '店舗登録・管理' : 'For Restaurants'}
+            </span>
+          </Link>
+
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
           {/* Language Selector */}
@@ -605,11 +657,19 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         <BottomSheet
           place={selectedPlace}
           currentLang={currentLang}
+          officialStoreData={ecosystemStores[selectedPlace.google_place_id] || null}
+          gratitudeNotes={ecosystemNotes.filter(
+            (n) => n.place_id === selectedPlace.google_place_id
+          )}
           placesLibrary={placesLibrary}
           map={map}
           onClose={() => setSelectedPlace(null)}
-          onOpenGratitude={(place, mode) =>
-            setGratitudeTarget({ place, mode: mode || 'gratitude' })
+          onOpenGratitude={(place, mode, orderedDishes) =>
+            setGratitudeTarget({
+              place,
+              mode: mode || 'gratitude',
+              orderedDishes: orderedDishes || [],
+            })
           }
         />
       )}
@@ -619,8 +679,13 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         <GratitudeModal
           isOpen={!!gratitudeTarget}
           place={gratitudeTarget.place}
+          officialStoreData={
+            ecosystemStores[gratitudeTarget.place.google_place_id] || null
+          }
+          preselectedDishes={gratitudeTarget.orderedDishes}
           initialMode={gratitudeTarget.mode}
           onClose={() => setGratitudeTarget(null)}
+          onSuccessRefresh={fetchEcosystem}
         />
       )}
 

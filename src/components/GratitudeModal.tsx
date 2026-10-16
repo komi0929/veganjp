@@ -1,23 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlaceWithPosts } from '@/lib/types';
+import type { PlaceWithPosts, StoreOfficialData } from '@/lib/types';
+import { getEffectiveVerifiedMenu } from '@/lib/kitchen-defaults';
 import { showToast } from './Toast';
-
-export interface GratitudeMessage {
-  id: string;
-  placeId: string;
-  placeName: string;
-  stamp: 'saved_trip' | 'delicious' | 'hospitality' | 'peace_of_mind';
-  stampEmoji: string;
-  stampTitleEn: string;
-  stampTitleJa: string;
-  senderName: string;
-  senderCountry: string;
-  customNote?: string;
-  createdAt: string;
-}
 
 const STAMPS = [
   {
@@ -58,114 +45,142 @@ const POPULAR_COUNTRIES = [
   'Australia 🇦🇺',
   'United States 🇺🇸',
   'United Kingdom 🇬🇧',
+  'Taiwan 🇹🇼',
   'Germany 🇩🇪',
   'France 🇫🇷',
+  'South Korea 🇰🇷',
   'Canada 🇨🇦',
-  'Taiwan 🇹🇼',
   'Singapore 🇸🇬',
-  'Netherlands 🇳🇱',
   'Spain 🇪🇸',
-  'Italy 🇮🇹',
-  'Other / Global 🌏',
+  'Japan 🇯🇵',
+  'Global 🌏',
 ];
 
 interface GratitudeModalProps {
   isOpen: boolean;
   place: PlaceWithPosts;
+  officialStoreData?: StoreOfficialData | null;
+  preselectedDishes?: string[];
   initialMode?: 'gratitude' | 'update';
   onClose: () => void;
+  onSuccessRefresh?: () => void;
 }
 
 export default function GratitudeModal({
   isOpen,
   place,
+  officialStoreData,
+  preselectedDishes = [],
   initialMode = 'gratitude',
   onClose,
+  onSuccessRefresh,
 }: GratitudeModalProps) {
   const [activeTab, setActiveTab] = useState<'gratitude' | 'update'>(initialMode);
-  
+
   // Gratitude form states
-  const [selectedStamp, setSelectedStamp] = useState<typeof STAMPS[number]['id']>('saved_trip');
+  const [selectedStamp, setSelectedStamp] =
+    useState<typeof STAMPS[number]['id']>('saved_trip');
   const [senderName, setSenderName] = useState('');
   const [senderCountry, setSenderCountry] = useState('Australia 🇦🇺');
   const [customNote, setCustomNote] = useState('');
-  
+  const [selectedDishes, setSelectedDishes] = useState<string[]>(preselectedDishes);
+
   // Update form states
   const [updateType, setUpdateType] = useState('verified');
   const [updateDetails, setUpdateDetails] = useState('');
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const verifiedMenu = useMemo(
+    () => getEffectiveVerifiedMenu(place, officialStoreData),
+    [place, officialStoreData]
+  );
 
   if (!isOpen) return null;
 
   const currentStampObj = STAMPS.find((s) => s.id === selectedStamp) || STAMPS[0];
 
-  const handleSendGratitude = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const newGratitude: GratitudeMessage = {
-      id: Math.random().toString(36).substring(2, 9),
-      placeId: place.google_place_id,
-      placeName: place.name,
-      stamp: selectedStamp,
-      stampEmoji: currentStampObj.emoji,
-      stampTitleEn: currentStampObj.titleEn,
-      stampTitleJa: currentStampObj.titleJa,
-      senderName: senderName.trim() || 'A Grateful Traveler',
-      senderCountry,
-      customNote: customNote.trim(),
-      createdAt: new Date().toISOString(),
-    };
-
-    try {
-      const stored = JSON.parse(localStorage.getItem('vegan_jp_gratitude_notes') || '[]');
-      stored.unshift(newGratitude);
-      localStorage.setItem('vegan_jp_gratitude_notes', JSON.stringify(stored));
-
-      // Trigger custom event so BottomSheet updates cheer count immediately
-      window.dispatchEvent(new CustomEvent('vegan_jp_gratitude_added', { detail: newGratitude }));
-    } catch (err) {
-      // fallback
-    }
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      showToast('Gratitude note sent! The kitchen will feel your love.', '💌');
-    }, 400);
+  const toggleDish = (dishNameJa: string) => {
+    setSelectedDishes((prev) =>
+      prev.includes(dishNameJa)
+        ? prev.filter((d) => d !== dishNameJa)
+        : [...prev, dishNameJa]
+    );
   };
 
-  const handleSendUpdate = (e: React.FormEvent) => {
+  const handleSendGratitude = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const storedReports = JSON.parse(localStorage.getItem('vegan_jp_reports') || '[]');
-      storedReports.unshift({
-        placeId: place.google_place_id,
-        placeName: place.name,
-        type: updateType,
-        details: updateDetails,
-        createdAt: new Date().toISOString(),
+      const res = await fetch('/api/ecosystem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_gratitude',
+          place_id: place.google_place_id,
+          place_name: place.name,
+          stamp: selectedStamp,
+          stamp_emoji: currentStampObj.emoji,
+          stamp_title_en: currentStampObj.titleEn,
+          stamp_title_ja: currentStampObj.titleJa,
+          sender_name: senderName.trim() || 'A Grateful Traveler',
+          sender_country: senderCountry,
+          message_original: customNote.trim(),
+          ordered_dishes: selectedDishes,
+        }),
       });
-      localStorage.setItem('vegan_jp_reports', JSON.stringify(storedReports));
-    } catch (err) {
-      // fallback
-    }
 
-    setTimeout(() => {
+      const data = await res.json();
+      if (data.ok) {
+        window.dispatchEvent(new CustomEvent('vegan_jp_ecosystem_updated'));
+        onSuccessRefresh?.();
+      }
+    } catch (err) {
+      console.error('Failed to send gratitude note:', err);
+    } finally {
       setIsSubmitting(false);
-      showToast('Thank you for helping keep this spot accurate for everyone!', '🌱');
-      onClose();
-    }, 400);
+      setIsSuccess(true);
+      showToast('Delivered to Store Kitchen Inbox! 💌', '💌');
+    }
+  };
+
+  const handleSendUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      await fetch('/api/ecosystem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_gratitude',
+          place_id: place.google_place_id,
+          place_name: place.name,
+          stamp: 'peace_of_mind',
+          stamp_emoji: '📌',
+          stamp_title_en: `Community Verification (${updateType})`,
+          stamp_title_ja: `最新現地レポート（${updateType}）`,
+          sender_name: 'Community Verifier',
+          sender_country: 'Global 🌏',
+          message_original: updateDetails.trim() || 'Verified spot information on-site.',
+          ordered_dishes: [],
+        }),
+      });
+      window.dispatchEvent(new CustomEvent('vegan_jp_ecosystem_updated'));
+      onSuccessRefresh?.();
+    } catch (err) {}
+
+    setIsSubmitting(false);
+    showToast('Verification report delivered to store & community!', '🌱');
+    onClose();
   };
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
+        className="fixed inset-0 z-[60] bg-slate-950/65 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -184,8 +199,13 @@ export default function GratitudeModal({
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800 bg-rose-50 border border-rose-200/80 px-2 py-0.5 rounded-full">
-                  Community Love & Care 💚
+                  Direct to Kitchen Dashboard 💌
                 </span>
+                {officialStoreData?.is_official_verified && (
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    🏅 Official Partner Store
+                  </span>
+                )}
               </div>
               <h3 className="text-base font-bold text-slate-900 leading-tight truncate max-w-[280px] sm:max-w-md">
                 {place.name}
@@ -216,7 +236,7 @@ export default function GratitudeModal({
               }`}
             >
               <span>💌</span>
-              <span>Send Love & Gratitude (感謝を届ける)</span>
+              <span>Send Gratitude to Chef (感謝を届ける)</span>
             </button>
 
             <button
@@ -231,7 +251,7 @@ export default function GratitudeModal({
               }`}
             >
               <span>✏️</span>
-              <span>Suggest Info Update (情報更新)</span>
+              <span>Live Spot Report (現地情報更新)</span>
             </button>
           </div>
 
@@ -244,17 +264,17 @@ export default function GratitudeModal({
                   <div className="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-rose-950 space-y-1 leading-relaxed">
                     <p className="font-bold text-xs flex items-center gap-1 text-rose-900">
                       <span>✨</span>
-                      <span>Tell the kitchen how much their food meant to you!</span>
+                      <span>Auto-Translated & Delivered to the Store Owner!</span>
                     </p>
                     <p className="text-[11px] text-rose-900/90">
-                      Japanese chefs and staff work hard to prepare safe plant-based meals. Your message will be formatted with warm Japanese translations so local staff can read and feel your gratitude!
+                      Your thank-you note is automatically translated into warm Japanese and delivered directly to the restaurant&apos;s Partner Inbox so the chef can read and reply to you!
                     </p>
                   </div>
 
                   {/* Stamp Selector */}
                   <div className="space-y-2">
                     <label className="font-bold text-slate-800 block">
-                      Choose Your Gratitude Stamp (気持ちを伝えるスタンプ)
+                      1. Choose Your Gratitude Stamp (気持ちを伝えるスタンプ)
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {STAMPS.map((s) => {
@@ -277,6 +297,35 @@ export default function GratitudeModal({
                       })}
                     </div>
                   </div>
+
+                  {/* Which dishes did you enjoy? */}
+                  {verifiedMenu.length > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-slate-800 block">
+                        2. Which Vegan Dishes Did You Enjoy? (注文した料理を選択)
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {verifiedMenu.map((item) => {
+                          const active = selectedDishes.includes(item.name_ja);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => toggleDish(item.name_ja)}
+                              className={`text-[11px] px-2.5 py-1.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-1 ${
+                                active
+                                  ? 'bg-emerald-700 text-white border-emerald-700 font-bold shadow-2xs'
+                                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              <span>{active ? '✓' : '+'}</span>
+                              <span className="truncate max-w-[230px]">{item.name_en}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Traveler Info */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -310,42 +359,18 @@ export default function GratitudeModal({
                     </div>
                   </div>
 
-                  {/* Optional Personal Note */}
+                  {/* Personal Note */}
                   <div>
                     <label className="font-bold text-slate-800 block mb-1">
-                      Personal Message to the Team (Optional)
+                      3. Message to the Chef & Staff (自動的に日本語へ翻訳されます)
                     </label>
                     <textarea
                       value={customNote}
                       onChange={(e) => setCustomNote(e.target.value)}
                       rows={2}
-                      placeholder="e.g. The spicy ramen was incredible, thank you for being so welcoming to vegans!"
+                      placeholder="e.g. The broth was so rich without any fish dashi, and the gluten-free waffle was amazing! Thank you so much!"
                       className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-rose-500 text-xs"
                     />
-                  </div>
-
-                  {/* Digital Card Preview */}
-                  <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/90 space-y-1.5 font-sans">
-                    <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block">
-                      Card Preview for Kitchen Staff / お店への表示プレビュー
-                    </span>
-                    <div className="bg-white p-3 rounded-xl border border-amber-200 text-xs space-y-1">
-                      <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                        <span>{currentStampObj.emoji}</span>
-                        <span>{currentStampObj.titleJa}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 italic">
-                        &quot;{currentStampObj.descJa}&quot;
-                      </p>
-                      {customNote && (
-                        <p className="text-[11px] text-slate-800 pt-1 font-medium border-t border-slate-100">
-                          &quot;{customNote}&quot;
-                        </p>
-                      )}
-                      <div className="text-[10px] text-slate-400 text-right pt-1 font-semibold">
-                        — {senderName.trim() || 'A Grateful Traveler'} ({senderCountry})
-                      </div>
-                    </div>
                   </div>
 
                   {/* Action Buttons */}
@@ -363,7 +388,7 @@ export default function GratitudeModal({
                       className="px-5 py-2.5 font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-full shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5"
                     >
                       <span>💌</span>
-                      <span>Send Love to Kitchen</span>
+                      <span>{isSubmitting ? 'Sending...' : 'Deliver to Kitchen Inbox'}</span>
                     </button>
                   </div>
                 </form>
@@ -371,18 +396,24 @@ export default function GratitudeModal({
                 <div className="p-6 text-center space-y-3">
                   <span className="text-5xl block animate-bounce">💌</span>
                   <h4 className="text-base font-bold text-slate-900">
-                    Thank You! Your Note Has Been Sent!
+                    Delivered to {place.name}&apos;s Kitchen Inbox!
                   </h4>
                   <p className="text-slate-600 leading-relaxed text-xs">
-                    Your words of encouragement help restaurants in Japan understand how meaningful their plant-based options are. Thank you for spreading positive vibes!
+                    Your gratitude note has been translated into Japanese and saved to the store&apos;s official dashboard. When the chef replies, their message will appear right on this spot&apos;s card!
                   </p>
-                  <div className="pt-4 flex justify-center gap-2">
+                  <div className="pt-4 flex flex-wrap justify-center gap-2">
                     <button
                       onClick={onClose}
-                      className="bg-slate-900 text-white font-bold px-6 py-2 rounded-full cursor-pointer hover:bg-slate-800 transition-colors"
+                      className="bg-slate-900 text-white font-bold px-5 py-2.5 rounded-full cursor-pointer hover:bg-slate-800 transition-colors"
                     >
-                      Back to Map 🗺️
+                      Back to Spot Card 🗺️
                     </button>
+                    <a
+                      href={`/partner?placeId=${encodeURIComponent(place.google_place_id)}`}
+                      className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold px-4 py-2.5 rounded-full hover:bg-emerald-100 transition-colors"
+                    >
+                      🏪 View in Store Owner Portal →
+                    </a>
                   </div>
                 </div>
               )
@@ -395,20 +426,20 @@ export default function GratitudeModal({
                     <span>Help Keep This Spot Accurate & Fresh</span>
                   </p>
                   <p className="text-[11px] text-emerald-900/90">
-                    Did you notice any changes during your visit? Your update helps the whole community travel with confidence.
+                    Did you notice any changes during your visit? Your report is shared with the store owner and community.
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="font-bold text-slate-800 block">
-                    What would you like to update?
+                    What would you like to report?
                   </label>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <button
                       type="button"
-                      onClick={() => setUpdateType('verified')}
+                      onClick={() => setUpdateType('Verified Open')}
                       className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'verified'
+                        updateType === 'Verified Open'
                           ? 'bg-emerald-50 border-emerald-500 text-emerald-900'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
@@ -419,9 +450,9 @@ export default function GratitudeModal({
 
                     <button
                       type="button"
-                      onClick={() => setUpdateType('hours_menu')}
+                      onClick={() => setUpdateType('Hours / Menu Changed')}
                       className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'hours_menu'
+                        updateType === 'Hours / Menu Changed'
                           ? 'bg-amber-50 border-amber-500 text-amber-900'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
@@ -432,9 +463,9 @@ export default function GratitudeModal({
 
                     <button
                       type="button"
-                      onClick={() => setUpdateType('new_vegan_option')}
+                      onClick={() => setUpdateType('New Vegan Menu')}
                       className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'new_vegan_option'
+                        updateType === 'New Vegan Menu'
                           ? 'bg-purple-50 border-purple-500 text-purple-900'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
@@ -445,15 +476,15 @@ export default function GratitudeModal({
 
                     <button
                       type="button"
-                      onClick={() => setUpdateType('closed')}
+                      onClick={() => setUpdateType('Sold Out / Closed')}
                       className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'closed'
+                        updateType === 'Sold Out / Closed'
                           ? 'bg-rose-50 border-rose-500 text-rose-900'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <span className="block text-base mb-0.5">🚪</span>
-                      Permanently Closed
+                      Temporarily / Perm Closed
                     </button>
                   </div>
                 </div>
@@ -484,7 +515,7 @@ export default function GratitudeModal({
                     disabled={isSubmitting}
                     className="px-5 py-2.5 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5"
                   >
-                    <span>Submit Update 🚀</span>
+                    <span>Submit Report 🚀</span>
                   </button>
                 </div>
               </form>
