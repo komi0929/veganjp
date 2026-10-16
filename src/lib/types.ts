@@ -85,6 +85,8 @@ export interface StoreOfficialData {
   verification_cert?: OwnerVerificationCertificate;
   chef_greeting_ja?: string;
   chef_greeting_en?: string;
+  welcome_perk_ja?: string;
+  welcome_perk_en?: string;
   live_status?: LiveKitchenStatus;
   kitchen_audit: KitchenAudit;
   verified_menu: MenuItem[];

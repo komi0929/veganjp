@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts } from '@/lib/types';
 import { useGooglePlaceDetails } from '@/lib/place-photos';
+import { getEffectiveVerifiedMenu } from '@/lib/kitchen-defaults';
 import { SupportedLanguage } from '@/lib/i18n';
 
 interface SpotCardCarouselProps {
@@ -23,17 +24,16 @@ function SpotCarouselCard({
 }) {
   const meta = useGooglePlaceDetails(place);
   const realPhoto = meta.photos[0] || null;
-  const is100Vegan = place.dietary_type === '100%_vegan';
+  const sigDish = useMemo(() => getEffectiveVerifiedMenu(place, null)[0], [place]);
 
-  const badgeText = is100Vegan
-    ? (currentLang === 'ja' ? '🌱 100% 完全ヴィーガン' : '🌱 100% Vegan')
-    : (currentLang === 'ja' ? '🥗 ヴィーガン対応' : '🥗 Vegan Options');
+  const badgeText =
+    currentLang === 'ja' ? '🎁 歓迎特典あり' : '🎁 Welcome Perk';
 
   return (
     <motion.div
       key={place.google_place_id}
       onClick={() => onSelectPlace(place)}
-      className="snap-start shrink-0 w-[240px] sm:w-[270px] bg-white/95 backdrop-blur-2xl rounded-3xl p-2.5 shadow-glass-md hover:shadow-photo-card border border-black/[0.08] cursor-pointer group transition-all"
+      className="snap-start shrink-0 w-[250px] sm:w-[280px] bg-white/95 backdrop-blur-2xl rounded-3xl p-2.5 shadow-glass-md hover:shadow-photo-card border border-black/[0.08] cursor-pointer group transition-all"
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
@@ -47,27 +47,18 @@ function SpotCarouselCard({
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50 via-slate-50 to-amber-50 text-slate-400 p-3 text-center">
-            <span className="text-3xl mb-1">🌱</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 via-slate-50 to-emerald-50 text-slate-400 p-3 text-center">
+            <span className="text-3xl mb-1">🍽️</span>
             <span className="text-[11px] font-bold text-slate-700 truncate w-full">
               {place.name}
             </span>
-            <span className="text-[9px] font-medium text-slate-400 mt-0.5">
-              {place.genre_en || place.genre}
-            </span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
-        {/* Badge Overlay: Dietary + Star Rating */}
+        {/* Badge Overlay */}
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md border ${
-              is100Vegan
-                ? 'bg-emerald-950/80 text-emerald-200 border-emerald-400/30'
-                : 'bg-amber-950/80 text-amber-200 border-amber-400/30'
-            }`}
-          >
+          <span className="text-[10px] font-black px-2 py-0.5 rounded-full backdrop-blur-md bg-emerald-950/85 text-emerald-200 border border-emerald-400/30">
             {badgeText}
           </span>
           {meta.rating && (
@@ -79,22 +70,24 @@ function SpotCarouselCard({
         </div>
       </div>
 
-      {/* Spot Info */}
-      <div className="mt-2.5 px-1">
+      {/* Spot Info + Signature Dish Highlight */}
+      <div className="mt-2.5 px-1 space-y-1">
         <div className="flex items-center justify-between gap-1 text-[11px] text-slate-500 font-medium">
-          <span className="truncate">{currentLang === 'ja' ? (place.area || place.area_en) : (place.area_en || place.area)}</span>
+          <span className="truncate">
+            {currentLang === 'ja' ? place.area || place.area_en : place.area_en || place.area}
+          </span>
           {(place.genre_en || place.genre) && (
             <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded-md shrink-0">
-              {currentLang === 'ja' ? (place.genre || place.genre_en) : (place.genre_en || place.genre)}
+              {currentLang === 'ja' ? place.genre || place.genre_en : place.genre_en || place.genre}
             </span>
           )}
         </div>
-        <h4 className="text-xs font-bold text-slate-900 truncate mt-0.5 group-hover:text-emerald-700 transition-colors">
-          {place.name}
+        <h4 className="text-xs font-black text-slate-900 truncate group-hover:text-emerald-700 transition-colors">
+          {currentLang === 'ja' ? place.name_ja || place.name : place.name}
         </h4>
-        {place.name_ja && place.name_ja !== place.name && (
-          <p className="text-[10px] text-slate-400 truncate mt-0.5">
-            {place.name_ja}
+        {sigDish && (
+          <p className="text-[10px] font-bold text-amber-900 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg truncate">
+            👑 {currentLang === 'ja' ? sigDish.name_ja : sigDish.name_en}
           </p>
         )}
       </div>

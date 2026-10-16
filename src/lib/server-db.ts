@@ -79,15 +79,19 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
         certificate_id: 'CERT-VGJP-88412',
       },
       chef_greeting_ja:
-        '創業100年「荒木豆腐店」の朝搾り濃厚豆乳を使った、乳・卵・小麦・白砂糖不使用の100%植物性クラフトアイス＆焼きたて米粉ワッフル専門店です。海外からのゲストも指差し注文で安心してご利用いただけます🌱',
+        '創業100年「荒木豆腐店」の朝搾り濃厚豆乳と、福岡県産・八女抹茶やあまおう苺を重ねたクラフトアイス＆焼きたて米粉ワッフル専門店です。福岡の旅の思い出に残る特別な一皿をご用意してお待ちしています🍨',
       chef_greeting_en:
-        'Welcome to SoyStories Yakuin! Every single scoop of our craft ice cream and freshly baked rice-flour waffle is 100% plant-based, gluten-free, and refined-sugar-free, crafted with fresh morning soy milk from a 100-year-old Fukuoka tofu master.',
+        'Welcome to SoyStories Yakuin! Every scoop of our craft ice cream and freshly baked rice-flour waffle is made with fresh morning soy milk from a 100-year-old Fukuoka tofu master and local Kyushu ingredients.',
+      welcome_perk_ja:
+        '🎁 Vegan.jp 注文画面のご提示で「焼きたてミニ米粉クッキー または 豆乳ホイップ増量」を歓迎サービス！',
+      welcome_perk_en:
+        '🎁 Show this Vegan.jp Order Card for a complimentary Freshly Baked Mini Rice-Flour Cookie or Extra Soy Whip!',
       live_status: {
         status: 'open_available',
         message_ja:
-          '🟢 本日営業中！朝搾り豆乳の「濃厚ピスタチオ」「八女抹茶」「あまおう苺」全フレーバー揃っています。イートイン席すぐご案内可能です🍨',
+          '🟢 本日営業中！朝搾り豆乳の「濃厚ピスタチオ」「八女抹茶」「あまおう苺」全フレーバー揃っています🍨',
         message_en:
-          '🟢 Open Now! Freshly churned Pistachio, Yame Matcha & Fukuoka Amaou Strawberry soy craft ice cream & hot rice-flour waffles ready. Walk-in seats available! 🍨',
+          '🟢 Open Now! Freshly churned Pistachio, Yame Matcha & Fukuoka Amaou Strawberry soy craft ice cream & hot rice-flour waffles ready! 🍨',
         updated_at: new Date().toISOString(),
       },
       kitchen_audit: {
@@ -108,22 +112,22 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
           name_ja: '濃厚豆乳クラフトアイス ダブル ＋ 焼きたて米粉ワッフルボウル',
           name_en: 'Double Soy Craft Ice Cream in Freshly Baked Rice-Flour Waffle Bowl',
           description_ja:
-            '荒木豆腐店の濃厚豆乳アイス2種（八女抹茶・ピスタチオ・リッチカカオ等）を、注文後に焼き上げるサクもち食感の国産米粉100%ワッフルと共に。乳・卵・小麦・白砂糖完全不使用。',
+            '荒木豆腐店の濃厚豆乳アイス2種（八女抹茶・ピスタチオ・リッチカカオ等）を、注文後に焼き上げるサクもち食感の国産米粉100%ワッフルと共に。',
           description_en:
-            'Choose any 2 artisan soy milk ice cream flavors served in a warm, crispy-chewy 100% Japanese rice-flour waffle bowl. Zero dairy, zero eggs, zero wheat, zero refined sugar.',
+            'Choose any 2 artisan soy milk ice cream flavors served in a warm, crispy-chewy 100% Japanese rice-flour waffle bowl.',
           price_jpy: 980,
           is_100_vegan: true,
           is_gluten_free: true,
           is_allium_free: true,
           is_popular: true,
-          order_note_ja: 'クラフトアイス ダブル（米粉ワッフルボウル）を1つお願いします',
+          order_note_ja: '看板メニュー「クラフトアイス ダブル（米粉ワッフルボウル）」を1つお願いします',
         },
         {
           id: 'ss-menu-2',
           name_ja: '福岡・八女抹茶＆黒蜜きな粉の豆乳パフェ（グルテンフリー）',
           name_en: 'Fukuoka Yame Matcha & Kinako Kuromitsu Soy Parfait (GF)',
           description_ja:
-            '福岡県産・星野村の香り高い八女抹茶アイスに、自家製米粉グラノーラ・白玉・黒蜜を重ねた和パフェ。',
+            '福岡県産・星野村の香り高い八女抹茶アイスに、自家製米粉グラノーラ・白玉・黒蜜を重ねた贅沢な和パフェ。',
           description_en:
             'Premium Fukuoka Yame matcha ice cream layered with house-baked gluten-free rice granola, mochi pearls, and organic brown sugar syrup.',
           price_jpy: 1280,
@@ -147,20 +151,6 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
           is_allium_free: true,
           order_note_ja: '米粉ワッフルプレート（豆乳ホイップ添え）を1つお願いします',
         },
-        {
-          id: 'ss-menu-4',
-          name_ja: '朝搾り濃厚ソイラテ（ホット / アイス）',
-          name_en: 'Freshly-Pressed Rich Soy Latte (Hot / Iced)',
-          description_ja:
-            '豆腐店直送の濃厚無調整豆乳とスペシャルティエスプレッソを合わせた、甘み際立つ看板ラテ。',
-          description_en:
-            'Specialty espresso paired with ultra-rich morning-pressed soy milk from Araki Tofu Shop.',
-          price_jpy: 620,
-          is_100_vegan: true,
-          is_gluten_free: true,
-          is_allium_free: true,
-          order_note_ja: '濃厚ソイラテを1つお願いします',
-        },
       ],
       updated_at: '2026-10-16T02:00:00.000Z',
     },
@@ -180,15 +170,19 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
         certificate_id: 'CERT-VGJP-88509',
       },
       chef_greeting_ja:
-        '当店は五葷（ねぎ・にんにく等）も動物性・魚介出汁も一切使わない100%植物性のラーメン専門店です。オリエンタルヴィーガンの方やグルテンフリーご希望の方も安心してスープの最後の一滴までお楽しみください！',
+        '九州産大豆の濃厚豆乳と羅臼昆布・原木椎茸を2日間じっくり熟成させ、本場・博多豚骨のクリーミーなコクと旨味を極めたラーメン専門店です。熱々の一杯で最高の博多の夜をお楽しみください🍜',
       chef_greeting_en:
-        '100% Plant-Based & Oriental Vegan (Allium-Free) Ramen specialty shop in Hirao, Fukuoka. Zero meat, zero fish dashi, zero garlic/onions, and gluten-free rice noodles available!',
+        'Welcome to YADOKARI in Hirao, Fukuoka! We slow-simmer Kyushu soy milk, Rausu kelp, and shiitake for 48 hours to create our ultra-creamy Hakata Tonkotsu-style ramen.',
+      welcome_perk_ja:
+        '🎁 Vegan.jp 注文画面のご提示で「パリッと羽根つき一口餃子（2個）または 替え玉ハーフ」を歓迎サービス！',
+      welcome_perk_en:
+        '🎁 Show this Vegan.jp Order Card for 2 complimentary Crispy Gyoza Dumplings or a Half Kaedama Noodle refill!',
       live_status: {
         status: 'open_available',
         message_ja:
-          '🟢 本日ランチ・ディナーとも営業！人気の「豆乳とんこつ風ラーメン」と「植物性焼き餃子」仕込み万全です🍜',
+          '🟢 本日ランチ・ディナーとも営業！看板の「博多豆乳とんこつラーメン」と「羽根つき焼き餃子」仕込み万全です🍜',
         message_en:
-          '🟢 Open today for Lunch & Dinner! Our signature Soy-Tonkotsu Ramen and Crispy Vegan Gyoza are freshly prepped and ready 🍜',
+          '🟢 Open today for Lunch & Dinner! Our signature Hakata Soy-Tonkotsu Ramen and Crispy Winged Gyoza are freshly prepped 🍜',
         updated_at: new Date().toISOString(),
       },
       kitchen_audit: {
@@ -206,57 +200,45 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
       verified_menu: [
         {
           id: 'yd-menu-1',
-          name_ja: '博多ヴィーガン豆乳とんこつ風ラーメン（五葷不使用）',
-          name_en: 'Hakata Vegan Soy-Tonkotsu Style Ramen (Allium-Free)',
+          name_ja: '熟成濃厚・博多豆乳とんこつラーメン',
+          name_en: 'Signature Rich Hakata Soy-Tonkotsu Ramen',
           description_ja:
-            '動物性・魚介出汁・五葷を一切使わず、昆布と干し椎茸、濃厚豆乳で博多豚骨のコクを再現した看板の一杯。',
+            '九州産の一番搾り豆乳と香味野菜を強火で炊き上げ、クリーミーで奥深い博多豚骨の旨味を表現した不動の看板メニュー。',
           description_en:
-            'Rich, creamy Hakata-style broth crafted from kelp, shiitake, and soy milk. 100% vegan and free of garlic/onion.',
+            'Our #1 signature bowl: ultra-creamy Hakata-style broth crafted from first-press Kyushu soy milk and slow-roasted aromatics.',
           price_jpy: 1150,
           is_100_vegan: true,
           is_gluten_free: false,
           is_allium_free: true,
           is_popular: true,
-          order_note_ja: '博多ヴィーガン豆乳とんこつ風ラーメンを1杯お願いします',
+          order_note_ja: '看板メニュー「博多豆乳とんこつラーメン」を1杯お願いします',
         },
         {
           id: 'yd-menu-2',
-          name_ja: '五葷抜き・濃厚胡麻ヴィーガン担々麺',
-          name_en: 'Rich Sesame Vegan Tantanmen (No Garlic / No Onion)',
+          name_ja: '自家製焙煎・金胡麻の濃厚担々麺',
+          name_en: 'House-Roasted Golden Sesame Rich Tantanmen',
           description_ja:
-            '自家製焙煎胡麻ペーストと大豆ミートそぼろの旨辛担々麺。五葷不使用。',
+            '香り高い自家製焙煎胡麻ペーストと旨辛大豆ミートそぼろが絡み合う、リピーター続出の一杯。',
           description_en:
-            'House-roasted sesame broth with spiced soy meat mince. Completely vegan and allium-free.',
+            'Fragrant stone-ground golden sesame broth crowned with savory spiced soy mince.',
           price_jpy: 1280,
           is_100_vegan: true,
           is_gluten_free: false,
           is_allium_free: true,
           is_popular: true,
-          order_note_ja: 'ヴィーガン担々麺（五葷抜き）を1杯お願いします',
-        },
-        {
-          id: 'yd-menu-3',
-          name_ja: 'グルテンフリー米粉麺への変更',
-          name_en: 'Substitute with Gluten-Free Rice Noodles',
-          description_ja: 'すべてのラーメンを＋200円で国産米粉100%グルテンフリー麺に変更可能。',
-          description_en: 'Upgrade any ramen to 100% gluten-free rice noodles.',
-          price_jpy: 200,
-          is_100_vegan: true,
-          is_gluten_free: true,
-          is_allium_free: true,
-          order_note_ja: '麺をグルテンフリー米粉麺に変更してください',
+          order_note_ja: '金胡麻の濃厚担々麺を1杯お願いします',
         },
         {
           id: 'yd-menu-4',
-          name_ja: 'パリッと羽根つき 植物性ヴィーガン餃子（5個）',
-          name_en: 'Crispy Winged Vegan Gyoza Dumplings (5 pcs)',
-          description_ja: 'にんにく・ニラ・動物性ラード不使用でも驚くほどジューシーな特製焼き餃子。',
-          description_en: 'Crispy pan-fried dumplings made without meat, lard, garlic, or chives.',
+          name_ja: 'パリッと羽根つき 自家製焼き餃子（5個）',
+          name_en: 'Crispy Winged House-Made Gyoza Dumplings (5 pcs)',
+          description_ja: '香ばしい羽根とキャベツ・椎茸のジューシーな旨味が溢れる特製焼き餃子。',
+          description_en: 'Pan-fried dumplings with a lacy crispy wing and juicy cabbage-shiitake filling.',
           price_jpy: 580,
           is_100_vegan: true,
           is_gluten_free: false,
           is_allium_free: true,
-          order_note_ja: '植物性ヴィーガン餃子を1皿お願いします',
+          order_note_ja: '自家製焼き餃子（5個）を1皿お願いします',
         },
       ],
       updated_at: '2026-10-16T02:00:00.000Z',
@@ -277,13 +259,17 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
         certificate_id: 'CERT-VGJP-88620',
       },
       chef_greeting_ja:
-        '大阪・心斎橋エリアの100%植物性＆米粉麺対応ヴィーガンラーメン専門店です。世界中から訪れるヴィーガン旅行者の皆様に、本物の日本のラーメン体験をお届けします！',
+        '大阪・心斎橋エリアで「一番記憶に残る日本のソウルフード体験」をお届けするラーメン＆ビストロです。米粉麺への変更もご用意しています🍜',
       chef_greeting_en:
-        'Osaka’s premier 100% dedicated vegan ramen shop! All broths are crafted from pure plant ingredients with gluten-free rice noodle options.',
+        'Osaka’s premier plant-based ramen & bistro! Crafted to give travelers an unforgettable Japanese soul-food memory.',
+      welcome_perk_ja:
+        '🎁 Vegan.jp 注文画面のご提示で「自家製スパイス味玉風トッピング または ミニ乌龍茶」を歓迎サービス！',
+      welcome_perk_en:
+        '🎁 Show this Vegan.jp Order Card for a complimentary Spiced Topping or Iced Oolong Tea!',
       live_status: {
         status: 'open_available',
-        message_ja: '🟢 本日11:30〜21:00通し営業中！米粉グルテンフリー麺も十分在庫ございます🍜',
-        message_en: '🟢 Open all day 11:30–21:00! Gluten-free rice noodles and spicy miso broth fully stocked 🍜',
+        message_ja: '🟢 本日11:30〜21:00通し営業中！人気の熟成味噌ラーメンご用意できています🍜',
+        message_en: '🟢 Open all day 11:30–21:00! Our signature Aged Miso Ramen is hot and ready 🍜',
         updated_at: new Date().toISOString(),
       },
       kitchen_audit: {
@@ -308,24 +294,23 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
       place_id: 'ChIJL8ZEXViRQTURgeN1wM_GJ6E',
       place_name: 'SoyStories（ソイストーリーズ）薬院',
       stamp: 'delicious',
-      stamp_emoji: '🍜',
-      stamp_title_en: 'Mind-Blowing Delicious!',
-      stamp_title_ja: '感動の美味しさ！',
+      stamp_emoji: '🍨',
+      stamp_title_en: 'Unforgettable Signature Dish!',
+      stamp_title_ja: '忘れられない看板の一皿！',
       sender_name: 'Chloe & Sam',
       sender_country: 'Australia 🇦🇺',
       message_original:
-        'Being both vegan and celiac (gluten-free), finding safe desserts in Japan was so hard until we found SoyStories! The freshly baked rice-flour waffle and pistachio soy ice cream blew our minds!',
+        'The freshly baked rice-flour waffle bowl with Yame Matcha & Pistachio soy ice cream was the highlight of our Kyushu trip! Collecting our Gochisosama stamp here made our day!',
       message_ja_translated:
-        'ヴィーガンかつグルテンフリー（セリアック病）の私たちにとって、日本で安心して食べられるスイーツに出会えたのは奇跡のようでした！焼きたての米粉ワッフルとピスタチオ豆乳アイス、感動するほど美味しかったです！',
+        '焼きたての米粉ワッフルボウルと八女抹茶＆ピスタチオ豆乳アイス、今回の九州旅行で一番のハイライトになりました！ここでごちそうさまスタンプを集められて最高の1日です！',
       ordered_dishes: [
         '濃厚豆乳クラフトアイス ダブル ＋ 焼きたて米粉ワッフルボウル',
-        '福岡・八女抹茶＆黒蜜きな粉の豆乳パフェ（グルテンフリー）',
       ],
       owner_reply: {
         text_ja:
-          'Chloeさん、Samさん、オーストラリアからのご来店本当にありがとうございました！当店は小麦も乳製品も工房内に一切持ち込まずお作りしているので、安心して笑顔で召し上がっていただけてスタッフ一同最高の励みになります🌱また福岡へお越しの際はぜひお立ち寄りください！',
+          'Chloeさん、Samさん、オーストラリアからのご来店本当にありがとうございました！焼きたての米粉ワッフルと八女抹茶アイス、お二人の九州旅行の思い出の1ページになれてパティシエ・スタッフ一同最高の喜びです🌱また福岡へお越しの際はぜひお立ち寄りください！',
         text_en:
-          'Thank you so much for visiting us from Australia, Chloe & Sam! Since our kitchen is 100% free of wheat, dairy, and eggs, seeing you enjoy our freshly baked rice-flour waffles with complete peace of mind means the world to our whole team. We look forward to welcoming you back to Fukuoka! 🌱',
+          'Thank you so much for visiting us from Australia, Chloe & Sam! Knowing our freshly baked rice-flour waffle and Yame matcha ice cream became a highlight of your Kyushu journey means the world to our whole team. See you again in Fukuoka! 🌱',
         chef_name: 'SoyStories 薬院 パティシエ・スタッフ一同',
         replied_at: '2026-10-15T11:30:00.000Z',
       },
@@ -335,16 +320,16 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
       id: 'grat-seed-2',
       place_id: 'ChIJL8ZEXViRQTURgeN1wM_GJ6E',
       place_name: 'SoyStories（ソイストーリーズ）薬院',
-      stamp: 'peace_of_mind',
-      stamp_emoji: '🛡️',
-      stamp_title_en: '100% Peace of Mind',
-      stamp_title_ja: '安心して食べられました',
+      stamp: 'hospitality',
+      stamp_emoji: '💐',
+      stamp_title_en: 'Best Memory in Japan!',
+      stamp_title_ja: '最高の旅の思い出！',
       sender_name: 'Mei-Ling (美玲)',
       sender_country: 'Taiwan 🇹🇼',
       message_original:
-        'Point-and-order menu made ordering so easy! The Yame Matcha parfait with tofu-shop soy milk was rich yet refreshing. Thank you for creating such a kind vegan spot in Fukuoka!',
+        'Saw the Signature Yame Matcha Parfait on Vegan.jp and came straight here! The welcome cookie perk and warm smiles from the staff made us fall in love with Fukuoka!',
       message_ja_translated:
-        '指差し注文メニューのおかげでとてもスムーズに注文できました！お豆腐屋さんの豆乳を使った八女抹茶パフェ、濃厚なのに後味すっきりで最高でした。福岡にこんなに優しいお店を作ってくださり感謝します！',
+        'Vegan.jpで看板メニューの「八女抹茶パフェ」を見て一目惚れして来店しました！歓迎特典の米粉クッキーとスタッフ皆さんの温かい笑顔のおかげで、福岡がもっと大好きになりました！',
       ordered_dishes: ['福岡・八女抹茶＆黒蜜きな粉の豆乳パフェ（グルテンフリー）'],
       created_at: '2026-10-16T01:15:00.000Z',
     },
@@ -353,24 +338,24 @@ const INITIAL_SEED_DB: EcosystemDatabase = {
       place_id: 'vegan-ramen-01',
       place_name: 'Vegan Ramen YADOKARI',
       stamp: 'saved_trip',
-      stamp_emoji: '💚',
-      stamp_title_en: 'You Saved My Trip!',
-      stamp_title_ja: '日本旅行の救世主です！',
+      stamp_emoji: '🍜',
+      stamp_title_en: 'Best Bowl of My Trip!',
+      stamp_title_ja: '人生最高の一杯！',
       sender_name: 'Lucas M.',
       sender_country: 'France 🇫🇷',
       message_original:
-        'I was so worried about hidden fish dashi in ramen broths across Japan. Knowing YADOKARI is 100% plant-based and allium-free let me enjoy authentic Hakata tonkotsu-style ramen with zero anxiety!',
+        'The Signature Hakata Soy-Tonkotsu Ramen and crispy winged gyoza were out of this world! Showing the order card got me extra gyoza and the chef’s big smile. Sharing my postcard with all my friends in Paris!',
       message_ja_translated:
-        '日本のラーメンには見えない魚介出汁が入っているのではないかとずっと不安でしたが、YADOKARIさんが100%植物性・五葷不使用だと分かり、心から安心して本場の博多とんこつ風ラーメンを堪能できました！',
+        '看板メニューの博多豆乳とんこつラーメンと羽根つき餃子、信じられない美味しさでした！注文画面を見せたら歓迎ギョーザと大将の最高の笑顔までいただけて感激です。パリの友人全員にこの絵葉書をシェアします！',
       ordered_dishes: [
-        '博多ヴィーガン豆乳とんこつ風ラーメン（五葷不使用）',
-        'パリッと羽根つき 植物性ヴィーガン餃子（5個）',
+        '熟成濃厚・博多豆乳とんこつラーメン',
+        'パリッと羽根つき 自家製焼き餃子（5個）',
       ],
       owner_reply: {
         text_ja:
-          'Lucasさん、フランスからのご来店誠にありがとうございます！出汁の不安を忘れてスープまで完飲していただけたこと、ラーメン職人としてこれ以上の喜びはありません。またいつでも帰ってきてくださいね🍜',
+          'Lucasさん、フランス・パリからのご来店誠にありがとうございます！スープの最後の一滴まで笑顔で完飲していただけて、ラーメン職人としてこれ以上の幸せはありません。パリの皆様にもよろしくお伝えください🍜',
         text_en:
-          'Merci beaucoup for visiting from France, Lucas! As a ramen chef, nothing makes me happier than seeing you enjoy every last drop of broth without worrying about fish dashi. Come back anytime! 🍜',
+          'Merci beaucoup for visiting from Paris, Lucas! As a ramen chef, nothing makes me happier than seeing you enjoy every last drop of our Hakata broth. Thank you for sharing your postcard with your friends in Paris! 🍜',
         chef_name: 'Vegan Ramen YADOKARI 大将',
         replied_at: '2026-10-15T16:00:00.000Z',
       },
@@ -494,6 +479,8 @@ export function upsertStoreOfficialDataInDb(params: {
   verification_cert?: OwnerVerificationCertificate;
   chef_greeting_ja?: string;
   chef_greeting_en?: string;
+  welcome_perk_ja?: string;
+  welcome_perk_en?: string;
   live_status?: LiveKitchenStatus;
   kitchen_audit?: KitchenAudit;
   verified_menu?: MenuItem[];
@@ -512,6 +499,8 @@ export function upsertStoreOfficialDataInDb(params: {
     verification_cert: params.verification_cert ?? existing?.verification_cert,
     chef_greeting_ja: params.chef_greeting_ja ?? existing?.chef_greeting_ja ?? '',
     chef_greeting_en: params.chef_greeting_en ?? existing?.chef_greeting_en ?? '',
+    welcome_perk_ja: params.welcome_perk_ja ?? existing?.welcome_perk_ja,
+    welcome_perk_en: params.welcome_perk_en ?? existing?.welcome_perk_en,
     live_status: params.live_status ?? existing?.live_status,
     kitchen_audit:
       params.kitchen_audit ??

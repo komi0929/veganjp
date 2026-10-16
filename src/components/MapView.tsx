@@ -25,6 +25,7 @@ import ToastContainer from './Toast';
 import LanguageSelector from './LanguageSelector';
 import SpotCardCarousel from './SpotCardCarousel';
 import { SupportedLanguage, TRANSLATIONS, LANGUAGES } from '@/lib/i18n';
+import { getTripStamps, TripStampRecord } from '@/lib/trip-stamps';
 
 const JAPAN_CENTER = { lat: 36.2048, lng: 138.2529 };
 
@@ -121,6 +122,8 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [savedFilterOnly, setSavedFilterOnly] = useState(false);
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [tripStamps, setTripStamps] = useState<TripStampRecord[]>([]);
+  const [isPassportOpen, setIsPassportOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [gratitudeTarget, setGratitudeTarget] = useState<{
     place: PlaceWithPosts;
@@ -152,15 +155,22 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
     return () => window.removeEventListener('vegan_jp_ecosystem_updated', fetchEcosystem);
   }, [fetchEcosystem]);
 
-  // Sync saved wishlist IDs
+  // Sync saved wishlist IDs & Trip Stamps
   const syncSaved = useCallback(() => {
     setSavedIds(getSavedPlaceIds());
+    setTripStamps(getTripStamps());
   }, []);
 
   useEffect(() => {
     syncSaved();
     window.addEventListener('vegan_jp_saved_changed', syncSaved);
-    return () => window.removeEventListener('vegan_jp_saved_changed', syncSaved);
+    window.addEventListener('vegan-jp-saved-updated', syncSaved);
+    window.addEventListener('vegan_jp_stamps_updated', syncSaved);
+    return () => {
+      window.removeEventListener('vegan_jp_saved_changed', syncSaved);
+      window.removeEventListener('vegan-jp-saved-updated', syncSaved);
+      window.removeEventListener('vegan_jp_stamps_updated', syncSaved);
+    };
   }, [syncSaved]);
 
   // Restore map center & zoom if switching languages
@@ -179,11 +189,11 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
     } catch (e) {}
   }, [map]);
 
-  // Handle URL deep link (?place=...)
+  // Handle URL deep link (?place=... or ?store=...)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const placeId = params.get('place');
+      const placeId = params.get('place') || params.get('store');
       if (placeId) {
         const target = places.find(
           (p) => p.google_place_id === placeId || p.id === placeId
@@ -443,6 +453,21 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
 
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
+          {/* Japan Culinary Stamp Passport Button */}
+          <button
+            onClick={() => setIsPassportOpen(true)}
+            className="flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition-colors shrink-0 cursor-pointer"
+            title="Japan Culinary Stamp Passport / 旅の美食御朱印帳"
+          >
+            <span>💮</span>
+            <span className="hidden sm:inline">
+              {currentLang === 'ja' ? '御朱印帳' : 'My Stamps'}
+            </span>
+            <span className="text-[10px] font-black px-1.5 rounded-full bg-rose-600 text-white">
+              {tripStamps.length}
+            </span>
+          </button>
+
           {/* Wishlist Toggle Button */}
           <button
             onClick={() => setSavedFilterOnly(!savedFilterOnly)}
@@ -454,7 +479,6 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
             title={t.wishlist}
           >
             <span className="text-xs">{savedFilterOnly ? '❤️' : '🤍'}</span>
-            <span className="hidden sm:inline">{t.wishlist}</span>
             {savedIds.length > 0 && (
               <span className={`text-[10px] font-bold px-1.5 rounded-full ${
                 savedFilterOnly ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
@@ -468,11 +492,11 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           <Link
             href="/guide"
             className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors shrink-0"
-            title="How It Works & Anti-Spoofing FAQ / 使い方・店舗向けLP・Q&A"
+            title="About Vegan.jp & FAQ / 特徴・使い方・Q&A"
           >
             <span>❓</span>
             <span className="hidden sm:inline">
-              {currentLang === 'ja' ? '使い方・Q&A' : 'Guide & FAQ'}
+              {currentLang === 'ja' ? '特徴・Q&A' : 'How It Works'}
             </span>
           </Link>
 
@@ -480,11 +504,11 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           <Link
             href="/partner"
             className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 transition-colors shrink-0"
-            title="Store Owner Portal / 飲食店オーナー登録・管理画面"
+            title="Store Owner Studio / 飲食店オーナー画面"
           >
             <span>🏪</span>
             <span className="hidden sm:inline">
-              {currentLang === 'ja' ? '店舗登録・管理' : 'For Restaurants'}
+              {currentLang === 'ja' ? '店舗オーナー' : 'For Restaurants'}
             </span>
           </Link>
 
@@ -495,7 +519,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         </div>
       </motion.header>
 
-      {/* ─── Floating Search & Dietary Filter Control Cluster ─── */}
+      {/* ─── Floating Search & Single Clean Filter Row ─── */}
       <motion.div
         className="absolute top-14 inset-x-0 z-20 pointer-events-none flex flex-col items-center gap-1.5 px-3 max-w-4xl mx-auto"
         initial={{ opacity: 0, y: -8 }}
@@ -572,27 +596,10 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           </AnimatePresence>
         </div>
 
-        {/* Dietary Requirement Pills (The Non-Negotiables for Vegans) */}
-        <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
-          {DIETARY_CONFIG.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => setActiveDietary(d.id)}
-              className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all shrink-0 border cursor-pointer ${
-                activeDietary === d.id
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                  : 'bg-white/90 text-slate-700 border-black/[0.08] hover:bg-white hover:text-slate-900'
-              }`}
-            >
-              {t[d.nameKey] || d.id}
-            </button>
-          ))}
-        </div>
-
-        {/* City Quick-Jumps & Cuisines row */}
+        {/* Single Clean Row: City Quick-Jumps & Cuisines */}
         <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
           {/* City Chips */}
-          <div className="flex items-center gap-1 bg-white/80 backdrop-blur-md p-0.5 rounded-full border border-black/[0.06] shrink-0">
+          <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md p-0.5 rounded-full border border-black/[0.06] shrink-0">
             {CITIES_CONFIG.map((c) => (
               <button
                 key={c.id}
@@ -615,10 +622,10 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`text-[10px] font-medium px-2 py-0.5 rounded-full transition-all shrink-0 border cursor-pointer ${
+              className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full transition-all shrink-0 border cursor-pointer ${
                 activeCategory === cat.id
                   ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
-                  : 'bg-white/85 text-slate-600 border-black/[0.06] hover:bg-white hover:text-slate-900'
+                  : 'bg-white/90 text-slate-600 border-black/[0.06] hover:bg-white hover:text-slate-900'
               }`}
             >
               {t[cat.nameKey] || cat.id}
@@ -686,7 +693,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         />
       )}
 
-      {/* ─── Community Gratitude & Friendly Update Modal ─── */}
+      {/* ─── Gochisosama Postcard & Stamp Modal ─── */}
       {gratitudeTarget && (
         <GratitudeModal
           isOpen={!!gratitudeTarget}
@@ -700,6 +707,95 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           onSuccessRefresh={fetchEcosystem}
         />
       )}
+
+      {/* ─── 💮 Japan Culinary Stamp Passport Modal (旅の美食御朱印帳) ─── */}
+      <AnimatePresence>
+        {isPassportOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsPassportOpen(false)}
+          >
+            <motion.div
+              className="w-full max-w-lg bg-[#FCF9F2] rounded-3xl border-2 border-amber-300 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col"
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.94, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-rose-900 via-rose-800 to-amber-900 text-white flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                    JAPAN CULINARY STAMP PASSPORT
+                  </span>
+                  <h3 className="text-lg font-black">
+                    💮 {currentLang === 'ja' ? '日本旅の美食御朱印帳' : 'My Japan Culinary Stamp Book'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setIsPassportOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-5 overflow-y-auto space-y-3">
+                <p className="text-xs font-bold text-amber-950 bg-amber-100/80 border border-amber-200 rounded-2xl p-3 leading-relaxed">
+                  {currentLang === 'ja'
+                    ? 'お店で「看板の一皿」を味わってシェフに『ごちそうさま！』を送ると、そのお店だけの完食御朱印スタンプと記念絵葉書がここにコレクションされます。'
+                    : 'Enjoy a restaurant’s Signature Dish and send a Gochisosama note to collect your commemorative Japanese culinary stamps & postcards here!'}
+                </p>
+
+                {tripStamps.map((stamp) => (
+                  <div
+                    key={stamp.id}
+                    className="relative rounded-2xl bg-white border-2 border-amber-200 p-4 shadow-xs flex items-start justify-between gap-3"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <span className="text-[10px] font-black text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
+                        #{stamp.seal_code} • {new Date(stamp.created_at).toLocaleDateString('ja-JP')}
+                      </span>
+                      <h4 className="text-sm font-black text-slate-900 truncate">
+                        {stamp.place_name}
+                      </h4>
+                      <p className="text-xs font-bold text-amber-800">
+                        🍽️ {stamp.signature_dish}
+                      </p>
+                      <p className="text-xs text-slate-600 italic">
+                        &ldquo;{stamp.message}&rdquo;
+                      </p>
+                      <button
+                        onClick={() => {
+                          setIsPassportOpen(false);
+                          const target = places.find((p) => p.google_place_id === stamp.place_id);
+                          if (target) {
+                            setSelectedPlace(target);
+                            map?.panTo({ lat: target.lat, lng: target.lng });
+                            map?.setZoom(15);
+                          }
+                        }}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                      >
+                        <span>📍</span>
+                        <span>{currentLang === 'ja' ? 'このお店をマップで見る →' : 'View on Map →'}</span>
+                      </button>
+                    </div>
+
+                    <div className="w-16 h-16 rounded-full border-2 border-rose-600 bg-rose-50/90 flex flex-col items-center justify-center text-rose-700 shrink-0 rotate-[-8deg] shadow-2xs">
+                      <span className="text-[8px] font-black">VEGAN.JP</span>
+                      <span className="text-[11px] font-black leading-tight">完食御朱印</span>
+                      <span className="text-sm">{stamp.stamp_emoji}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ToastContainer />
     </div>

@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
         verification_cert: body.verification_cert,
         chef_greeting_ja: body.chef_greeting_ja,
         chef_greeting_en: body.chef_greeting_en,
+        welcome_perk_ja: body.welcome_perk_ja,
+        welcome_perk_en: body.welcome_perk_en,
         live_status: body.live_status,
         kitchen_audit: body.kitchen_audit,
         verified_menu: body.verified_menu,

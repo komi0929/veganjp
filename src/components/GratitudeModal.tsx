@@ -4,40 +4,33 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts, StoreOfficialData } from '@/lib/types';
 import { getEffectiveVerifiedMenu } from '@/lib/kitchen-defaults';
+import { addTripStamp, TripStampRecord } from '@/lib/trip-stamps';
 import { showToast } from './Toast';
 
 const STAMPS = [
   {
-    id: 'saved_trip' as const,
-    emoji: '💚',
-    titleEn: 'You Saved My Trip!',
-    titleJa: '日本旅行の救世主です！',
-    descEn: 'Finding safe, delicious vegan food here relieved all my travel anxiety.',
-    descJa: '出汁の不安を抱える旅行者にとって、本当に心強い味方でした。',
-  },
-  {
     id: 'delicious' as const,
-    emoji: '🍜',
-    titleEn: 'Mind-Blowing Delicious!',
-    titleJa: '感動の美味しさ！',
-    descEn: 'One of the most memorable plant-based meals of my life.',
-    descJa: '世界中で食べたヴィーガン料理の中でも屈指の美味しさでした。',
+    emoji: '🍽️',
+    titleEn: 'Unforgettable Signature Dish!',
+    titleJa: '忘れられない看板の一皿！',
+    descEn: 'This dish became the absolute culinary highlight of my trip to Japan.',
+    descJa: 'このお店でしか味わえない感動の美味しさでした！',
   },
   {
     id: 'hospitality' as const,
     emoji: '🌸',
-    titleEn: 'Warm Hospitality',
-    titleJa: '温かいおもてなしに感動',
-    descEn: 'The chef and staff were so welcoming and accommodating.',
-    descJa: '店員さんの温かい気配りと対応に心が温まりました。',
+    titleEn: 'Best Memory & Warm Hospitality',
+    titleJa: '最高の旅の思い出＆おもてなし',
+    descEn: 'The chef and staff made us feel so welcome in Japan.',
+    descJa: 'シェフとスタッフの温かい笑顔で、日本がもっと好きになりました。',
   },
   {
-    id: 'peace_of_mind' as const,
-    emoji: '🛡️',
-    titleEn: '100% Peace of Mind',
-    titleJa: '安心して食べられました',
-    descEn: 'I could relax and enjoy every single bite without worrying about dashi.',
-    descJa: 'かつお節や動物性の心配をせず、心から寛いで食事を楽しめました。',
+    id: 'saved_trip' as const,
+    emoji: '💎',
+    titleEn: 'Must-Visit Hidden Gem!',
+    titleJa: '仲間に教えたい最高の名店！',
+    descEn: 'I want to recommend this special restaurant to all my friends.',
+    descJa: '次に日本へ来る友人全員にこのお店をおすすめします！',
   },
 ];
 
@@ -45,13 +38,11 @@ const POPULAR_COUNTRIES = [
   'Australia 🇦🇺',
   'United States 🇺🇸',
   'United Kingdom 🇬🇧',
+  'France 🇫🇷',
   'Taiwan 🇹🇼',
   'Germany 🇩🇪',
-  'France 🇫🇷',
-  'South Korea 🇰🇷',
   'Canada 🇨🇦',
   'Singapore 🇸🇬',
-  'Spain 🇪🇸',
   'Japan 🇯🇵',
   'Global 🌏',
 ];
@@ -71,43 +62,27 @@ export default function GratitudeModal({
   place,
   officialStoreData,
   preselectedDishes = [],
-  initialMode = 'gratitude',
   onClose,
   onSuccessRefresh,
 }: GratitudeModalProps) {
-  const [activeTab, setActiveTab] = useState<'gratitude' | 'update'>(initialMode);
-
-  // Gratitude form states
   const [selectedStamp, setSelectedStamp] =
-    useState<typeof STAMPS[number]['id']>('saved_trip');
+    useState<typeof STAMPS[number]['id']>('delicious');
   const [senderName, setSenderName] = useState('');
   const [senderCountry, setSenderCountry] = useState('Australia 🇦🇺');
   const [customNote, setCustomNote] = useState('');
-  const [selectedDishes, setSelectedDishes] = useState<string[]>(preselectedDishes);
-
-  // Update form states
-  const [updateType, setUpdateType] = useState('verified');
-  const [updateDetails, setUpdateDetails] = useState('');
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [issuedStamp, setIssuedStamp] = useState<TripStampRecord | null>(null);
 
   const verifiedMenu = useMemo(
     () => getEffectiveVerifiedMenu(place, officialStoreData),
     [place, officialStoreData]
   );
 
+  const signatureDish = verifiedMenu[0]?.name_ja || preselectedDishes[0] || 'シェフの看板メニュー';
+
   if (!isOpen) return null;
 
   const currentStampObj = STAMPS.find((s) => s.id === selectedStamp) || STAMPS[0];
-
-  const toggleDish = (dishNameJa: string) => {
-    setSelectedDishes((prev) =>
-      prev.includes(dishNameJa)
-        ? prev.filter((d) => d !== dishNameJa)
-        : [...prev, dishNameJa]
-    );
-  };
 
   const handleSendGratitude = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,10 +100,10 @@ export default function GratitudeModal({
           stamp_emoji: currentStampObj.emoji,
           stamp_title_en: currentStampObj.titleEn,
           stamp_title_ja: currentStampObj.titleJa,
-          sender_name: senderName.trim() || 'A Grateful Traveler',
+          sender_name: senderName.trim() || 'Traveler',
           sender_country: senderCountry,
-          message_original: customNote.trim(),
-          ordered_dishes: selectedDishes,
+          message_original: customNote.trim() || `${currentStampObj.titleEn} (${signatureDish})`,
+          ordered_dishes: [signatureDish],
         }),
       });
 
@@ -140,47 +115,42 @@ export default function GratitudeModal({
     } catch (err) {
       console.error('Failed to send gratitude note:', err);
     } finally {
+      const stampRec = addTripStamp({
+        place_id: place.google_place_id,
+        place_name: place.name,
+        area: place.area || 'Japan',
+        signature_dish: signatureDish,
+        stamp_emoji: currentStampObj.emoji,
+        stamp_title_ja: currentStampObj.titleJa,
+        stamp_title_en: currentStampObj.titleEn,
+        message: customNote.trim() || currentStampObj.descJa,
+        sender_name: senderName.trim() || 'Traveler',
+      });
+      setIssuedStamp(stampRec);
       setIsSubmitting(false);
-      setIsSuccess(true);
-      showToast('Delivered to Store Kitchen Inbox! 💌', '💌');
+      showToast('💮 旅の美食御朱印スタンプ＆絵葉書が発行されました！', '💮');
     }
   };
 
-  const handleSendUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
+  const handleSharePostcard = async () => {
+    const shareUrl = `${window.location.origin}/?store=${encodeURIComponent(place.google_place_id)}`;
+    const shareText = `💮 ごちそうさまでした！ @ ${place.name} (${place.area || 'Japan'})\n🍽️ 看板の一皿: ${signatureDish}\n"${customNote.trim() || currentStampObj.titleEn}"\n#VeganJP`;
     try {
-      await fetch('/api/ecosystem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'send_gratitude',
-          place_id: place.google_place_id,
-          place_name: place.name,
-          stamp: 'peace_of_mind',
-          stamp_emoji: '📌',
-          stamp_title_en: `Community Verification (${updateType})`,
-          stamp_title_ja: `最新現地レポート（${updateType}）`,
-          sender_name: 'Community Verifier',
-          sender_country: 'Global 🌏',
-          message_original: updateDetails.trim() || 'Verified spot information on-site.',
-          ordered_dishes: [],
-        }),
-      });
-      window.dispatchEvent(new CustomEvent('vegan_jp_ecosystem_updated'));
-      onSuccessRefresh?.();
-    } catch (err) {}
-
-    setIsSubmitting(false);
-    showToast('Verification report delivered to store & community!', '🌱');
-    onClose();
+      if (navigator.share) {
+        await navigator.share({ title: `${place.name} — Vegan.jp`, text: shareText, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        showToast('絵葉書リンクをコピーしました！SNSや友人にシェアできます📲', '✨');
+      }
+    } catch {
+      showToast('絵葉書リンクをコピーしました！📲', '✨');
+    }
   };
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[60] bg-slate-950/65 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
+        className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -195,329 +165,200 @@ export default function GratitudeModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 shrink-0">
+          <div className="p-4 sm:p-5 border-b border-amber-100 flex items-center justify-between bg-gradient-to-r from-amber-50 via-orange-50/60 to-rose-50 shrink-0">
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800 bg-rose-50 border border-rose-200/80 px-2 py-0.5 rounded-full">
-                  Direct to Kitchen Dashboard 💌
+                <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 bg-white border border-rose-200 px-2.5 py-0.5 rounded-full shadow-2xs">
+                  💮 ごちそうさま絵葉書 ＆ 旅の御朱印スタンプ
                 </span>
-                {officialStoreData?.is_official_verified && (
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    🏅 Official Partner Store
-                  </span>
-                )}
               </div>
-              <h3 className="text-base font-bold text-slate-900 leading-tight truncate max-w-[280px] sm:max-w-md">
+              <h3 className="text-base font-black text-slate-900 leading-tight truncate max-w-[300px] sm:max-w-md">
                 {place.name}
               </h3>
-              {place.name_ja && (
-                <p className="text-xs text-slate-500 font-medium">{place.name_ja}</p>
-              )}
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center cursor-pointer transition-colors"
+              className="w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-600 flex items-center justify-center cursor-pointer transition-colors border border-slate-200"
             >
               ✕
             </button>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="flex border-b border-slate-200 px-4 pt-2 bg-slate-100/70 shrink-0 gap-2 text-xs font-semibold">
-            <button
-              onClick={() => {
-                setActiveTab('gratitude');
-                setIsSuccess(false);
-              }}
-              className={`px-3 py-2 rounded-t-xl transition-all flex items-center gap-1.5 border-b-2 cursor-pointer ${
-                activeTab === 'gratitude'
-                  ? 'bg-white text-rose-800 border-rose-600 shadow-xs'
-                  : 'text-slate-600 border-transparent hover:text-slate-900'
-              }`}
-            >
-              <span>💌</span>
-              <span>Send Gratitude to Chef (感謝を届ける)</span>
-            </button>
+          {/* Body */}
+          <div className="p-5 overflow-y-auto space-y-4">
+            {issuedStamp ? (
+              /* ─── Commemorative Japanese Culinary Postcard & Goshuin Stamp View ─── */
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="space-y-4"
+              >
+                <div className="relative rounded-3xl bg-[#FCF9F2] border-2 border-amber-300/90 p-5 shadow-lg overflow-hidden">
+                  {/* Traditional Japanese Vermilion Seal (Goshuin Hanko) */}
+                  <motion.div
+                    initial={{ scale: 2.2, opacity: 0, rotate: -25 }}
+                    animate={{ scale: 1, opacity: 1, rotate: -10 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+                    className="absolute top-4 right-4 w-24 h-24 rounded-full border-4 border-rose-600/85 bg-rose-50/90 flex flex-col items-center justify-center text-rose-700 shadow-md select-none"
+                  >
+                    <span className="text-[9px] font-black tracking-widest uppercase">VEGAN.JP</span>
+                    <span className="text-sm font-black leading-tight my-0.5">完食御朱印</span>
+                    <span className="text-[9px] font-bold">{new Date().toLocaleDateString('ja-JP')}</span>
+                  </motion.div>
 
-            <button
-              onClick={() => {
-                setActiveTab('update');
-                setIsSuccess(false);
-              }}
-              className={`px-3 py-2 rounded-t-xl transition-all flex items-center gap-1.5 border-b-2 cursor-pointer ${
-                activeTab === 'update'
-                  ? 'bg-white text-emerald-800 border-emerald-600 shadow-xs'
-                  : 'text-slate-600 border-transparent hover:text-slate-900'
-              }`}
-            >
-              <span>✏️</span>
-              <span>Live Spot Report (現地情報更新)</span>
-            </button>
-          </div>
-
-          {/* Modal Body */}
-          <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs">
-            {activeTab === 'gratitude' ? (
-              !isSuccess ? (
-                <form onSubmit={handleSendGratitude} className="space-y-4">
-                  {/* Heartfelt intro */}
-                  <div className="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 text-rose-950 space-y-1 leading-relaxed">
-                    <p className="font-bold text-xs flex items-center gap-1 text-rose-900">
-                      <span>✨</span>
-                      <span>Auto-Translated & Delivered to the Store Owner!</span>
-                    </p>
-                    <p className="text-[11px] text-rose-900/90">
-                      Your thank-you note is automatically translated into warm Japanese and delivered directly to the restaurant&apos;s Partner Inbox so the chef can read and reply to you!
+                  <div className="pr-24">
+                    <span className="inline-block text-[10px] font-black uppercase tracking-widest text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-md mb-1.5">
+                      JAPAN CULINARY MEMORY POSTCARD • #{issuedStamp.seal_code}
+                    </span>
+                    <h4 className="text-lg font-black text-slate-900 leading-snug">
+                      {issuedStamp.place_name}
+                    </h4>
+                    <p className="text-xs font-bold text-amber-800 mt-0.5">
+                      📍 {issuedStamp.area}
                     </p>
                   </div>
 
-                  {/* Stamp Selector */}
-                  <div className="space-y-2">
-                    <label className="font-bold text-slate-800 block">
-                      1. Choose Your Gratitude Stamp (気持ちを伝えるスタンプ)
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {STAMPS.map((s) => {
-                        const isSelected = selectedStamp === s.id;
-                        return (
-                          <div
-                            key={s.id}
-                            onClick={() => setSelectedStamp(s.id)}
-                            className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                              isSelected
-                                ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-200 shadow-xs'
-                                : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100/80'
-                            }`}
-                          >
-                            <div className="text-xl mb-1">{s.emoji}</div>
-                            <div className="font-bold text-xs text-slate-900">{s.titleEn}</div>
-                            <div className="text-[10px] text-rose-800 font-medium">{s.titleJa}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div className="mt-4 p-3 rounded-2xl bg-white/90 border border-amber-200/80">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 mb-0.5">
+                      🍽️ 味わった看板の一皿 / Signature Dish
+                    </p>
+                    <p className="text-xs font-black text-slate-900">
+                      {issuedStamp.signature_dish}
+                    </p>
                   </div>
 
-                  {/* Which dishes did you enjoy? */}
-                  {verifiedMenu.length > 0 && (
-                    <div className="space-y-1.5">
-                      <label className="font-bold text-slate-800 block">
-                        2. Which Vegan Dishes Did You Enjoy? (注文した料理を選択)
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {verifiedMenu.map((item) => {
-                          const active = selectedDishes.includes(item.name_ja);
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => toggleDish(item.name_ja)}
-                              className={`text-[11px] px-2.5 py-1.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-1 ${
-                                active
-                                  ? 'bg-emerald-700 text-white border-emerald-700 font-bold shadow-2xs'
-                                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                              }`}
-                            >
-                              <span>{active ? '✓' : '+'}</span>
-                              <span className="truncate max-w-[230px]">{item.name_en}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Traveler Info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-800 block mb-1">
-                        Your Name / Nickname
-                      </label>
-                      <input
-                        type="text"
-                        value={senderName}
-                        onChange={(e) => setSenderName(e.target.value)}
-                        placeholder="e.g. Emma & Liam"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-rose-500 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-800 block mb-1">
-                        Where are you traveling from?
-                      </label>
-                      <select
-                        value={senderCountry}
-                        onChange={(e) => setSenderCountry(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-rose-500 text-xs bg-white"
-                      >
-                        {POPULAR_COUNTRIES.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="mt-3 p-3.5 rounded-2xl bg-rose-50/60 border border-rose-200/70">
+                    <p className="text-xs font-bold text-rose-950 leading-relaxed">
+                      {issuedStamp.stamp_emoji} &ldquo;{issuedStamp.message}&rdquo;
+                    </p>
+                    <p className="text-[11px] font-bold text-slate-500 mt-1.5 text-right">
+                      — {issuedStamp.sender_name} ({senderCountry})
+                    </p>
                   </div>
 
-                  {/* Personal Note */}
-                  <div>
-                    <label className="font-bold text-slate-800 block mb-1">
-                      3. Message to the Chef & Staff (自動的に日本語へ翻訳されます)
-                    </label>
-                    <textarea
-                      value={customNote}
-                      onChange={(e) => setCustomNote(e.target.value)}
-                      rows={2}
-                      placeholder="e.g. The broth was so rich without any fish dashi, and the gluten-free waffle was amazing! Thank you so much!"
-                      className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-rose-500 text-xs"
-                    />
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="px-5 py-2.5 font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-full shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5"
-                    >
-                      <span>💌</span>
-                      <span>{isSubmitting ? 'Sending...' : 'Deliver to Kitchen Inbox'}</span>
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="p-6 text-center space-y-3">
-                  <span className="text-5xl block animate-bounce">💌</span>
-                  <h4 className="text-base font-bold text-slate-900">
-                    Delivered to {place.name}&apos;s Kitchen Inbox!
-                  </h4>
-                  <p className="text-slate-600 leading-relaxed text-xs">
-                    Your gratitude note has been translated into Japanese and saved to the store&apos;s official dashboard. When the chef replies, their message will appear right on this spot&apos;s card!
-                  </p>
-                  <div className="pt-4 flex flex-wrap justify-center gap-2">
-                    <button
-                      onClick={onClose}
-                      className="bg-slate-900 text-white font-bold px-5 py-2.5 rounded-full cursor-pointer hover:bg-slate-800 transition-colors"
-                    >
-                      Back to Spot Card 🗺️
-                    </button>
-                    <a
-                      href={`/partner?placeId=${encodeURIComponent(place.google_place_id)}`}
-                      className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold px-4 py-2.5 rounded-full hover:bg-emerald-100 transition-colors"
-                    >
-                      🏪 View in Store Owner Portal →
-                    </a>
+                  <div className="mt-3 pt-2.5 border-t border-amber-200/70 flex items-center justify-between text-[11px] text-amber-900 font-bold">
+                    <span>✓ シェフへ「ごちそうさま」送信済</span>
+                    <span>✓ 旅の御朱印帳に保存済</span>
                   </div>
                 </div>
-              )
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    onClick={handleSharePostcard}
+                    className="w-full py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  >
+                    <span>📲</span>
+                    <span>絵葉書をシェアして友達に紹介</span>
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  >
+                    <span>💮</span>
+                    <span>スタンプ帳に保存して閉じる</span>
+                  </button>
+                </div>
+              </motion.div>
             ) : (
-              /* Tab 2: Suggest Info Update */
-              <form onSubmit={handleSendUpdate} className="space-y-4">
-                <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-950 space-y-1 leading-relaxed">
-                  <p className="font-bold text-xs flex items-center gap-1 text-emerald-900">
-                    <span>🌱</span>
-                    <span>Help Keep This Spot Accurate & Fresh</span>
-                  </p>
-                  <p className="text-[11px] text-emerald-900/90">
-                    Did you notice any changes during your visit? Your report is shared with the store owner and community.
+              /* ─── Simple 10-Second Gochisosama Form ─── */
+              <form onSubmit={handleSendGratitude} className="space-y-4">
+                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center gap-3">
+                  <span className="text-2xl shrink-0">💮</span>
+                  <p className="text-xs text-amber-950 font-semibold leading-relaxed">
+                    シェフに「ごちそうさま！」を送ると、あなたの<b>『旅の美食御朱印帳』に記念スタンプと絵葉書</b>が刻まれ、シェフから直筆返信が届きます！
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="font-bold text-slate-800 block">
-                    What would you like to report?
+                {/* 1. Choose Stamp Mood */}
+                <div>
+                  <label className="block text-xs font-black text-slate-800 mb-2">
+                    1. 今日の感動スタンプを選択 / Choose Your Stamp
                   </label>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setUpdateType('Verified Open')}
-                      className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'Verified Open'
-                          ? 'bg-emerald-50 border-emerald-500 text-emerald-900'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className="block text-base mb-0.5">👍</span>
-                      Visited & Verified Open
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setUpdateType('Hours / Menu Changed')}
-                      className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'Hours / Menu Changed'
-                          ? 'bg-amber-50 border-amber-500 text-amber-900'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className="block text-base mb-0.5">🕒</span>
-                      Hours / Menu Changed
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setUpdateType('New Vegan Menu')}
-                      className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'New Vegan Menu'
-                          ? 'bg-purple-50 border-purple-500 text-purple-900'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className="block text-base mb-0.5">✨</span>
-                      New Vegan Menu Added!
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setUpdateType('Sold Out / Closed')}
-                      className={`p-2.5 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
-                        updateType === 'Sold Out / Closed'
-                          ? 'bg-rose-50 border-rose-500 text-rose-900'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className="block text-base mb-0.5">🚪</span>
-                      Temporarily / Perm Closed
-                    </button>
+                  <div className="grid grid-cols-1 gap-2">
+                    {STAMPS.map((s) => {
+                      const active = selectedStamp === s.id;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setSelectedStamp(s.id)}
+                          className={`text-left p-3 rounded-2xl border transition-all flex items-center gap-3 cursor-pointer ${
+                            active
+                              ? 'bg-rose-50/90 border-rose-400 ring-2 ring-rose-500/20 shadow-xs'
+                              : 'bg-slate-50/70 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="text-2xl shrink-0">{s.emoji}</span>
+                          <div>
+                            <p className="text-xs font-black text-slate-900">
+                              {s.titleJa} <span className="text-slate-500 font-semibold">/ {s.titleEn}</span>
+                            </p>
+                            <p className="text-[11px] text-slate-600 mt-0.5">{s.descJa}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
+                {/* 2. Short Message */}
                 <div>
-                  <label className="font-bold text-slate-800 block mb-1">
-                    Details / Additional Notes
+                  <label className="block text-xs font-black text-slate-800 mb-1.5">
+                    2. シェフへの一言メッセージ（英語・日本語どちらもOK）
                   </label>
                   <textarea
-                    value={updateDetails}
-                    onChange={(e) => setUpdateDetails(e.target.value)}
-                    rows={3}
-                    placeholder="e.g. Closed on Tuesdays, now serves gluten-free noodles, English menu available at register..."
-                    className="w-full p-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500 text-xs"
+                    rows={2}
+                    value={customNote}
+                    onChange={(e) => setCustomNote(e.target.value)}
+                    placeholder="例: 看板メニューの濃厚な味わいに感動しました！最高の旅の思い出をありがとう！ / Best dish of my Japan trip!"
+                    className="w-full rounded-2xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-rose-500"
                   />
                 </div>
 
-                <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-5 py-2.5 font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5"
-                  >
-                    <span>Submit Report 🚀</span>
-                  </button>
+                {/* 3. Name & Country */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                      お名前 / Nickname
+                    </label>
+                    <input
+                      type="text"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      placeholder="Alex / 旅人"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                      国・地域 / From
+                    </label>
+                    <select
+                      value={senderCountry}
+                      onChange={(e) => setSenderCountry(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white"
+                    >
+                      {POPULAR_COUNTRIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-sm shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>💮</span>
+                  <span>
+                    {isSubmitting
+                      ? '御朱印スタンプ発行中...'
+                      : 'ごちそうさまを送って「御朱印スタンプ」を押す'}
+                  </span>
+                </button>
               </form>
             )}
           </div>
