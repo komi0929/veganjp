@@ -16,11 +16,8 @@ import {
     getEffectiveWelcomePerk,
 } from '@/lib/kitchen-defaults';
 
-type PartnerTab = 'dish' | 'postcards' | 'verify';
-
 export default function PartnerPortalPage() {
     const [lang, setLang] = useState<NavLang>('ja');
-    const [activeTab, setActiveTab] = useState<PartnerTab>('dish');
     const [storesMap, setStoresMap] = useState<Record<string, StoreOfficialData>>({});
     const [notes, setNotes] = useState<GratitudeNote[]>([]);
     const [customPlaces, setCustomPlaces] = useState<Place[]>([]);
@@ -28,6 +25,7 @@ export default function PartnerPortalPage() {
         'ChIJL8ZEXViRQTURgeN1wM_GJ6E'
     );
     const [toastMsg, setToastMsg] = useState<string | null>(null);
+    const [showVerifyPanel, setShowVerifyPanel] = useState(false);
 
     // Anti-Spoofing OTP Verification States
     const [verifyMethod, setVerifyMethod] =
@@ -39,7 +37,7 @@ export default function PartnerPortalPage() {
     const [verifyError, setVerifyError] = useState<string | null>(null);
     const [isVerifying, setIsVerifying] = useState(false);
 
-    // Simple Store Form States (Pillar 1: Signature Dish + Welcome Perk)
+    // Store Form States (Pillar 1: Signature Dish + Welcome Perk)
     const [sigNameJa, setSigNameJa] = useState('');
     const [sigNameEn, setSigNameEn] = useState('');
     const [sigPrice, setSigPrice] = useState<number>(1200);
@@ -81,7 +79,7 @@ export default function PartnerPortalPage() {
             const params = new URLSearchParams(window.location.search);
             const st = params.get('store') || params.get('claim');
             if (st) setSelectedPlaceId(st);
-            if (params.get('claim')) setActiveTab('verify');
+            if (params.get('claim')) setShowVerifyPanel(true);
         }
     }, [fetchEcosystem]);
 
@@ -125,6 +123,7 @@ export default function PartnerPortalPage() {
         setIssuedOtpDemo(null);
         setOtpInput('');
         setVerifyError(null);
+        setShowVerifyPanel(!Boolean(currentOfficial?.verification_cert?.is_verified));
         setVerifyIdentifier(
             currentPlace.instagram_id
                 ? `@${currentPlace.instagram_id}`
@@ -187,8 +186,8 @@ export default function PartnerPortalPage() {
             if (data.ok) {
                 await fetchEcosystem();
                 setIssuedOtpDemo(null);
-                setActiveTab('dish');
-                showNotice('オーナー本人確認が完了し、編集ロックが解除されました');
+                setShowVerifyPanel(false);
+                showNotice('オーナー本人確認が完了し、認定証明書が発行されました');
             } else {
                 setVerifyError(data.error || '認証コードが一致しません');
             }
@@ -247,7 +246,7 @@ export default function PartnerPortalPage() {
             if (data.ok) {
                 await fetchEcosystem();
                 showNotice(
-                    '「看板の一皿」と「画面提示の歓迎特典」を保存・公開しました'
+                    '「看板の一皿」と「画面提示の歓迎特典」をマップに公開しました'
                 );
             }
         } catch {
@@ -287,7 +286,7 @@ export default function PartnerPortalPage() {
     };
 
     return (
-        <div className="min-h-dvh bg-[#EEF7F2] text-[#1C2822] md:grid md:grid-cols-[268px_1fr]">
+        <div className="min-h-dvh bg-[#EEF7F2] text-[#1C2822] lg:grid lg:grid-cols-[248px_1fr]">
             <AppSidebar lang={lang} onLangChange={setLang} />
 
             <div className="flex flex-col min-h-dvh overflow-x-hidden">
@@ -298,79 +297,63 @@ export default function PartnerPortalPage() {
                     </div>
                 )}
 
-                {/* TOP CENTERED WORKSPACE (nani.now style) */}
-                <main className="flex-1 px-4 sm:px-6 pt-8 md:pt-16 pb-16">
-                    <div className="max-w-2xl mx-auto">
-                        {/* Header + Rotated Handwritten Guidance */}
-                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-3.5 px-1">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-[13px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(22,163,74,0.25)] shrink-0">
-                                    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                                        <polyline points="9 22 9 12 15 12 15 22" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h1 className="text-xl sm:text-[25px] font-extrabold tracking-tight text-[#1C2822] leading-tight">
+                <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 lg:pt-10 pb-20 max-w-6xl w-full mx-auto space-y-6">
+                    {/* Top Header + Store Selector Bar */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/90 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#DCECE3] shadow-[0_6px_20px_rgba(20,40,30,0.04)]">
+                        <div className="flex items-center gap-3.5">
+                            <div className="size-11 rounded-[14px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(22,163,74,0.25)] shrink-0">
+                                <svg className="size-5.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                    <polyline points="9 22 9 12 15 12 15 22" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1C2822]">
                                         {isJa ? '店舗オーナースタジオ' : 'Restaurant Partner Studio'}
                                     </h1>
-                                    <p className="text-xs font-semibold text-[#526358] mt-0.5">
-                                        {isJa
-                                            ? 'やることは「看板の一皿＆歓迎特典の登録」と「絵葉書への返信」の2つだけ'
-                                            : 'Simply showcase your Signature Dish & Welcome Perk and reply to postcards'}
-                                    </p>
+                                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#EEF7F2] text-[#15803D]">
+                                        {isJa ? '初期費用・手数料 0円' : '100% Free'}
+                                    </span>
                                 </div>
-                            </div>
-
-                            <div className="hidden sm:flex items-center gap-1.5 text-[#15803D] font-bold text-xs rotate-2 translate-y-1 select-none shrink-0">
-                                <span>{isJa ? '手数料0円・30秒でマップに即時反映' : '100% Free · Live in 30s'}</span>
-                                <svg className="w-5 h-5 text-[#16A34A] translate-y-1" viewBox="0 0 28 28" fill="none">
-                                    <path
-                                        d="M4 6C12 6 19 10 20 21M20 21L15 16.5M20 21L24.5 16"
-                                        stroke="currentColor"
-                                        strokeWidth="2.2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
+                                <p className="text-xs font-medium text-[#526358] mt-0.5">
+                                    {isJa
+                                        ? '左で「看板の一皿＆歓迎特典」を入力すると、右のスマホ画面プレビュー（6言語注文票）にリアルタイム反映されます'
+                                        : 'Edit your Signature Dish & Welcome Perk on the left and watch the live traveler preview on the right'}
+                                </p>
                             </div>
                         </div>
 
-                        {/* Store Picker Pill Bar right above the Tray */}
-                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 bg-white/75 backdrop-blur-xs border border-[#DCECE3] rounded-[18px] px-3.5 py-2">
-                            <div className="flex items-center gap-2 flex-1 min-w-[220px]">
-                                <span className="text-[11px] font-extrabold text-[#526358] shrink-0">
-                                    {isJa ? '対象店舗:' : 'Store:'}
-                                </span>
-                                <select
-                                    value={selectedPlaceId}
-                                    onChange={(e) => setSelectedPlaceId(e.target.value)}
-                                    className="flex-1 h-8 rounded-[10px] bg-[#F7FBF8] border border-[#DCECE3] px-2.5 text-xs font-extrabold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
-                                >
-                                    {allPlaces.map((p) => {
-                                        const verified = Boolean(
-                                            storesMap[p.google_place_id]?.verification_cert
-                                                ?.is_verified
-                                        );
-                                        return (
-                                            <option
-                                                key={p.google_place_id}
-                                                value={p.google_place_id}
-                                            >
-                                                {verified ? '✓ ' : '🔒 '}
-                                                {p.name_ja || p.name} ({p.area || 'Tokyo'})
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                            </div>
+                        {/* Store Selector & Verification Toggle */}
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <select
+                                value={selectedPlaceId}
+                                onChange={(e) => setSelectedPlaceId(e.target.value)}
+                                className="h-10 rounded-[14px] bg-[#F7FBF8] border border-[#DCECE3] px-3 text-xs font-extrabold text-[#1C2822] focus:outline-none focus:border-[#16A34A] max-w-[270px]"
+                            >
+                                {allPlaces.map((p) => {
+                                    const verified = Boolean(
+                                        storesMap[p.google_place_id]?.verification_cert
+                                            ?.is_verified
+                                    );
+                                    return (
+                                        <option
+                                            key={p.google_place_id}
+                                            value={p.google_place_id}
+                                        >
+                                            {verified ? '✓ ' : '🔒 '}
+                                            {p.name_ja || p.name} ({p.area || 'Tokyo'})
+                                        </option>
+                                    );
+                                })}
+                            </select>
 
                             <button
                                 type="button"
-                                onClick={() => setActiveTab('verify')}
-                                className={`h-7 px-3 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all active:scale-95 ${
+                                onClick={() => setShowVerifyPanel((v) => !v)}
+                                className={`h-10 px-3.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
                                     isVerifiedOwner
-                                        ? 'bg-[#DCECE3] text-[#14532D]'
+                                        ? 'bg-[#EEF7F2] text-[#14532D] border border-[#C5DDD0]'
                                         : 'bg-[#1C2822] text-white'
                                 }`}
                             >
@@ -382,435 +365,470 @@ export default function PartnerPortalPage() {
                                 <span>
                                     {isVerifiedOwner
                                         ? isJa ? '公式オーナー認証済' : 'Verified Owner'
-                                        : isJa ? '未認証（タップで本人確認）' : 'Unverified (Unlock)'}
+                                        : isJa ? '未認証（10秒で本人確認）' : 'Verify Ownership'}
                                 </span>
                             </button>
                         </div>
+                    </div>
 
-                        {/* TWO-LAYER SQUIRCLE TRAY (.nani-well + .nani-sheet) */}
+                    {/* Optional Expandable 3-Tier Anti-Spoofing Verification Card */}
+                    {showVerifyPanel && (
                         <div className="nani-well">
-                            {/* Top Segmented Bar */}
-                            <div className="px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-1 bg-[#CBE2D4]/75 p-1 rounded-[16px]">
+                            <div className="px-3.5 py-2 flex items-center justify-between">
+                                <span className="text-xs font-extrabold text-[#14532D] flex items-center gap-2">
+                                    <span className="size-2 rounded-full bg-[#16A34A]" />
+                                    <span>
+                                        {isJa
+                                            ? 'なりすまし防止：3段階の公式オーナー本人確認（10秒でロック解除）'
+                                            : '3-Tier Anti-Spoofing Owner Verification'}
+                                    </span>
+                                </span>
+                                {isVerifiedOwner && (
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('dish')}
-                                        className={`h-8 px-3.5 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${
-                                            activeTab === 'dish'
-                                                ? 'bg-white text-[#1C2822] shadow-xs'
-                                                : 'text-[#3D5245] hover:text-[#1C2822]'
-                                        }`}
+                                        onClick={() => setShowVerifyPanel(false)}
+                                        className="text-xs font-bold text-[#526358] hover:text-[#1C2822]"
                                     >
-                                        {isJa ? '1. 看板の一皿＆歓迎特典' : '1. Dish & Perk'}
+                                        閉じる ✕
                                     </button>
+                                )}
+                            </div>
+                            <div className="nani-sheet p-5 space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    {[
+                                        {
+                                            id: 'instagram_official' as const,
+                                            title: '1. 公式Instagram DM認証',
+                                            sub: '店舗公式アカウントへ6桁コード送信',
+                                        },
+                                        {
+                                            id: 'phone_otp' as const,
+                                            title: '2. 店舗の固定電話認証',
+                                            sub: 'Google登録の店舗電話番号で確認',
+                                        },
+                                        {
+                                            id: 'business_license' as const,
+                                            title: '3. 飲食店営業許可番号',
+                                            sub: '許可証番号または公式ドメイン照合',
+                                        },
+                                    ].map((m) => (
+                                        <button
+                                            key={m.id}
+                                            type="button"
+                                            onClick={() => setVerifyMethod(m.id)}
+                                            className={`p-3 rounded-[14px] border text-left transition-all active:scale-98 ${
+                                                verifyMethod === m.id
+                                                    ? 'border-[#16A34A] bg-[#F2F9F5]'
+                                                    : 'border-[#DCECE3] bg-white'
+                                            }`}
+                                        >
+                                            <div className="text-xs font-extrabold text-[#1C2822]">
+                                                {m.title}
+                                            </div>
+                                            <div className="text-[11px] text-[#526358] mt-0.5">
+                                                {m.sub}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
 
+                                <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
+                                            {isJa ? '確認先アカウント / 固定電話番号' : 'Official Handle / Phone'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={verifyIdentifier}
+                                            onChange={(e) => setVerifyIdentifier(e.target.value)}
+                                            className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3 text-xs font-bold text-[#1C2822]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
+                                            {isJa ? 'オーナー・責任者名' : 'Owner / Chef Name'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={verifyOwnerName}
+                                            onChange={(e) => setVerifyOwnerName(e.target.value)}
+                                            className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3 text-xs font-bold text-[#1C2822]"
+                                        />
+                                    </div>
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('postcards')}
-                                        className={`h-8 px-3.5 rounded-[12px] text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 ${
-                                            activeTab === 'postcards'
-                                                ? 'bg-white text-[#1C2822] shadow-xs'
-                                                : 'text-[#3D5245] hover:text-[#1C2822]'
-                                        }`}
+                                        onClick={handleRequestOtp}
+                                        disabled={isVerifying}
+                                        className="h-10 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-xs font-bold text-[#1C2822] active:scale-95 transition-all"
                                     >
-                                        <span>{isJa ? '2. ごちそうさま絵葉書' : '2. Postcards'}</span>
-                                        <span className="px-1.5 py-0.2 rounded-full bg-[#16A34A] text-white text-[10px]">
-                                            {storeNotes.length}
-                                        </span>
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveTab('verify')}
-                                        className={`h-8 px-3.5 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${
-                                            activeTab === 'verify'
-                                                ? 'bg-white text-[#1C2822] shadow-xs'
-                                                : 'text-[#3D5245] hover:text-[#1C2822]'
-                                        }`}
-                                    >
-                                        {isJa ? '3. 本人確認＆店頭QR' : '3. Verify & QR'}
+                                        {isJa ? '6桁コードを発行' : 'Send 6-Digit OTP'}
                                     </button>
                                 </div>
 
-                                <Link
-                                    href={`/?store=${encodeURIComponent(selectedPlaceId)}`}
-                                    className="h-7 px-3 rounded-full bg-white/80 hover:bg-white text-[11px] font-bold text-[#15803D] flex items-center gap-1 transition-all active:scale-95"
-                                >
-                                    <span>{isJa ? 'マップ上の表示を見る ↗' : 'View on Map ↗'}</span>
-                                </Link>
+                                {(issuedOtpDemo || otpInput) && (
+                                    <div className="rounded-[14px] bg-[#F2F9F5] border border-[#16A34A] p-3.5 flex flex-wrap items-center justify-between gap-3">
+                                        <div className="text-xs font-bold text-[#14532D]">
+                                            {issuedOtpDemo
+                                                ? `発行された本人確認コード「${issuedOtpDemo}」を自動セットしました：`
+                                                : '6桁の本人確認コードを入力してください：'}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="text"
+                                                value={otpInput}
+                                                onChange={(e) => setOtpInput(e.target.value)}
+                                                className="w-28 h-9 rounded-full border border-[#DCECE3] bg-white px-3 text-center font-mono text-xs font-extrabold text-[#1C2822]"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleConfirmOtp}
+                                                className="h-9 px-4 rounded-full bg-[#16A34A] text-white text-xs font-bold active:scale-95 transition-all"
+                                            >
+                                                {isJa ? '認証して編集ロック解除 →' : 'Verify & Unlock →'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {verifyError && (
+                                    <p className="text-xs font-bold text-red-600">{verifyError}</p>
+                                )}
                             </div>
+                        </div>
+                    )}
 
-                            {/* Inner White Sheet (.nani-sheet) */}
-                            <div className="nani-sheet p-5 sm:p-6">
-                                {activeTab === 'dish' && (
-                                    <form onSubmit={handleSaveSignatureAndPerk} className="space-y-4">
-                                        {!isVerifiedOwner && (
-                                            <div className="rounded-[14px] bg-[#F2F9F5] border border-[#C5DDD0] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                                                <div className="text-xs text-[#14532D] font-semibold">
-                                                    <span className="font-extrabold">
-                                                        {isJa
-                                                            ? 'なりすまし防止ロック中：'
-                                                            : 'Anti-Spoofing Lock Active: '}
-                                                    </span>
-                                                    {isJa
-                                                        ? '第三者による勝手な書き換えを防ぐため、保存前に10秒のオーナー認証を行ってください。'
-                                                        : 'Verify ownership in 10 seconds before publishing changes.'}
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('verify')}
-                                                    className="h-8 px-3.5 rounded-full bg-[#16A34A] text-white text-xs font-bold shrink-0 active:scale-95 transition-all"
-                                                >
-                                                    {isJa ? '本人確認へ進む →' : 'Unlock Now →'}
-                                                </button>
-                                            </div>
-                                        )}
+                    {/* ─── 2-COLUMN SPLIT WORKSPACE: Left Editor + Inbox / Right Live iPhone Preview ─── */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_370px] gap-6 items-start">
+                        {/* LEFT COLUMN: Pillar 1 (Dish & Perk Editor) + Pillar 2 (Postcard Inbox) */}
+                        <div className="space-y-6">
+                            {/* PILLAR 1: Signature Dish & Welcome Perk Editor */}
+                            <div className="nani-well">
+                                <div className="px-3.5 py-2 flex items-center justify-between">
+                                    <span className="text-xs font-extrabold text-[#14532D] flex items-center gap-2">
+                                        <span className="size-2 rounded-full bg-[#16A34A]" />
+                                        <span>
+                                            {isJa
+                                                ? '① 看板の一皿 ＆ 画面提示の歓迎特典（来店動機の登録）'
+                                                : "1. Chef's Signature Dish & Welcome Perk"}
+                                        </span>
+                                    </span>
+                                    <span className="text-[11px] font-bold text-[#15803D] bg-white/80 px-2.5 py-0.5 rounded-full">
+                                        {isJa ? '右側のプレビューに即時反映' : 'Live Preview Active'}
+                                    </span>
+                                </div>
 
-                                        {/* Dish Title & Price */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_110px] gap-3">
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
-                                                    {isJa ? '看板の一皿（日本語名）' : 'Signature Dish (JA)'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={sigNameJa}
-                                                    onChange={(e) => setSigNameJa(e.target.value)}
-                                                    className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3 text-xs font-bold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
-                                                    {isJa ? '英語メニュー名 (訪日客表示)' : 'Signature Dish (EN)'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={sigNameEn}
-                                                    onChange={(e) => setSigNameEn(e.target.value)}
-                                                    className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3 text-xs font-bold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
-                                                    {isJa ? '税込価格 (¥)' : 'Price (JPY)'}
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    value={sigPrice}
-                                                    onChange={(e) => setSigPrice(Number(e.target.value))}
-                                                    className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3 text-xs font-bold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
-                                                />
-                                            </div>
+                                <form
+                                    onSubmit={handleSaveSignatureAndPerk}
+                                    className="nani-sheet p-5 sm:p-6 space-y-4"
+                                >
+                                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px] gap-3">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
+                                                {isJa
+                                                    ? '看板の一皿（日本語メニュー名 — 店員さん提示票にも表示）'
+                                                    : 'Signature Dish Name (Japanese)'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={sigNameJa}
+                                                onChange={(e) => setSigNameJa(e.target.value)}
+                                                className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3.5 text-xs font-bold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
+                                            />
                                         </div>
-
-                                        {/* Dish Appeal */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
-                                                    {isJa ? '一皿の魅力・こだわり（日本語）' : 'Dish Story (JA)'}
-                                                </label>
-                                                <textarea
-                                                    rows={2}
-                                                    value={sigDescJa}
-                                                    onChange={(e) => setSigDescJa(e.target.value)}
-                                                    className="w-full rounded-[12px] border border-[#DCECE3] bg-white p-2.5 text-xs text-[#1C2822] font-medium resize-none focus:outline-none focus:border-[#16A34A]"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
-                                                    {isJa ? '英語の説明文（未入力なら自動補完）' : 'Dish Story (EN)'}
-                                                </label>
-                                                <textarea
-                                                    rows={2}
-                                                    value={sigDescEn}
-                                                    onChange={(e) => setSigDescEn(e.target.value)}
-                                                    className="w-full rounded-[12px] border border-[#DCECE3] bg-white p-2.5 text-xs text-[#1C2822] font-medium resize-none focus:outline-none focus:border-[#16A34A]"
-                                                />
-                                            </div>
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
+                                                {isJa ? '税込価格 (¥)' : 'Price (JPY)'}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={sigPrice}
+                                                onChange={(e) => setSigPrice(Number(e.target.value))}
+                                                className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3.5 text-xs font-bold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
+                                            />
                                         </div>
+                                    </div>
 
-                                        {/* Welcome Perk */}
-                                        <div className="rounded-[16px] bg-[#F7FBF8] border border-[#DCECE3] p-3.5 space-y-2.5">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs font-extrabold text-[#15803D]">
-                                                    {isJa
-                                                        ? '画面提示の歓迎特典（来店率が劇的に上がるおもてなし）'
-                                                        : 'Show-Screen Welcome Perk'}
-                                                </span>
-                                                <span className="text-[10px] font-bold text-[#526358]">
-                                                    {isJa ? '注文時にスマホ画面を提示' : 'Shown at ordering'}
-                                                </span>
-                                            </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
+                                            {isJa
+                                                ? '英語メニュー名（海外ゲストのマップ画面に表示）'
+                                                : 'Signature Dish Name (English)'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={sigNameEn}
+                                            onChange={(e) => setSigNameEn(e.target.value)}
+                                            className="w-full h-10 rounded-[12px] border border-[#DCECE3] bg-[#F7FBF8] px-3.5 text-xs font-bold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
+                                                {isJa ? '一皿の魅力・こだわり（日本語）' : 'Dish Story (Japanese)'}
+                                            </label>
+                                            <textarea
+                                                rows={2}
+                                                value={sigDescJa}
+                                                onChange={(e) => setSigDescJa(e.target.value)}
+                                                className="w-full rounded-[12px] border border-[#DCECE3] bg-white p-3 text-xs text-[#1C2822] font-medium resize-none focus:outline-none focus:border-[#16A34A]"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
+                                                {isJa ? '英語の説明文' : 'Dish Story (English)'}
+                                            </label>
+                                            <textarea
+                                                rows={2}
+                                                value={sigDescEn}
+                                                onChange={(e) => setSigDescEn(e.target.value)}
+                                                className="w-full rounded-[12px] border border-[#DCECE3] bg-white p-3 text-xs text-[#1C2822] font-medium resize-none focus:outline-none focus:border-[#16A34A]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Welcome Perk Inputs (Full-width so nothing gets cut off!) */}
+                                    <div className="rounded-[16px] bg-[#F7FBF8] border border-[#DCECE3] p-4 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-extrabold text-[#15803D]">
+                                                {isJa
+                                                    ? '🎁 画面提示の歓迎特典（ミニドリンクやトッピング1品など）'
+                                                    : '🎁 Show-Screen Welcome Perk'}
+                                            </span>
+                                            <span className="text-[10.5px] font-bold text-[#526358]">
+                                                {isJa ? '来店率が最も上がる設定です' : 'Boosts walk-ins'}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div>
+                                                <label className="block text-[10.5px] font-bold text-[#5A6E62] mb-1">
+                                                    {isJa ? '日本語表記（注文チケットに表示）' : 'Perk (Japanese)'}
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={welcomePerkJa}
                                                     onChange={(e) => setWelcomePerkJa(e.target.value)}
-                                                    placeholder="例: 画面提示でミニ烏龍茶またはトッピング1品サービス"
-                                                    className="h-9 rounded-[10px] border border-[#DCECE3] bg-white px-3 text-xs font-semibold text-[#1C2822]"
+                                                    className="w-full h-9 rounded-[10px] border border-[#DCECE3] bg-white px-3 text-xs font-semibold text-[#1C2822]"
                                                 />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10.5px] font-bold text-[#5A6E62] mb-1">
+                                                    {isJa ? '英語表記（訪日ゲストに表示）' : 'Perk (English)'}
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={welcomePerkEn}
                                                     onChange={(e) => setWelcomePerkEn(e.target.value)}
-                                                    placeholder="e.g. Complimentary mini oolong tea or extra topping"
-                                                    className="h-9 rounded-[10px] border border-[#DCECE3] bg-white px-3 text-xs font-semibold text-[#1C2822]"
+                                                    className="w-full h-9 rounded-[10px] border border-[#DCECE3] bg-white px-3 text-xs font-semibold text-[#1C2822]"
                                                 />
                                             </div>
                                         </div>
+                                    </div>
 
-                                        {/* Bottom Action Bar inside .nani-sheet */}
-                                        <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
-                                            <Link
-                                                href={`/?store=${encodeURIComponent(selectedPlaceId)}`}
-                                                className="h-11 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-[#1C2822] font-bold text-xs sm:text-sm flex items-center gap-2 active:scale-95 transition-all"
-                                            >
-                                                <span>{isJa ? '旅人からの見え方をプレビュー' : 'Preview Traveler Sheet'}</span>
-                                            </Link>
+                                    <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
+                                        <Link
+                                            href={`/?store=${encodeURIComponent(selectedPlaceId)}`}
+                                            className="h-11 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-[#1C2822] font-bold text-xs flex items-center gap-2 active:scale-95 transition-all"
+                                        >
+                                            <span>{isJa ? '実際のマップ画面で確認 ↗' : 'View on Live Map ↗'}</span>
+                                        </Link>
 
-                                            <button
-                                                type="submit"
-                                                disabled={!isVerifiedOwner || isSaving}
-                                                className="h-11 px-5 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_6px_18px_rgba(28,40,34,0.18)] active:scale-95 transition-all disabled:opacity-45"
-                                            >
-                                                <span>
-                                                    {isSaving
-                                                        ? isJa ? '保存中...' : 'Saving...'
-                                                        : isJa ? '看板の一皿＆歓迎特典を保存' : 'Save Dish & Perk'}
-                                                </span>
-                                                <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="20 6 9 17 4 12" />
-                                                </svg>
-                                            </button>
+                                        <button
+                                            type="submit"
+                                            disabled={!isVerifiedOwner || isSaving}
+                                            className="h-11 px-6 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_6px_18px_rgba(28,40,34,0.18)] active:scale-95 transition-all disabled:opacity-45 cursor-pointer"
+                                        >
+                                            <span>
+                                                {isSaving
+                                                    ? isJa ? '保存中...' : 'Saving...'
+                                                    : isJa ? '看板の一皿＆歓迎特典を保存して公開 ✓' : 'Save & Publish ✓'}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* PILLAR 2: Traveler Gochisosama Postcards Inbox (Always visible!) */}
+                            <div className="nani-well">
+                                <div className="px-3.5 py-2 flex items-center justify-between">
+                                    <span className="text-xs font-extrabold text-[#14532D] flex items-center gap-2">
+                                        <span className="size-2 rounded-full bg-[#16A34A]" />
+                                        <span>
+                                            {isJa
+                                                ? `② 旅人から届いた「ごちそうさま絵葉書」（${storeNotes.length}通）`
+                                                : `2. Traveler Gochisosama Postcards (${storeNotes.length})`}
+                                        </span>
+                                    </span>
+                                    <span className="text-[11px] font-bold text-[#15803D]">
+                                        {isJa ? '日本語で返信 → 英語へ自動翻訳' : 'Auto-translated replies'}
+                                    </span>
+                                </div>
+
+                                <div className="nani-sheet p-5 space-y-3">
+                                    {storeNotes.length === 0 ? (
+                                        <div className="rounded-[14px] bg-[#F7FBF8] border border-[#DCECE3] p-5 text-center text-xs text-[#526358]">
+                                            {isJa
+                                                ? 'まだこの店舗宛の絵葉書はありません。マップ画面から絵葉書を送るとここに届きます。'
+                                                : 'No postcards yet for this restaurant.'}
                                         </div>
-                                    </form>
-                                )}
-
-                                {activeTab === 'postcards' && (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h2 className="text-sm font-extrabold text-[#1C2822]">
-                                                {isJa
-                                                    ? `${currentPlace?.name_ja || currentPlace?.name} に届いた「ごちそうさま絵葉書」`
-                                                    : 'Traveler Gochisosama Postcards'}
-                                            </h2>
-                                            <p className="text-xs text-[#526358] mt-0.5">
-                                                {isJa
-                                                    ? '日本語でひとこと返信すると、英語へ自動翻訳されてマップ上の店舗シートに掲載されます。'
-                                                    : 'Reply in Japanese and your message is automatically translated for global travelers.'}
-                                            </p>
-                                        </div>
-
-                                        {storeNotes.length === 0 ? (
-                                            <div className="rounded-[16px] bg-[#F7FBF8] border border-[#DCECE3] p-6 text-center text-xs text-[#526358] font-medium">
-                                                {isJa
-                                                    ? 'まだ絵葉書がありません。マップ画面からテスト送信するとここにリアルタイムで届きます。'
-                                                    : 'No postcards yet for this store.'}
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
-                                                {storeNotes.map((note) => (
-                                                    <div
-                                                        key={note.id}
-                                                        className="rounded-[16px] bg-[#FAF7F0] border border-[#E5DEC9] p-4 space-y-2.5"
-                                                    >
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xs font-extrabold text-[#1C2822]">
-                                                                    {note.stamp_emoji} {note.sender_name} ({note.sender_country})
-                                                                </span>
-                                                                {note.ordered_dishes?.[0] && (
-                                                                    <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#DCECE3] text-[#14532D]">
-                                                                        完食: {note.ordered_dishes[0]}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <span className="text-[10px] font-bold text-[#DC2626] border border-[#DC2626] px-1.5 py-0.5 rounded">
-                                                                御朱印済
+                                    ) : (
+                                        storeNotes.map((note) => (
+                                            <div
+                                                key={note.id}
+                                                className="rounded-[16px] bg-[#FAF7F0] border border-[#E5DEC9] p-4 space-y-2"
+                                            >
+                                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-extrabold text-[#1C2822]">
+                                                            {note.stamp_emoji} {note.sender_name} ({note.sender_country})
+                                                        </span>
+                                                        {note.ordered_dishes?.[0] && (
+                                                            <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#DCECE3] text-[#14532D]">
+                                                                完食: {note.ordered_dishes[0]}
                                                             </span>
-                                                        </div>
-
-                                                        <p className="text-xs font-bold text-[#1C2822]">
-                                                            “{note.message_ja_translated}”
-                                                        </p>
-                                                        <p className="text-[11px] text-[#526358]">
-                                                            Original: “{note.message_original}”
-                                                        </p>
-
-                                                        {note.owner_reply?.text_ja ? (
-                                                            <div className="rounded-[12px] bg-white border border-[#DCECE3] p-2.5 text-xs">
-                                                                <div className="font-extrabold text-[#15803D]">
-                                                                    ✓ シェフからの返信（公開中）:
-                                                                </div>
-                                                                <p className="text-[#1C2822] mt-0.5 font-medium">
-                                                                    {note.owner_reply.text_ja}
-                                                                </p>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center gap-2 pt-1">
-                                                                <input
-                                                                    type="text"
-                                                                    value={replyDrafts[note.id] || ''}
-                                                                    onChange={(e) =>
-                                                                        setReplyDrafts((prev) => ({
-                                                                            ...prev,
-                                                                            [note.id]: e.target.value,
-                                                                        }))
-                                                                    }
-                                                                    placeholder="例: ご来店ありがとうございます！また日本にいらした際はぜひお立ち寄りください。"
-                                                                    className="flex-1 h-9 rounded-[10px] border border-[#DCECE3] bg-white px-3 text-xs"
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleSendReply(note.id)}
-                                                                    disabled={replyingId === note.id}
-                                                                    className="h-9 px-3.5 rounded-full bg-[#1C2822] text-white text-xs font-bold shrink-0 active:scale-95 transition-all"
-                                                                >
-                                                                    {replyingId === note.id ? '送信中...' : '返信する'}
-                                                                </button>
-                                                            </div>
                                                         )}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                                    <span className="text-[10px] font-bold text-[#DC2626] border border-[#DC2626] px-1.5 py-0.5 rounded">
+                                                        完食御朱印済
+                                                    </span>
+                                                </div>
 
-                                {activeTab === 'verify' && (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h2 className="text-sm font-extrabold text-[#1C2822]">
-                                                {isJa
-                                                    ? '3段階のなりすまし防止・公式オーナー本人確認'
-                                                    : '3-Tier Anti-Spoofing Owner Verification'}
-                                            </h2>
-                                            <p className="text-xs text-[#526358] mt-0.5">
-                                                {isJa
-                                                    ? '公式Instagram DM・店舗固定電話・営業許可証照合のいずれかで6桁の認証コードを発行し、第三者のなりすましを防止します。'
-                                                    : 'Prevent unauthorized edits via Official Instagram DM, Store Landline, or Business License OTP.'}
-                                            </p>
-                                        </div>
+                                                <p className="text-xs font-bold text-[#1C2822]">
+                                                    “{note.message_ja_translated}”
+                                                </p>
+                                                <p className="text-[11px] text-[#526358]">
+                                                    Original: “{note.message_original}”
+                                                </p>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                            {[
-                                                {
-                                                    id: 'instagram_official' as const,
-                                                    title: '1. 公式Instagram DM',
-                                                    sub: '公式アカウント宛にコード送信',
-                                                },
-                                                {
-                                                    id: 'phone_otp' as const,
-                                                    title: '2. 店舗の固定電話',
-                                                    sub: '登録電話番号で音声確認',
-                                                },
-                                                {
-                                                    id: 'business_license' as const,
-                                                    title: '3. 飲食店営業許可番号',
-                                                    sub: '許可証または公式ドメイン照合',
-                                                },
-                                            ].map((m) => (
-                                                <button
-                                                    key={m.id}
-                                                    type="button"
-                                                    onClick={() => setVerifyMethod(m.id)}
-                                                    className={`p-3 rounded-[13px] border text-left transition-all active:scale-95 ${
-                                                        verifyMethod === m.id
-                                                            ? 'border-[#16A34A] bg-[#F2F9F5]'
-                                                            : 'border-[#DCECE3] bg-white'
-                                                    }`}
-                                                >
-                                                    <div className="text-xs font-extrabold text-[#1C2822]">
-                                                        {m.title}
+                                                {note.owner_reply?.text_ja ? (
+                                                    <div className="rounded-[12px] bg-white border border-[#DCECE3] p-3 text-xs">
+                                                        <div className="font-extrabold text-[#15803D]">
+                                                            ✓ シェフからの直筆返信（マップ上で公開中）:
+                                                        </div>
+                                                        <p className="text-[#1C2822] mt-0.5 font-medium">
+                                                            {note.owner_reply.text_ja}
+                                                        </p>
                                                     </div>
-                                                    <div className="text-[10.5px] text-[#526358] mt-0.5">
-                                                        {m.sub}
+                                                ) : (
+                                                    <div className="flex items-center gap-2 pt-1">
+                                                        <input
+                                                            type="text"
+                                                            value={replyDrafts[note.id] || ''}
+                                                            onChange={(e) =>
+                                                                setReplyDrafts((prev) => ({
+                                                                    ...prev,
+                                                                    [note.id]: e.target.value,
+                                                                }))
+                                                            }
+                                                            placeholder="例: ご来店ありがとうございます！また日本へお越しの際はぜひお立ち寄りください。"
+                                                            className="flex-1 h-9 rounded-[10px] border border-[#DCECE3] bg-white px-3 text-xs"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSendReply(note.id)}
+                                                            disabled={replyingId === note.id}
+                                                            className="h-9 px-4 rounded-full bg-[#16A34A] text-white text-xs font-bold shrink-0 active:scale-95 transition-all cursor-pointer"
+                                                        >
+                                                            {replyingId === note.id ? '送信中...' : '返信を公開'}
+                                                        </button>
                                                     </div>
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
-                                                    {isJa ? '確認先アカウント / 電話番号' : 'Official Handle / Phone'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={verifyIdentifier}
-                                                    onChange={(e) => setVerifyIdentifier(e.target.value)}
-                                                    className="w-full h-9 rounded-[11px] border border-[#DCECE3] bg-[#F7FBF8] px-3 text-xs font-bold text-[#1C2822]"
-                                                />
+                                                )}
                                             </div>
-                                            <div>
-                                                <label className="block text-[11px] font-bold text-[#5A6E62] mb-1">
-                                                    {isJa ? '責任者・シェフ名' : 'Owner / Chef Name'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={verifyOwnerName}
-                                                    onChange={(e) => setVerifyOwnerName(e.target.value)}
-                                                    className="w-full h-9 rounded-[11px] border border-[#DCECE3] bg-[#F7FBF8] px-3 text-xs font-bold text-[#1C2822]"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {verifyError && (
-                                            <div className="text-xs font-bold text-red-600">
-                                                {verifyError}
-                                            </div>
-                                        )}
-
-                                        <div className="pt-1 flex flex-wrap items-center justify-between gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={handleRequestOtp}
-                                                disabled={isVerifying}
-                                                className="h-10 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-xs font-bold text-[#1C2822] active:scale-95 transition-all"
-                                            >
-                                                {isJa
-                                                    ? '6桁の本人確認コードを発行'
-                                                    : 'Issue 6-Digit OTP Code'}
-                                            </button>
-
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="text"
-                                                    value={otpInput}
-                                                    onChange={(e) => setOtpInput(e.target.value)}
-                                                    placeholder="6桁コード"
-                                                    className="w-28 h-10 rounded-full border border-[#DCECE3] bg-[#F7FBF8] px-3.5 text-center font-mono text-xs font-extrabold text-[#1C2822]"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleConfirmOtp}
-                                                    disabled={!otpInput || isVerifying}
-                                                    className="h-10 px-5 rounded-full bg-[#16A34A] text-white text-xs font-bold active:scale-95 transition-all disabled:opacity-45"
-                                                >
-                                                    {isJa ? '認証してロック解除' : 'Verify & Unlock'}
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {issuedOtpDemo && (
-                                            <div className="rounded-[12px] bg-[#F2F9F5] border border-[#C5DDD0] px-3.5 py-2 text-xs font-bold text-[#14532D]">
-                                                デモ用即時通知: 発行されたコード「{issuedOtpDemo}」を自動入力しました。「認証してロック解除」を押すと即座に完了します。
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* SUB-ACTIONS: 2-Column Dashed Cards */}
-                        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {/* RIGHT COLUMN: Sticky Real-Time Traveler iPhone Preview + Table QR Print */}
+                        <div className="space-y-4 lg:sticky lg:top-6">
+                            <div className="rounded-[28px] bg-[#1C2822] p-3.5 text-white shadow-[0_16px_40px_rgba(20,40,30,0.18)]">
+                                <div className="flex items-center justify-between px-2 pb-2.5">
+                                    <span className="text-[11px] font-extrabold text-[#86EFAC] flex items-center gap-1.5">
+                                        <span className="size-2 rounded-full bg-[#22C55E]" />
+                                        <span>
+                                            {isJa
+                                                ? '訪日客のスマホ画面（リアルタイムプレビュー）'
+                                                : 'Live Traveler iPhone Preview'}
+                                        </span>
+                                    </span>
+                                    <span className="text-[10px] font-bold text-white/60">
+                                        EN / 日本語
+                                    </span>
+                                </div>
+
+                                {/* Simulated iPhone Screen */}
+                                <div className="rounded-[20px] bg-white text-[#1C2822] p-4 space-y-3.5">
+                                    {/* Store Header */}
+                                    <div className="border-b border-[#EDF5F0] pb-2.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-extrabold text-[#1C2822] truncate">
+                                                {currentPlace?.name}
+                                            </span>
+                                            <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full bg-[#EEF7F2] text-[#15803D] shrink-0">
+                                                ✓ Verified
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-[#526358] font-medium">
+                                            {currentPlace?.area_en || currentPlace?.area} •{' '}
+                                            {currentPlace?.genre_en || currentPlace?.genre}
+                                        </p>
+                                    </div>
+
+                                    {/* Live Signature Dish Card for Tourists */}
+                                    <div className="rounded-[15px] bg-[#F7FBF8] border border-[#DCECE3] p-3 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-extrabold text-[#15803D]">
+                                                👑 CHEF&apos;S SIGNATURE DISH
+                                            </span>
+                                            <span className="text-xs font-extrabold text-[#1C2822] bg-white px-2 py-0.5 rounded-full border border-[#DCECE3]">
+                                                ¥{Number(sigPrice || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-extrabold text-[#1C2822] leading-snug">
+                                                {sigNameEn || "Chef's Signature Vegan Dish"}
+                                            </p>
+                                            <p className="text-[11px] font-bold text-[#15803D]">
+                                                {sigNameJa}
+                                            </p>
+                                            <p className="text-[11px] text-[#526358] mt-1 line-clamp-2">
+                                                {sigDescEn || sigDescJa}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-[11px] bg-[#EEF7F2] border border-[#C5DDD0] p-2.5">
+                                            <span className="block text-[9.5px] font-extrabold text-[#15803D]">
+                                                🎁 FREE WELCOME PERK
+                                            </span>
+                                            <p className="text-[11px] font-bold text-[#1C2822] mt-0.5 leading-snug">
+                                                {welcomePerkEn || welcomePerkJa}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Simulated Staff Order Ticket Preview */}
+                                    <div className="rounded-[15px] bg-[#FAF7F0] border-2 border-[#1C2822] p-3 space-y-1.5">
+                                        <span className="text-[9.5px] font-extrabold text-[#15803D]">
+                                            🗣️ 店員さんに提示される日本語注文票
+                                        </span>
+                                        <p className="text-xs font-black text-[#1C2822]">
+                                            「{sigNameJa || '看板メニュー'}」をお願いします
+                                        </p>
+                                        <p className="text-[10.5px] font-bold text-[#526358]">
+                                            特典: {welcomePerkJa}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Printable Table QR Stand Card */}
                             <button
                                 type="button"
                                 onClick={() => window.print()}
-                                className="nani-dashed p-4 text-left flex items-center justify-between gap-3 group"
+                                className="w-full nani-dashed p-4 text-left flex items-center justify-between gap-3 bg-white/80 hover:bg-white cursor-pointer"
                             >
                                 <div className="flex items-start gap-3">
-                                    <div className="size-9 rounded-[11px] bg-white border border-[#DCECE3] text-[#16A34A] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                                    <div className="size-9 rounded-[11px] bg-[#EEF7F2] text-[#16A34A] flex items-center justify-center shrink-0 mt-0.5">
                                         <svg className="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                                             <polyline points="6 9 6 2 18 2 18 9" />
                                             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
@@ -818,108 +836,25 @@ export default function PartnerPortalPage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <div className="text-xs sm:text-[13.5px] font-extrabold text-[#1C2822]">
-                                            {isJa ? '卓上用「完食御朱印ポップ」を印刷' : 'Print Table Stamp Stand'}
+                                        <div className="text-xs font-extrabold text-[#1C2822]">
+                                            {isJa
+                                                ? '卓上用「完食御朱印＆絵葉書QRポップ」を印刷'
+                                                : 'Print Tabletop Stamp & Postcard QR Stand'}
                                         </div>
                                         <p className="text-[11px] text-[#526358] mt-0.5 font-medium">
                                             {isJa
-                                                ? '食後のゲストがQRから絵葉書とストーリーズを投稿'
-                                                : 'Let diners collect their stamp & share to Instagram'}
+                                                ? '食後のゲストがQRから御朱印を集めてInstagram拡散'
+                                                : 'Let diners scan after eating to collect your stamp'}
                                         </p>
                                     </div>
                                 </div>
-                                <span className="text-[11px] font-bold text-[#15803D] shrink-0">
+                                <span className="text-xs font-bold text-[#15803D] shrink-0">
                                     {isJa ? '印刷 →' : 'Print →'}
                                 </span>
                             </button>
-
-                            <Link
-                                href="/growth"
-                                className="nani-dashed p-4 text-left flex items-center justify-between gap-3 group"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="size-9 rounded-[11px] bg-white border border-[#DCECE3] text-[#16A34A] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
-                                        <svg className="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-                                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs sm:text-[13.5px] font-extrabold text-[#1C2822]">
-                                            {isJa ? 'Instagram用 9:16 宣伝カードを作成' : 'Create 9:16 Instagram Story'}
-                                        </div>
-                                        <p className="text-[11px] text-[#526358] mt-0.5 font-medium">
-                                            {isJa
-                                                ? '自店の看板メニュー紹介画像を1タップで生成'
-                                                : 'Generate a vertical story card for your restaurant'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className="text-[11px] font-bold text-[#15803D] shrink-0">
-                                    {isJa ? '作成 →' : 'Create →'}
-                                </span>
-                            </Link>
                         </div>
                     </div>
                 </main>
-
-                {/* WAVE DIVIDER + CLEAN SHOWCASE */}
-                <div className="nani-wave-bottom h-6 w-full" />
-
-                <section className="bg-[#F7FBF8] pt-14 pb-20 px-4 sm:px-6 border-t border-[#E2EFE8]">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="text-center max-w-xl mx-auto mb-10">
-                            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1C2822] leading-snug">
-                                {isJa ? (
-                                    <>
-                                        お店の負担はゼロ。
-                                        <span className="nani-highlight mx-1">旅の思い出と集客</span>
-                                        だけに集中
-                                    </>
-                                ) : (
-                                    <>
-                                        Zero Commission. Built for{' '}
-                                        <span className="nani-highlight mx-1">Hospitality & Joy</span>
-                                    </>
-                                )}
-                            </h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="nani-frame bg-[#EEF7F2] p-5">
-                                <span className="inline-block text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#DCECE3] text-[#15803D] mb-2">
-                                    PILLAR 01 · SIGNATURE DISH
-                                </span>
-                                <h3 className="text-base font-extrabold text-[#1C2822]">
-                                    {isJa
-                                        ? '細かい成分チェックより「シェフの看板の一皿」'
-                                        : "Highlight Your Chef's Signature Dish"}
-                                </h3>
-                                <p className="text-xs text-[#526358] mt-1.5 leading-relaxed font-medium">
-                                    {isJa
-                                        ? '複雑なアンケートは一切不要。お店が一番食べてほしい1皿と歓迎特典を登録するだけで、6言語の指差し注文票が自動生成されます。'
-                                        : 'Register your best dish and welcome perk once—automatically translated into 6 languages with a point-and-order ticket.'}
-                                </p>
-                            </div>
-
-                            <div className="nani-frame bg-[#EEF7F2] p-5">
-                                <span className="inline-block text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#DCECE3] text-[#15803D] mb-2">
-                                    PILLAR 02 · GOCHISOSAMA POSTCARD
-                                </span>
-                                <h3 className="text-base font-extrabold text-[#1C2822]">
-                                    {isJa
-                                        ? '食後の「完食御朱印」が世界中の口コミに変わる'
-                                        : 'Turn Every Meal Into a Collectible Stamp'}
-                                </h3>
-                                <p className="text-xs text-[#526358] mt-1.5 leading-relaxed font-medium">
-                                    {isJa
-                                        ? '旅人が食後にデジタル御朱印を集めて絵葉書を送信。シェフからの温かい返信が次の訪日客の来店動機になります。'
-                                        : 'Diners collect your restaurant stamp and send a thank-you postcard that inspires the next traveler.'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
             </div>
         </div>
     );

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts, StoreOfficialData } from '@/lib/types';
+import type { SupportedLanguage } from '@/lib/i18n';
 import { getEffectiveVerifiedMenu, getEffectiveWelcomePerk } from '@/lib/kitchen-defaults';
 import { addTripStamp, TripStampRecord } from '@/lib/trip-stamps';
 import { downloadInstagramStoryCardPng } from '@/lib/story-card-generator';
@@ -20,7 +21,7 @@ const STAMPS = [
   {
     id: 'hospitality' as const,
     emoji: '🌸',
-    titleEn: 'Best Memory & Warm Hospitality',
+    titleEn: 'Warm Hospitality & Best Memory',
     titleJa: '最高の旅の思い出＆おもてなし',
     descEn: 'The chef and staff made us feel so welcome in Japan.',
     descJa: 'シェフとスタッフの温かい笑顔で、日本がもっと好きになりました。',
@@ -41,16 +42,17 @@ const POPULAR_COUNTRIES = [
   'United Kingdom 🇬🇧',
   'France 🇫🇷',
   'Taiwan 🇹🇼',
+  'South Korea 🇰🇷',
+  'Spain 🇪🇸',
   'Germany 🇩🇪',
   'Canada 🇨🇦',
-  'Singapore 🇸🇬',
   'Japan 🇯🇵',
-  'Global 🌏',
 ];
 
 interface GratitudeModalProps {
   isOpen: boolean;
   place: PlaceWithPosts;
+  currentLang?: SupportedLanguage;
   officialStoreData?: StoreOfficialData | null;
   preselectedDishes?: string[];
   initialMode?: 'gratitude' | 'update';
@@ -61,15 +63,19 @@ interface GratitudeModalProps {
 export default function GratitudeModal({
   isOpen,
   place,
+  currentLang = 'en',
   officialStoreData,
   preselectedDishes = [],
   onClose,
   onSuccessRefresh,
 }: GratitudeModalProps) {
+  const isJa = currentLang === 'ja';
   const [selectedStamp, setSelectedStamp] =
     useState<typeof STAMPS[number]['id']>('delicious');
   const [senderName, setSenderName] = useState('');
-  const [senderCountry, setSenderCountry] = useState('Australia 🇦🇺');
+  const [senderCountry, setSenderCountry] = useState(
+    isJa ? 'Japan 🇯🇵' : 'Australia 🇦🇺'
+  );
   const [customNote, setCustomNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [issuedStamp, setIssuedStamp] = useState<TripStampRecord | null>(null);
@@ -84,14 +90,20 @@ export default function GratitudeModal({
     [place, officialStoreData]
   );
 
-  const signatureDish = verifiedMenu[0]?.name_ja || preselectedDishes[0] || 'シェフの看板メニュー';
+  const signatureDishJa =
+    verifiedMenu[0]?.name_ja || preselectedDishes[0] || 'シェフの看板メニュー';
+  const signatureDishDisplay = isJa
+    ? signatureDishJa
+    : verifiedMenu[0]?.name_en || signatureDishJa;
+
   const igHandle = place.instagram_id
     ? `@${place.instagram_id}`
     : `@${place.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
   if (!isOpen) return null;
 
-  const currentStampObj = STAMPS.find((s) => s.id === selectedStamp) || STAMPS[0];
+  const currentStampObj =
+    STAMPS.find((s) => s.id === selectedStamp) || STAMPS[0];
 
   const handleSendGratitude = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,8 +123,10 @@ export default function GratitudeModal({
           stamp_title_ja: currentStampObj.titleJa,
           sender_name: senderName.trim() || 'Traveler',
           sender_country: senderCountry,
-          message_original: customNote.trim() || `${currentStampObj.titleEn} (${signatureDish})`,
-          ordered_dishes: [signatureDish],
+          message_original:
+            customNote.trim() ||
+            `${isJa ? currentStampObj.descJa : currentStampObj.descEn} (${signatureDishDisplay})`,
+          ordered_dishes: [signatureDishJa],
         }),
       });
 
@@ -121,23 +135,30 @@ export default function GratitudeModal({
         window.dispatchEvent(new CustomEvent('vegan_jp_ecosystem_updated'));
         onSuccessRefresh?.();
       }
-    } catch (err) {
-      console.error('Failed to send gratitude note:', err);
+    } catch {
+      // Offline / local fallback
     } finally {
       const stampRec = addTripStamp({
         place_id: place.google_place_id,
-        place_name: place.name,
-        area: place.area || 'Japan',
-        signature_dish: signatureDish,
+        place_name: isJa ? place.name_ja || place.name : place.name,
+        area: isJa ? place.area || 'Japan' : place.area_en || place.area || 'Japan',
+        signature_dish: signatureDishDisplay,
         stamp_emoji: currentStampObj.emoji,
         stamp_title_ja: currentStampObj.titleJa,
         stamp_title_en: currentStampObj.titleEn,
-        message: customNote.trim() || currentStampObj.descJa,
+        message:
+          customNote.trim() ||
+          (isJa ? currentStampObj.descJa : currentStampObj.descEn),
         sender_name: senderName.trim() || 'Traveler',
       });
       setIssuedStamp(stampRec);
       setIsSubmitting(false);
-      showToast('💮 旅の美食御朱印スタンプ＆絵葉書が発行されました！', '💮');
+      showToast(
+        isJa
+          ? '💮 完食御朱印スタンプ＆絵葉書が発行されました！'
+          : '💮 Culinary Stamp Collected & Postcard Sent to Chef!',
+        '💮'
+      );
     }
   };
 
@@ -146,7 +167,7 @@ export default function GratitudeModal({
     await downloadInstagramStoryCardPng({
       storeName: place.name_ja || place.name,
       area: place.area || 'Japan',
-      signatureDish,
+      signatureDish: `${signatureDishJa}`,
       welcomePerk: welcomePerk.ja,
       quote: issuedStamp.message,
       senderName: `${issuedStamp.sender_name} (${senderCountry})`,
@@ -155,162 +176,177 @@ export default function GratitudeModal({
     });
     try {
       await navigator.clipboard.writeText(
-        `💮 ごちそうさまでした！ ${igHandle} @vegan.jp\n👑 看板の一皿: ${signatureDish}\n#VeganJP #JapanVegan`
+        `💮 ごちそうさまでした！ ${igHandle} @vegan.jp\n🍽️ ${signatureDishDisplay}\nhttps://vegan.jp/?store=${encodeURIComponent(place.google_place_id)}\n#VeganJapan #TokyoVegan`
       );
     } catch {}
-    showToast('📸 Instagramストーリーズ用画像を保存＆メンション文をコピーしました！', '📸');
+    showToast(
+      isJa
+        ? '📸 9:16 ストーリーズ画像を保存＆紹介文をコピーしました！'
+        : '📸 Saved 9:16 Story PNG & Copied Mention Caption!',
+      '📸'
+    );
   };
 
   const handleSharePostcard = async () => {
-    const shareUrl = `${window.location.origin}/?store=${encodeURIComponent(place.google_place_id)}`;
-    const shareText = `💮 ごちそうさまでした！ @ ${place.name} (${place.area || 'Japan'}) ${igHandle} @vegan.jp\n🍽️ 看板の一皿: ${signatureDish}\n"${customNote.trim() || currentStampObj.titleEn}"\n#VeganJP`;
+    const shareUrl = `${window.location.origin}/?store=${encodeURIComponent(
+      place.google_place_id
+    )}`;
+    const shareText = `💮 ごちそうさまでした！ @ ${place.name} ${igHandle} @vegan.jp\n🍽️ ${signatureDishDisplay}\n"${
+      customNote.trim() || (isJa ? currentStampObj.titleJa : currentStampObj.titleEn)
+    }"`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `${place.name} — Vegan.jp`, text: shareText, url: shareUrl });
+        await navigator.share({
+          title: `${place.name} — Vegan.jp`,
+          text: shareText,
+          url: shareUrl,
+        });
       } else {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-        showToast('絵葉書リンク＆店舗メンションをコピーしました！📲', '✨');
+        showToast(
+          isJa
+            ? '絵葉書リンク＆メンション文をコピーしました！'
+            : 'Copied Postcard Link & Mention!',
+          '✨'
+        );
       }
-    } catch {
-      showToast('絵葉書リンクをコピーしました！📲', '✨');
-    }
+    } catch {}
   };
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
+        className="fixed inset-0 z-[60] bg-[#1C2822]/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-black/[0.08] overflow-hidden flex flex-col max-h-[92vh]"
+          className="relative w-full max-w-lg nani-well overflow-hidden flex flex-col max-h-[92vh]"
           initial={{ scale: 0.95, opacity: 0, y: 16 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 16 }}
           transition={{ type: 'spring', stiffness: 420, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="p-4 sm:p-5 border-b border-amber-100 flex items-center justify-between bg-gradient-to-r from-amber-50 via-orange-50/60 to-rose-50 shrink-0">
-            <div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 bg-white border border-rose-200 px-2.5 py-0.5 rounded-full shadow-2xs">
-                  💮 ごちそうさま絵葉書 ＆ 旅の御朱印スタンプ
-                </span>
-              </div>
-              <h3 className="text-base font-black text-slate-900 leading-tight truncate max-w-[300px] sm:max-w-md">
-                {place.name}
-              </h3>
-            </div>
+          {/* Top Well Bar */}
+          <div className="px-3.5 py-2 flex items-center justify-between">
+            <span className="text-xs font-extrabold text-[#14532D] flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-[#16A34A]" />
+              <span>
+                {isJa
+                  ? '完食御朱印 ＆ ごちそうさま絵葉書'
+                  : 'Collect Culinary Stamp & Send Postcard'}
+              </span>
+            </span>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-600 flex items-center justify-center cursor-pointer transition-colors border border-slate-200"
+              className="size-7 rounded-full bg-white/80 hover:bg-white text-[#1C2822] flex items-center justify-center text-xs font-bold cursor-pointer"
             >
               ✕
             </button>
           </div>
 
-          {/* Body */}
-          <div className="p-5 overflow-y-auto space-y-4">
+          {/* Inner White Sheet */}
+          <div className="nani-sheet p-5 overflow-y-auto space-y-4">
             {issuedStamp ? (
-              /* ─── Commemorative Japanese Culinary Postcard & Goshuin Stamp View ─── */
               <motion.div
-                initial={{ opacity: 0, scale: 0.92 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="space-y-3.5"
+                className="space-y-4"
               >
-                <div className="relative rounded-3xl bg-[#FCF9F2] border-2 border-amber-300/90 p-5 shadow-lg overflow-hidden">
-                  {/* Traditional Japanese Vermilion Seal (Goshuin Hanko) */}
+                {/* Authentic Japanese Washi Postcard with Vermilion Stamp */}
+                <div className="relative rounded-[22px] bg-[#FAF7F0] border-2 border-[#1C2822] p-5 shadow-md overflow-hidden">
                   <motion.div
-                    initial={{ scale: 2.2, opacity: 0, rotate: -25 }}
-                    animate={{ scale: 1, opacity: 1, rotate: -10 }}
+                    initial={{ scale: 2, opacity: 0, rotate: -20 }}
+                    animate={{ scale: 1, opacity: 1, rotate: -8 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                    className="absolute top-4 right-4 w-24 h-24 rounded-full border-4 border-rose-600/85 bg-rose-50/90 flex flex-col items-center justify-center text-rose-700 shadow-md select-none"
+                    className="absolute top-4 right-4 size-20 rounded-full border-[3px] border-[#DC2626] bg-white/90 flex flex-col items-center justify-center text-[#DC2626] shadow-xs select-none"
                   >
-                    <span className="text-[9px] font-black tracking-widest uppercase">VEGAN.JP</span>
-                    <span className="text-sm font-black leading-tight my-0.5">完食御朱印</span>
-                    <span className="text-[9px] font-bold">{new Date().toLocaleDateString('ja-JP')}</span>
+                    <span className="text-[8px] font-black tracking-widest uppercase">
+                      VEGAN.JP
+                    </span>
+                    <span className="text-xs font-black leading-tight my-0.5">
+                      完食御朱印
+                    </span>
+                    <span className="text-[8px] font-bold">
+                      {new Date().toLocaleDateString('ja-JP')}
+                    </span>
                   </motion.div>
 
-                  <div className="pr-24">
-                    <span className="inline-block text-[10px] font-black uppercase tracking-widest text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-md mb-1.5">
-                      JAPAN CULINARY MEMORY POSTCARD • #{issuedStamp.seal_code}
+                  <div className="pr-22">
+                    <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider text-[#15803D] bg-[#EEF7F2] px-2.5 py-0.5 rounded-full mb-1">
+                      STAMP #{issuedStamp.seal_code}
                     </span>
-                    <h4 className="text-lg font-black text-slate-900 leading-snug">
+                    <h4 className="text-base sm:text-lg font-extrabold text-[#1C2822] leading-snug">
                       {issuedStamp.place_name}
                     </h4>
-                    <p className="text-xs font-bold text-amber-800 mt-0.5">
-                      📍 {issuedStamp.area} • 📸 {igHandle}
+                    <p className="text-xs font-bold text-[#526358] mt-0.5">
+                      {issuedStamp.area} • {igHandle}
                     </p>
                   </div>
 
-                  <div className="mt-4 p-3 rounded-2xl bg-white/90 border border-amber-200/80">
-                    <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 mb-0.5">
-                      🍽️ 味わった看板の一皿 / Signature Dish
+                  <div className="mt-3.5 p-3 rounded-[14px] bg-white border border-[#E5DEC9]">
+                    <p className="text-[10px] font-extrabold text-[#15803D]">
+                      {isJa ? '完食した看板の一皿' : 'Signature Dish Enjoyed'}
                     </p>
-                    <p className="text-xs font-black text-slate-900">
+                    <p className="text-xs font-bold text-[#1C2822] mt-0.5">
                       {issuedStamp.signature_dish}
                     </p>
                   </div>
 
-                  <div className="mt-3 p-3.5 rounded-2xl bg-rose-50/60 border border-rose-200/70">
-                    <p className="text-xs font-bold text-rose-950 leading-relaxed">
-                      {issuedStamp.stamp_emoji} &ldquo;{issuedStamp.message}&rdquo;
+                  <div className="mt-3 pt-3 border-t border-dashed border-[#D5CCB4]">
+                    <p className="text-xs text-[#1C2822] font-medium leading-relaxed">
+                      &ldquo;{issuedStamp.message}&rdquo;
                     </p>
-                    <p className="text-[11px] font-bold text-slate-500 mt-1.5 text-right">
+                    <p className="text-[11px] font-bold text-[#526358] mt-1.5 text-right">
                       — {issuedStamp.sender_name} ({senderCountry})
                     </p>
                   </div>
-
-                  <div className="mt-3 pt-2.5 border-t border-amber-200/70 flex items-center justify-between text-[11px] text-amber-900 font-bold">
-                    <span>✓ シェフへ「ごちそうさま」送信済</span>
-                    <span>✓ 旅の御朱印帳に保存済</span>
-                  </div>
                 </div>
 
-                {/* Primary Viral Action: 9:16 Instagram Story PNG Download */}
-                <button
-                  onClick={handleDownloadStoryCard}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-rose-600 to-amber-500 hover:opacity-95 text-white font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
-                >
-                  <span>📸</span>
-                  <span>Instagramストーリーズ用カード画像を保存（{igHandle} メンション自動コピー）</span>
-                </button>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
                   <button
+                    type="button"
                     onClick={handleSharePostcard}
-                    className="w-full py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+                    className="h-11 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-[#1C2822] font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                   >
-                    <span>📲</span>
-                    <span>絵葉書リンクを友達にシェア</span>
+                    <span>
+                      {isJa ? 'リンク＆メンションをコピー' : 'Copy Link & Mention'}
+                    </span>
                   </button>
+
                   <button
-                    onClick={onClose}
-                    className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+                    type="button"
+                    onClick={handleDownloadStoryCard}
+                    className="h-11 px-5 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-bold text-xs flex items-center gap-2 shadow-[0_6px_18px_rgba(28,40,34,0.18)] active:scale-95 transition-all cursor-pointer"
                   >
-                    <span>💮</span>
-                    <span>御朱印帳に保存して閉じる</span>
+                    <span>
+                      {isJa
+                        ? 'Instagramストーリーズ画像 (9:16) を保存 ↓'
+                        : 'Save 9:16 Instagram Story PNG ↓'}
+                    </span>
                   </button>
                 </div>
               </motion.div>
             ) : (
-              /* ─── Simple 10-Second Gochisosama Form ─── */
               <form onSubmit={handleSendGratitude} className="space-y-4">
-                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center gap-3">
-                  <span className="text-2xl shrink-0">💮</span>
-                  <p className="text-xs text-amber-950 font-semibold leading-relaxed">
-                    シェフに「ごちそうさま！」を送ると、あなたの<b>『旅の美食御朱印帳』に記念スタンプと絵葉書</b>が刻まれ、シェフから直筆返信が届きます！
+                <div>
+                  <h3 className="text-base font-extrabold text-[#1C2822]">
+                    {isJa ? place.name_ja || place.name : place.name}
+                  </h3>
+                  <p className="text-xs text-[#526358] mt-0.5 font-medium">
+                    {isJa
+                      ? '感謝の絵葉書をシェフへ届けると、このお店だけの「完食御朱印」と9:16ストーリーズ画像が発行されます。'
+                      : 'Your message is automatically translated into Japanese for the chef, unlocking your restaurant stamp & 9:16 Story card.'}
                   </p>
                 </div>
 
-                {/* 1. Choose Stamp Mood */}
-                <div>
-                  <label className="block text-xs font-black text-slate-800 mb-2">
-                    1. 今日の感動スタンプを選択 / Choose Your Stamp
+                {/* 1. Choose Stamp */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-[#526358]">
+                    {isJa ? '1. 今日のスタンプを選ぶ' : '1. Choose Your Stamp'}
                   </label>
                   <div className="grid grid-cols-1 gap-2">
                     {STAMPS.map((s) => {
@@ -320,18 +356,20 @@ export default function GratitudeModal({
                           key={s.id}
                           type="button"
                           onClick={() => setSelectedStamp(s.id)}
-                          className={`text-left p-3 rounded-2xl border transition-all flex items-center gap-3 cursor-pointer ${
+                          className={`p-3 rounded-[14px] border text-left flex items-center gap-3 transition-all active:scale-98 cursor-pointer ${
                             active
-                              ? 'bg-rose-50/90 border-rose-400 ring-2 ring-rose-500/20 shadow-xs'
-                              : 'bg-slate-50/70 border-slate-200 hover:bg-slate-100'
+                              ? 'border-[#16A34A] bg-[#F2F9F5]'
+                              : 'border-[#DCECE3] bg-white hover:bg-[#F7FBF8]'
                           }`}
                         >
-                          <span className="text-2xl shrink-0">{s.emoji}</span>
-                          <div>
-                            <p className="text-xs font-black text-slate-900">
-                              {s.titleJa} <span className="text-slate-500 font-semibold">/ {s.titleEn}</span>
+                          <span className="text-xl shrink-0">{s.emoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-extrabold text-[#1C2822]">
+                              {isJa ? s.titleJa : s.titleEn}
                             </p>
-                            <p className="text-[11px] text-slate-600 mt-0.5">{s.descJa}</p>
+                            <p className="text-[11px] text-[#526358] truncate">
+                              {isJa ? s.descJa : s.descEn}
+                            </p>
                           </div>
                         </button>
                       );
@@ -339,42 +377,28 @@ export default function GratitudeModal({
                   </div>
                 </div>
 
-                {/* 2. Short Message */}
-                <div>
-                  <label className="block text-xs font-black text-slate-800 mb-1.5">
-                    2. シェフへの一言メッセージ（英語・日本語どちらもOK）
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={customNote}
-                    onChange={(e) => setCustomNote(e.target.value)}
-                    placeholder="例: 看板メニューの濃厚な味わいに感動しました！最高の旅の思い出をありがとう！ / Best dish of my Japan trip!"
-                    className="w-full rounded-2xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-rose-500"
-                  />
-                </div>
-
-                {/* 3. Name & Country */}
-                <div className="grid grid-cols-2 gap-2.5">
+                {/* 2. Name & Country */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      お名前 / Nickname
+                    <label className="block text-[11px] font-bold text-[#526358] mb-1">
+                      {isJa ? 'お名前 / ニックネーム' : 'Your Name'}
                     </label>
                     <input
                       type="text"
                       value={senderName}
                       onChange={(e) => setSenderName(e.target.value)}
-                      placeholder="Alex / 旅人"
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900"
+                      placeholder={isJa ? '例: Maya' : 'e.g. Maya'}
+                      className="w-full h-10 px-3 rounded-[12px] bg-[#F7FBF8] border border-[#DCECE3] text-xs font-bold text-[#1C2822] outline-none focus:border-[#16A34A]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      国・地域 / From
+                    <label className="block text-[11px] font-bold text-[#526358] mb-1">
+                      {isJa ? '国・地域' : 'From Country'}
                     </label>
                     <select
                       value={senderCountry}
                       onChange={(e) => setSenderCountry(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 bg-white"
+                      className="w-full h-10 px-3 rounded-[12px] bg-[#F7FBF8] border border-[#DCECE3] text-xs font-bold text-[#1C2822] outline-none focus:border-[#16A34A]"
                     >
                       {POPULAR_COUNTRIES.map((c) => (
                         <option key={c} value={c}>
@@ -385,18 +409,44 @@ export default function GratitudeModal({
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-sm shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>💮</span>
-                  <span>
+                {/* 3. Short Message */}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#526358] mb-1">
+                    {isJa
+                      ? 'シェフへのひとこと（任意）'
+                      : 'Message to the Chef (Auto-translated to Japanese)'}
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={customNote}
+                    onChange={(e) => setCustomNote(e.target.value)}
+                    placeholder={
+                      isJa
+                        ? '例: 最高に美味しかったです！また必ず来ます！'
+                        : 'e.g. Best vegan meal in Tokyo! Arigato gozaimasu!'
+                    }
+                    className="w-full p-3 rounded-[12px] bg-[#F7FBF8] border border-[#DCECE3] text-xs font-medium text-[#1C2822] outline-none focus:border-[#16A34A] resize-none"
+                  />
+                </div>
+
+                <div className="pt-1 flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="h-10 px-4 rounded-full border border-[#DCECE3] text-xs font-bold text-[#526358] hover:text-[#1C2822]"
+                  >
+                    {isJa ? 'キャンセル' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="h-11 px-5 rounded-full bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm shadow-[0_6px_18px_rgba(22,163,74,0.25)] active:scale-95 transition-all cursor-pointer"
+                  >
                     {isSubmitting
-                      ? '御朱印スタンプ発行中...'
-                      : 'ごちそうさまを送って「御朱印スタンプ」を押す'}
-                  </span>
-                </button>
+                      ? isJa ? '御朱印を発行中...' : 'Stamping...'
+                      : isJa ? '💮 ごちそうさま絵葉書を送って御朱印を押す' : '💮 Send Postcard & Collect Stamp'}
+                  </button>
+                </div>
               </form>
             )}
           </div>

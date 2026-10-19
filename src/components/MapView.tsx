@@ -531,14 +531,16 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
 
       {/* ─── Floating Two-Layer Search & City/Cuisine Tray (nani.now Squircle Well) ─── */}
       <motion.div
-        className="absolute top-15 inset-x-0 z-20 pointer-events-none flex flex-col items-center px-3 max-w-xl mx-auto"
+        className={`absolute top-16 right-0 z-20 pointer-events-none flex flex-col items-center px-3 transition-all duration-300 ${
+          selectedPlace ? 'left-0 md:left-[454px]' : 'inset-x-0'
+        }`}
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.12 }}
       >
         <div
           ref={searchContainerRef}
-          className="pointer-events-auto relative w-full rounded-[22px] bg-[#DCECE3]/90 backdrop-blur-xl p-1.5 border border-white/80 shadow-[0_10px_28px_rgba(20,40,30,0.1)]"
+          className="pointer-events-auto relative w-full max-w-xl mx-auto rounded-[22px] bg-[#DCECE3]/90 backdrop-blur-xl p-1.5 border border-white/80 shadow-[0_10px_28px_rgba(20,40,30,0.1)]"
         >
           {/* Top Mini Bar inside Well: City Quick-Jumps + Cuisine Filter */}
           <div className="flex items-center justify-between gap-1.5 px-1.5 pb-1.5 overflow-x-auto no-scrollbar">
@@ -671,15 +673,15 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
       </div>
 
       {/* ─── Trending / Featured Food Photo Carousel (Reel) ─── */}
-      {!selectedPlace && (
-        <SpotCardCarousel
-          places={visiblePlaces}
-          currentLang={currentLang}
-          onSelectPlace={handleSelectPlace}
-        />
-      )}
+      <SpotCardCarousel
+        places={visiblePlaces}
+        currentLang={currentLang}
+        selectedPlaceId={selectedPlace?.google_place_id || null}
+        officialStoresMap={ecosystemStores}
+        onSelectPlace={handleSelectPlace}
+      />
 
-      {/* ─── Place Detail Bottom Sheet ─── */}
+      {/* ─── Place Detail Docked Panel / Bottom Sheet ─── */}
       {selectedPlace && (
         <BottomSheet
           place={selectedPlace}
@@ -706,6 +708,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         <GratitudeModal
           isOpen={!!gratitudeTarget}
           place={gratitudeTarget.place}
+          currentLang={currentLang}
           officialStoreData={
             ecosystemStores[gratitudeTarget.place.google_place_id] || null
           }
@@ -720,59 +723,59 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
       <AnimatePresence>
         {isPassportOpen && (
           <motion.div
-            className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-[#1C2822]/75 backdrop-blur-md flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsPassportOpen(false)}
           >
             <motion.div
-              className="w-full max-w-lg bg-[#FCF9F2] rounded-3xl border-2 border-amber-300 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col"
-              initial={{ scale: 0.94, opacity: 0 }}
+              className="w-full max-w-lg nani-well overflow-hidden max-h-[88vh] flex flex-col"
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.94, opacity: 0 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 sm:p-5 bg-gradient-to-r from-rose-900 via-rose-800 to-amber-900 text-white flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-300">
-                    JAPAN CULINARY STAMP PASSPORT
+              <div className="px-3.5 py-2 flex items-center justify-between">
+                <span className="text-xs font-extrabold text-[#14532D] flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-[#16A34A]" />
+                  <span>
+                    {currentLang === 'ja'
+                      ? '日本旅の美食御朱印帳（コレクション）'
+                      : 'My Japan Culinary Stamp Book'}
                   </span>
-                  <h3 className="text-lg font-black">
-                    💮 {currentLang === 'ja' ? '日本旅の美食御朱印帳' : 'My Japan Culinary Stamp Book'}
-                  </h3>
-                </div>
+                </span>
                 <button
                   onClick={() => setIsPassportOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-sm font-bold cursor-pointer"
+                  className="size-7 rounded-full bg-white/80 hover:bg-white text-[#1C2822] flex items-center justify-center text-xs font-bold cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="p-4 sm:p-5 overflow-y-auto space-y-3">
-                <p className="text-xs font-bold text-amber-950 bg-amber-100/80 border border-amber-200 rounded-2xl p-3 leading-relaxed">
+              <div className="nani-sheet p-5 overflow-y-auto space-y-3">
+                <p className="text-xs font-medium text-[#3D5245] bg-[#F2F9F5] border border-[#C5DDD0] rounded-[14px] p-3 leading-relaxed">
                   {currentLang === 'ja'
                     ? 'お店で「看板の一皿」を味わってシェフに『ごちそうさま！』を送ると、そのお店だけの完食御朱印スタンプと記念絵葉書がここにコレクションされます。'
-                    : 'Enjoy a restaurant’s Signature Dish and send a Gochisosama note to collect your commemorative Japanese culinary stamps & postcards here!'}
+                    : 'Enjoy a restaurant’s Signature Dish and send a Gochisosama postcard to collect your commemorative Japanese culinary stamps here!'}
                 </p>
 
                 {tripStamps.map((stamp) => (
                   <div
                     key={stamp.id}
-                    className="relative rounded-2xl bg-white border-2 border-amber-200 p-4 shadow-xs flex items-start justify-between gap-3"
+                    className="relative rounded-[18px] bg-[#FAF7F0] border border-[#E5DEC9] p-4 flex items-start justify-between gap-3"
                   >
                     <div className="space-y-1 min-w-0">
-                      <span className="text-[10px] font-black text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
+                      <span className="text-[10px] font-extrabold text-[#15803D] bg-[#EEF7F2] px-2 py-0.5 rounded-full">
                         #{stamp.seal_code} • {new Date(stamp.created_at).toLocaleDateString('ja-JP')}
                       </span>
-                      <h4 className="text-sm font-black text-slate-900 truncate">
+                      <h4 className="text-sm font-extrabold text-[#1C2822] truncate">
                         {stamp.place_name}
                       </h4>
-                      <p className="text-xs font-bold text-amber-800">
+                      <p className="text-xs font-bold text-[#15803D]">
                         🍽️ {stamp.signature_dish}
                       </p>
-                      <p className="text-xs text-slate-600 italic">
+                      <p className="text-xs text-[#526358] font-medium">
                         &ldquo;{stamp.message}&rdquo;
                       </p>
                       <button
@@ -785,17 +788,16 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
                             map?.setZoom(15);
                           }
                         }}
-                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#16A34A] hover:text-[#15803D] cursor-pointer"
                       >
-                        <span>📍</span>
                         <span>{currentLang === 'ja' ? 'このお店をマップで見る →' : 'View on Map →'}</span>
                       </button>
                     </div>
 
-                    <div className="w-16 h-16 rounded-full border-2 border-rose-600 bg-rose-50/90 flex flex-col items-center justify-center text-rose-700 shrink-0 rotate-[-8deg] shadow-2xs">
-                      <span className="text-[8px] font-black">VEGAN.JP</span>
-                      <span className="text-[11px] font-black leading-tight">完食御朱印</span>
-                      <span className="text-sm">{stamp.stamp_emoji}</span>
+                    <div className="size-16 rounded-full border-2 border-[#DC2626] bg-white/90 flex flex-col items-center justify-center text-[#DC2626] shrink-0 rotate-[-8deg] shadow-2xs">
+                      <span className="text-[7.5px] font-black">VEGAN.JP</span>
+                      <span className="text-[10.5px] font-black leading-tight">完食御朱印</span>
+                      <span className="text-xs">{stamp.stamp_emoji}</span>
                     </div>
                   </div>
                 ))}

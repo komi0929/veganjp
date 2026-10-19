@@ -190,7 +190,7 @@ export function runSelfHealingDiagnostics(): {
       if (!existingInvite) {
         const master = MASTER_PLACES.find((p) => p.google_place_id === note.place_id);
         const handle = master?.instagram_id
-          ? `@${master.instagram_id}`
+          ? `@${master.instagram_id.replace(/^@+/, '')}`
           : `@${note.place_name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
         state.viral_invites.unshift({
           place_id: note.place_id,

@@ -1,13 +1,24 @@
 {
   "metrics": {
-    "postcards_issued": 48,
-    "instagram_story_downloads": 34,
+    "postcards_issued": 49,
+    "instagram_story_downloads": 35,
     "welcome_perks_shown": 92,
-    "stores_auto_invited": 12,
-    "self_healed_incidents": 8,
-    "last_diagnostics_at": "2026-10-19T19:08:42.291Z"
+    "stores_auto_invited": 13,
+    "self_healed_incidents": 9,
+    "last_diagnostics_at": "2026-10-19T20:15:28.451Z"
   },
   "healing_events": [
+    {
+      "id": "heal-1792440928451",
+      "timestamp": "2026-10-19T20:15:28.451Z",
+      "category": "db_schema_healed",
+      "severity": "resolved",
+      "title_ja": "システム全体セルフヒーリング診断（自動整合性チェック＆修復）実行",
+      "detail_ja": "✅ 自動診断＆自己修復完了：1件のデータ不整合・招待キューを自動修復しました（未認証店舗(Engine Ramen)への自動オーナー招待キューを生成）",
+      "auto_action_taken": "Full Ecosystem & Asset Integrity Check Passed",
+      "status": "auto_healed",
+      "page_url": "/growth"
+    },
     {
       "id": "heal-1792436922291",
       "timestamp": "2026-10-19T19:08:42.291Z",
@@ -54,6 +65,18 @@
     }
   ],
   "viral_invites": [
+    {
+      "place_id": "vegan-ramen-14",
+      "place_name": "Engine Ramen",
+      "area": "京都市河原町",
+      "instagram_handle": "@@engine_ramen",
+      "pending_postcards_count": 1,
+      "latest_traveler_quote": "Unforgettable Signature Dish! (芳醇金胡麻と九州産大豆の濃厚クリーミー担々麺)",
+      "invite_url": "/partner?store=vegan-ramen-14",
+      "dm_template_ja": "【Vegan.jpよりお知らせ】Engine Ramen様へ、海外の旅行者（Travelerさん）から「ごちそうさま絵葉書」が届いています💮 無料で返信＆看板メニュー登録が可能です 👉 https://vegan.jp/partner",
+      "status": "queued_auto",
+      "updated_at": "2026-10-19T20:15:28.451Z"
+    },
     {
       "place_id": "vegan-ramen-02",
       "place_name": "BUGORO ALL VEGAN 渋谷",

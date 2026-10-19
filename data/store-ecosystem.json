@@ -250,6 +250,23 @@
   },
   "gratitude_notes": [
     {
+      "id": "grat-1792440928440-ynq5n",
+      "place_id": "vegan-ramen-14",
+      "place_name": "Engine Ramen",
+      "stamp": "delicious",
+      "stamp_emoji": "🍽️",
+      "stamp_title_en": "Unforgettable Signature Dish!",
+      "stamp_title_ja": "忘れられない看板の一皿！",
+      "sender_name": "Traveler",
+      "sender_country": "Australia 🇦🇺",
+      "message_original": "Unforgettable Signature Dish! (芳醇金胡麻と九州産大豆の濃厚クリーミー担々麺)",
+      "message_ja_translated": "Unforgettable Signature Dish! (芳醇金胡麻と九州産大豆の濃厚クリーミー担々麺)",
+      "ordered_dishes": [
+        "芳醇金胡麻と九州産大豆の濃厚クリーミー担々麺"
+      ],
+      "created_at": "2026-10-19T20:15:28.440Z"
+    },
+    {
       "id": "grat-1792146106703-phg01",
       "place_id": "vegan-ramen-01",
       "place_name": "Vegan Ramen YADOKARI",
