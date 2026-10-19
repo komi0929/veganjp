@@ -512,6 +512,18 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
             </span>
           </Link>
 
+          {/* Autonomous Growth & Self-Healing Center Link */}
+          <Link
+            href="/growth"
+            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors shrink-0"
+            title="Autonomous Marketing & Self-Healing Center / 自動集客・自己修復センター"
+          >
+            <span>🚀</span>
+            <span className="hidden md:inline">
+              {currentLang === 'ja' ? '自動集客・修復' : 'Growth & Health'}
+            </span>
+          </Link>
+
           <span className="w-px h-3.5 bg-black/10 shrink-0" />
 
           {/* Language Selector */}

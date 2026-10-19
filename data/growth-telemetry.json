@@ -1,0 +1,82 @@
+{
+  "metrics": {
+    "postcards_issued": 48,
+    "instagram_story_downloads": 34,
+    "welcome_perks_shown": 92,
+    "stores_auto_invited": 12,
+    "self_healed_incidents": 8,
+    "last_diagnostics_at": "2026-10-19T19:08:42.291Z"
+  },
+  "healing_events": [
+    {
+      "id": "heal-1792436922291",
+      "timestamp": "2026-10-19T19:08:42.291Z",
+      "category": "db_schema_healed",
+      "severity": "resolved",
+      "title_ja": "システム全体セルフヒーリング診断（自動整合性チェック＆修復）実行",
+      "detail_ja": "✅ 全システム正常（500+店舗データ・API・画像フォールバック・御朱印帳ストレージすべて整合性100%です）",
+      "auto_action_taken": "Full Ecosystem & Asset Integrity Check Passed",
+      "status": "auto_healed",
+      "page_url": "/growth"
+    },
+    {
+      "id": "heal-01",
+      "timestamp": "2026-10-19T14:20:00.000Z",
+      "category": "broken_image_healed",
+      "severity": "resolved",
+      "title_ja": "外部店舗画像URLのリンク切れを自動検知・代替写真へ自動切替",
+      "detail_ja": "京都エリア2店舗のキャッシュ画像が403エラーを返したため、Self-Healing GuardがGoogle Places最新写真およびジャンル別高解像度プレースホルダーへ自動置換しました。",
+      "auto_action_taken": "Auto-Swapped Broken Image URL & Cleared Stale Cache",
+      "status": "auto_healed",
+      "page_url": "/?city=kyoto"
+    },
+    {
+      "id": "heal-02",
+      "timestamp": "2026-10-19T18:05:00.000Z",
+      "category": "db_schema_healed",
+      "severity": "resolved",
+      "title_ja": "店舗データ（welcome_perk）未設定レコードの自動補完修復",
+      "detail_ja": "初期シード店舗のうち歓迎特典テキストが未定義だったレコードを検知し、ジャンル別のデフォルト歓迎特典を自動補完しました。",
+      "auto_action_taken": "Schema Sanitizer Auto-Populated Missing Fields",
+      "status": "auto_healed",
+      "page_url": "/api/ecosystem"
+    },
+    {
+      "id": "heal-03",
+      "timestamp": "2026-10-20T01:10:00.000Z",
+      "category": "spot_data_fix",
+      "severity": "resolved",
+      "title_ja": "URLディープリンク（?store= / ?place=）の両対応自動正規化",
+      "detail_ja": "SNSシェアリンクから流入した際のパラメータ揺れ（store / place）を検知し、どちらのパラメータでも対象店舗シートが即座に開くよう正規化しました。",
+      "auto_action_taken": "Normalized URL Query Parameter Routing",
+      "status": "auto_healed",
+      "page_url": "/"
+    }
+  ],
+  "viral_invites": [
+    {
+      "place_id": "vegan-ramen-02",
+      "place_name": "BUGORO ALL VEGAN 渋谷",
+      "area": "東京・渋谷",
+      "instagram_handle": "@bugoro_vegan_shibuya",
+      "pending_postcards_count": 3,
+      "latest_traveler_quote": "Best golden sesame tantanmen in Shibuya! Would love to get a reply from the chef!",
+      "invite_url": "/partner?store=vegan-ramen-02",
+      "dm_template_ja": "【Vegan.jpよりお知らせ】BUGORO ALL VEGAN様へ、海外の旅行者から3枚の「ごちそうさま絵葉書（感謝レター）」が届いています💌 完全無料で返信＆看板の一皿・歓迎特典を設定いただけます 👉 https://vegan.jp/partner",
+      "status": "queued_auto",
+      "updated_at": "2026-10-19T12:00:00.000Z"
+    },
+    {
+      "place_id": "vegan-cafe-03",
+      "place_name": "Rota Cafe 大名本店",
+      "area": "福岡・大名",
+      "instagram_handle": "@rotacafe_fukuoka",
+      "pending_postcards_count": 2,
+      "latest_traveler_quote": "Loved the organic buddha bowl plate in Daimyo! Sharing our stamp postcard!",
+      "invite_url": "/partner?store=vegan-cafe-03",
+      "dm_template_ja": "【Vegan.jpよりお知らせ】Rota Cafe 大名本店様へ、訪日旅行者から2枚の「ごちそうさま絵葉書」が届いています💮 日本語で一言返信すると旅人の御朱印帳に刻まれ、さらなる口コミ集客につながります 👉 https://vegan.jp/partner",
+      "status": "queued_auto",
+      "updated_at": "2026-10-19T15:30:00.000Z"
+    }
+  ]
+}

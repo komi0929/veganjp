@@ -3,8 +3,9 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlaceWithPosts, StoreOfficialData } from '@/lib/types';
-import { getEffectiveVerifiedMenu } from '@/lib/kitchen-defaults';
+import { getEffectiveVerifiedMenu, getEffectiveWelcomePerk } from '@/lib/kitchen-defaults';
 import { addTripStamp, TripStampRecord } from '@/lib/trip-stamps';
+import { downloadInstagramStoryCardPng } from '@/lib/story-card-generator';
 import { showToast } from './Toast';
 
 const STAMPS = [
@@ -78,7 +79,15 @@ export default function GratitudeModal({
     [place, officialStoreData]
   );
 
+  const welcomePerk = useMemo(
+    () => getEffectiveWelcomePerk(place, officialStoreData),
+    [place, officialStoreData]
+  );
+
   const signatureDish = verifiedMenu[0]?.name_ja || preselectedDishes[0] || 'シェフの看板メニュー';
+  const igHandle = place.instagram_id
+    ? `@${place.instagram_id}`
+    : `@${place.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
   if (!isOpen) return null;
 
@@ -132,15 +141,35 @@ export default function GratitudeModal({
     }
   };
 
+  const handleDownloadStoryCard = async () => {
+    if (!issuedStamp) return;
+    await downloadInstagramStoryCardPng({
+      storeName: place.name_ja || place.name,
+      area: place.area || 'Japan',
+      signatureDish,
+      welcomePerk: welcomePerk.ja,
+      quote: issuedStamp.message,
+      senderName: `${issuedStamp.sender_name} (${senderCountry})`,
+      instagramHandle: igHandle,
+      sealCode: issuedStamp.seal_code,
+    });
+    try {
+      await navigator.clipboard.writeText(
+        `💮 ごちそうさまでした！ ${igHandle} @vegan.jp\n👑 看板の一皿: ${signatureDish}\n#VeganJP #JapanVegan`
+      );
+    } catch {}
+    showToast('📸 Instagramストーリーズ用画像を保存＆メンション文をコピーしました！', '📸');
+  };
+
   const handleSharePostcard = async () => {
     const shareUrl = `${window.location.origin}/?store=${encodeURIComponent(place.google_place_id)}`;
-    const shareText = `💮 ごちそうさまでした！ @ ${place.name} (${place.area || 'Japan'})\n🍽️ 看板の一皿: ${signatureDish}\n"${customNote.trim() || currentStampObj.titleEn}"\n#VeganJP`;
+    const shareText = `💮 ごちそうさまでした！ @ ${place.name} (${place.area || 'Japan'}) ${igHandle} @vegan.jp\n🍽️ 看板の一皿: ${signatureDish}\n"${customNote.trim() || currentStampObj.titleEn}"\n#VeganJP`;
     try {
       if (navigator.share) {
         await navigator.share({ title: `${place.name} — Vegan.jp`, text: shareText, url: shareUrl });
       } else {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-        showToast('絵葉書リンクをコピーしました！SNSや友人にシェアできます📲', '✨');
+        showToast('絵葉書リンク＆店舗メンションをコピーしました！📲', '✨');
       }
     } catch {
       showToast('絵葉書リンクをコピーしました！📲', '✨');
@@ -191,7 +220,7 @@ export default function GratitudeModal({
               <motion.div
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="space-y-4"
+                className="space-y-3.5"
               >
                 <div className="relative rounded-3xl bg-[#FCF9F2] border-2 border-amber-300/90 p-5 shadow-lg overflow-hidden">
                   {/* Traditional Japanese Vermilion Seal (Goshuin Hanko) */}
@@ -214,7 +243,7 @@ export default function GratitudeModal({
                       {issuedStamp.place_name}
                     </h4>
                     <p className="text-xs font-bold text-amber-800 mt-0.5">
-                      📍 {issuedStamp.area}
+                      📍 {issuedStamp.area} • 📸 {igHandle}
                     </p>
                   </div>
 
@@ -242,20 +271,29 @@ export default function GratitudeModal({
                   </div>
                 </div>
 
+                {/* Primary Viral Action: 9:16 Instagram Story PNG Download */}
+                <button
+                  onClick={handleDownloadStoryCard}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-fuchsia-600 via-rose-600 to-amber-500 hover:opacity-95 text-white font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <span>📸</span>
+                  <span>Instagramストーリーズ用カード画像を保存（{igHandle} メンション自動コピー）</span>
+                </button>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <button
                     onClick={handleSharePostcard}
                     className="w-full py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
                   >
                     <span>📲</span>
-                    <span>絵葉書をシェアして友達に紹介</span>
+                    <span>絵葉書リンクを友達にシェア</span>
                   </button>
                   <button
                     onClick={onClose}
                     className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
                   >
                     <span>💮</span>
-                    <span>スタンプ帳に保存して閉じる</span>
+                    <span>御朱印帳に保存して閉じる</span>
                   </button>
                 </div>
               </motion.div>

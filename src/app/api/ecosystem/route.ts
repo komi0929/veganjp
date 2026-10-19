@@ -8,6 +8,10 @@ import {
   requestStoreVerificationOtp,
   confirmStoreVerificationOtp,
 } from '@/lib/server-db';
+import {
+  incrementGrowthMetric,
+  runSelfHealingDiagnostics,
+} from '@/lib/growth-engine';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +59,8 @@ export async function POST(req: NextRequest) {
         message_original: body.message_original || '',
         ordered_dishes: body.ordered_dishes || [],
       });
+      incrementGrowthMetric('postcards_issued');
+      runSelfHealingDiagnostics();
       return NextResponse.json({ ok: true, note });
     }
 

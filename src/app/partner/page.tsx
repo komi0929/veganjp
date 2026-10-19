@@ -66,6 +66,11 @@ export default function PartnerPortalPage() {
 
   useEffect(() => {
     fetchEcosystem();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const st = params.get('store') || params.get('claim');
+      if (st) setSelectedPlaceId(st);
+    }
   }, [fetchEcosystem]);
 
   const allPlaces = useMemo<Place[]>(() => {
@@ -289,6 +294,12 @@ export default function PartnerPortalPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/growth"
+              className="text-xs font-black px-3 py-1.5 rounded-full bg-fuchsia-50 hover:bg-fuchsia-100 text-fuchsia-900 border border-fuchsia-200 transition-colors"
+            >
+              🚀 自動集客・自己修復センター
+            </Link>
             <Link
               href="/guide"
               className="text-xs font-black px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors"

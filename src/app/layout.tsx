@@ -33,12 +33,24 @@ export const metadata: Metadata = {
   },
 };
 
+import SelfHealingGuard from '@/components/SelfHealingGuard';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
   themeColor: '#549c40',
+};
+
+const STRUCTURED_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'vegan.jp — Japan Plant-Based Signature Dish & Culinary Stamp Map',
+  url: 'https://vegan.jp',
+  applicationCategory: 'TravelApplication',
+  description:
+    "Discover Japan's best vegan restaurants by their #1 Chef Signature Dish, enjoy exclusive Welcome Perks, and collect Gochisosama Culinary Stamps & Postcards.",
 };
 
 export default function RootLayout({
@@ -55,8 +67,13 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_JSON_LD) }}
+        />
       </head>
       <body className="font-sans antialiased bg-cream-50 text-bark-800 selection:bg-vegan-200 selection:text-vegan-900">
+        <SelfHealingGuard />
         {children}
       </body>
     </html>
