@@ -427,43 +427,43 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
         ))}
       </Map>
 
-      {/* ─── Floating Dynamic Island Header (Ultra-clean, High Contrast) ─── */}
+      {/* ─── Floating Native-App Pill Header (nani.now Monochromatic Style) ─── */}
       <motion.header
         className="absolute top-3 inset-x-0 z-30 pointer-events-none flex justify-center px-3"
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 350, damping: 26 }}
       >
-        <div className="pointer-events-auto glass-pill px-3.5 py-1.5 rounded-full flex items-center gap-2.5 shadow-glass-md border border-black/[0.08] bg-white/95 backdrop-blur-2xl">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-1.5 group shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 transition-transform group-hover:scale-125 shadow-xs" />
-            <span className="text-sm font-bold tracking-tight text-slate-900 font-sans">
-              vegan<span className="text-emerald-600">.jp</span>
+        <div className="pointer-events-auto px-2.5 py-1.5 rounded-full flex items-center gap-1.5 sm:gap-2 shadow-[0_8px_24px_rgba(20,40,30,0.08)] border border-[#DCECE3] bg-white/95 backdrop-blur-xl">
+          {/* Squircle Brand Logo */}
+          <Link href="/" className="flex items-center gap-2 pl-1 pr-1.5 group shrink-0">
+            <span className="size-7 rounded-[9px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_2px_8px_rgba(22,163,74,0.28)] group-hover:scale-105 transition-transform">
+              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+              </svg>
+            </span>
+            <span className="text-sm font-extrabold tracking-tight text-[#1C2822]">
+              Vegan.jp
             </span>
           </Link>
 
-          <span className="w-px h-3.5 bg-black/10 shrink-0" />
-
-          {/* Live Verified Spots Count */}
-          <div className="flex items-center gap-1 text-xs font-semibold text-slate-700 shrink-0">
-            <span className="text-emerald-700 font-bold">{visiblePlaces.length}</span>
-            <span className="text-slate-500 hidden sm:inline">{t.verified_spots}</span>
-          </div>
-
-          <span className="w-px h-3.5 bg-black/10 shrink-0" />
+          <span className="w-px h-4 bg-[#DCECE3] shrink-0" />
 
           {/* Japan Culinary Stamp Passport Button */}
           <button
             onClick={() => setIsPassportOpen(true)}
-            className="flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition-colors shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-bold h-8 px-3 rounded-full bg-[#EEF7F2] hover:bg-[#DCECE3] text-[#1C2822] transition-all active:scale-95 shrink-0 cursor-pointer"
             title="Japan Culinary Stamp Passport / 旅の美食御朱印帳"
           >
-            <span>💮</span>
+            <svg className="size-3.5 text-[#16A34A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="4" />
+            </svg>
             <span className="hidden sm:inline">
-              {currentLang === 'ja' ? '御朱印帳' : 'My Stamps'}
+              {currentLang === 'ja' ? '御朱印帳' : 'Stamps'}
             </span>
-            <span className="text-[10px] font-black px-1.5 rounded-full bg-rose-600 text-white">
+            <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-[#16A34A] text-white">
               {tripStamps.length}
             </span>
           </button>
@@ -471,92 +471,131 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           {/* Wishlist Toggle Button */}
           <button
             onClick={() => setSavedFilterOnly(!savedFilterOnly)}
-            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full transition-all shrink-0 cursor-pointer ${
+            className={`flex items-center gap-1 text-xs font-bold h-8 px-2.5 rounded-full transition-all active:scale-95 shrink-0 cursor-pointer ${
               savedFilterOnly
-                ? 'bg-rose-500 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                ? 'bg-[#1C2822] text-white'
+                : 'text-[#4A5D52] hover:bg-[#EEF7F2] hover:text-[#1C2822]'
             }`}
             title={t.wishlist}
           >
-            <span className="text-xs">{savedFilterOnly ? '❤️' : '🤍'}</span>
+            <svg className="size-3.5" viewBox="0 0 24 24" fill={savedFilterOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
             {savedIds.length > 0 && (
-              <span className={`text-[10px] font-bold px-1.5 rounded-full ${
-                savedFilterOnly ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
-              }`}>
-                {savedIds.length}
-              </span>
+              <span className="text-[10px] font-extrabold">{savedIds.length}</span>
             )}
           </button>
 
-          {/* Guide / LP / FAQ Link */}
-          <Link
-            href="/guide"
-            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors shrink-0"
-            title="About Vegan.jp & FAQ / 特徴・使い方・Q&A"
-          >
-            <span>❓</span>
-            <span className="hidden sm:inline">
-              {currentLang === 'ja' ? '特徴・Q&A' : 'How It Works'}
-            </span>
-          </Link>
-
-          {/* Partner Portal Link (For Restaurant Owners) */}
+          {/* Partner Studio Link */}
           <Link
             href="/partner"
-            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 transition-colors shrink-0"
-            title="Store Owner Studio / 飲食店オーナー画面"
+            className="flex items-center gap-1.5 text-xs font-bold h-8 px-3 rounded-full text-[#4A5D52] hover:bg-[#EEF7F2] hover:text-[#1C2822] transition-all active:scale-95 shrink-0"
           >
-            <span>🏪</span>
+            <svg className="size-3.5 text-[#16A34A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
             <span className="hidden sm:inline">
-              {currentLang === 'ja' ? '店舗オーナー' : 'For Restaurants'}
+              {currentLang === 'ja' ? '店舗スタジオ' : 'Partner'}
             </span>
           </Link>
 
-          {/* Autonomous Growth & Self-Healing Center Link */}
+          {/* Autonomous Growth & Self-Healing Link */}
           <Link
             href="/growth"
-            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors shrink-0"
-            title="Autonomous Marketing & Self-Healing Center / 自動集客・自己修復センター"
+            className="flex items-center gap-1.5 text-xs font-bold h-8 px-3 rounded-full text-[#4A5D52] hover:bg-[#EEF7F2] hover:text-[#1C2822] transition-all active:scale-95 shrink-0"
           >
-            <span>🚀</span>
+            <svg className="size-3.5 text-[#16A34A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+            </svg>
             <span className="hidden md:inline">
-              {currentLang === 'ja' ? '自動集客・修復' : 'Growth & Health'}
+              {currentLang === 'ja' ? '自動集客' : 'Growth'}
             </span>
           </Link>
 
-          <span className="w-px h-3.5 bg-black/10 shrink-0" />
+          {/* Guide / FAQ Link */}
+          <Link
+            href="/guide"
+            className="hidden sm:flex items-center gap-1 text-xs font-bold h-8 px-2.5 rounded-full text-[#4A5D52] hover:bg-[#EEF7F2] hover:text-[#1C2822] transition-all active:scale-95 shrink-0"
+          >
+            <span>{currentLang === 'ja' ? 'ガイド' : 'Guide'}</span>
+          </Link>
+
+          <span className="w-px h-4 bg-[#DCECE3] shrink-0" />
 
           {/* Language Selector */}
           <LanguageSelector currentLang={currentLang} onSelectLang={handleLanguageChange} />
         </div>
       </motion.header>
 
-      {/* ─── Floating Search & Single Clean Filter Row ─── */}
+      {/* ─── Floating Two-Layer Search & City/Cuisine Tray (nani.now Squircle Well) ─── */}
       <motion.div
-        className="absolute top-14 inset-x-0 z-20 pointer-events-none flex flex-col items-center gap-1.5 px-3 max-w-4xl mx-auto"
+        className="absolute top-15 inset-x-0 z-20 pointer-events-none flex flex-col items-center px-3 max-w-xl mx-auto"
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.12 }}
       >
-        {/* Instant Omni-Search Bar */}
         <div
           ref={searchContainerRef}
-          className="pointer-events-auto relative w-full max-w-md shadow-glass-md rounded-2xl bg-white/95 backdrop-blur-xl border border-black/[0.08]"
+          className="pointer-events-auto relative w-full rounded-[22px] bg-[#DCECE3]/90 backdrop-blur-xl p-1.5 border border-white/80 shadow-[0_10px_28px_rgba(20,40,30,0.1)]"
         >
-          <div className="flex items-center px-3 py-1.5 gap-2">
-            <span className="text-slate-400 text-sm select-none">🔍</span>
+          {/* Top Mini Bar inside Well: City Quick-Jumps + Cuisine Filter */}
+          <div className="flex items-center justify-between gap-1.5 px-1.5 pb-1.5 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-1 shrink-0">
+              {CITIES_CONFIG.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => handleCitySelect(c)}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-[10px] transition-all active:scale-95 shrink-0 cursor-pointer ${
+                    activeCity === c.id
+                      ? 'bg-white text-[#1C2822] shadow-2xs'
+                      : 'text-[#3D5245] hover:text-[#1C2822]'
+                  }`}
+                >
+                  {t[c.nameKey] || c.id}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {CUISINES_CONFIG.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`text-[10.5px] font-bold px-2.5 py-1 rounded-[10px] transition-all active:scale-95 shrink-0 cursor-pointer ${
+                    activeCategory === cat.id
+                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      : 'bg-white/60 text-[#3D5245] hover:bg-white'
+                  }`}
+                >
+                  {t[cat.nameKey] || cat.id}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Inner Elevated White Search Sheet */}
+          <div className="flex items-center bg-white rounded-[16px] px-3.5 h-10 gap-2.5 shadow-[0_2px_8px_rgba(20,40,30,0.04)] border border-black/[0.04]">
+            <svg className="size-4 text-[#16A34A] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               placeholder={t.search_placeholder}
-              className="w-full text-xs font-medium text-slate-800 placeholder:text-slate-400 bg-transparent outline-none"
+              className="w-full text-xs font-semibold text-[#1C2822] placeholder:text-[#7A8E82] bg-transparent outline-none"
             />
+            <span className="text-[10.5px] font-bold text-[#15803D] bg-[#EEF7F2] px-2 py-0.5 rounded-full shrink-0">
+              {visiblePlaces.length} {currentLang === 'ja' ? '店' : 'spots'}
+            </span>
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer"
+                className="text-[#526358] hover:text-[#1C2822] text-xs px-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -567,38 +606,32 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
           <AnimatePresence>
             {searchSuggestions.length > 0 && (
               <motion.div
-                className="absolute top-full left-0 right-0 mt-1.5 bg-white/98 backdrop-blur-xl rounded-2xl shadow-glass-lg border border-black/[0.08] overflow-hidden z-50 divide-y divide-slate-100"
+                className="absolute top-full left-0 right-0 mt-1.5 bg-white/98 backdrop-blur-xl rounded-[18px] shadow-[0_14px_34px_rgba(20,40,30,0.14)] border border-[#DCECE3] overflow-hidden z-50 divide-y divide-[#EEF7F2]"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
               >
-                <div className="px-3 py-1.5 bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <div className="px-3.5 py-2 bg-[#F7FBF8] text-[10px] font-extrabold text-[#526358] uppercase tracking-wider flex items-center justify-between">
                   <span>{t.verified_matches}</span>
-                  <span className="text-emerald-700">{searchSuggestions.length}</span>
+                  <span className="text-[#16A34A]">{searchSuggestions.length}</span>
                 </div>
                 {searchSuggestions.map((place) => (
                   <div
                     key={place.google_place_id}
                     onClick={() => handleSuggestionClick(place)}
-                    className="p-2.5 hover:bg-emerald-50/60 cursor-pointer transition-colors flex items-center justify-between gap-2"
+                    className="p-3 hover:bg-[#EEF7F2] cursor-pointer transition-colors flex items-center justify-between gap-2"
                   >
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-900 truncate">
+                      <div className="text-xs font-extrabold text-[#1C2822] truncate">
                         {place.name}
                       </div>
-                      <div className="text-[10px] text-slate-500 truncate flex items-center gap-1.5">
+                      <div className="text-[10.5px] text-[#526358] truncate flex items-center gap-1.5">
                         <span>{place.area_en || place.area}</span>
                         <span>•</span>
                         <span>{place.genre_en || place.genre}</span>
                       </div>
                     </div>
-                    <span
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                        place.dietary_type === '100%_vegan'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0 bg-[#EEF7F2] text-[#15803D]">
                       {place.dietary_type === '100%_vegan' ? t.tag_100vegan : t.tag_options}
                     </span>
                   </div>
@@ -606,43 +639,6 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
-        {/* Single Clean Row: City Quick-Jumps & Cuisines */}
-        <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full scrollbar-hide py-0.5">
-          {/* City Chips */}
-          <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md p-0.5 rounded-full border border-black/[0.06] shrink-0">
-            {CITIES_CONFIG.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => handleCitySelect(c)}
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all shrink-0 cursor-pointer ${
-                  activeCity === c.id
-                    ? 'bg-emerald-700 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {t[c.nameKey] || c.id}
-              </button>
-            ))}
-          </div>
-
-          <span className="w-px h-3.5 bg-black/10 shrink-0" />
-
-          {/* Cuisine Chips */}
-          {CUISINES_CONFIG.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full transition-all shrink-0 border cursor-pointer ${
-                activeCategory === cat.id
-                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
-                  : 'bg-white/90 text-slate-600 border-black/[0.06] hover:bg-white hover:text-slate-900'
-              }`}
-            >
-              {t[cat.nameKey] || cat.id}
-            </button>
-          ))}
         </div>
       </motion.div>
 

@@ -3,13 +3,11 @@
 @tailwind utilities;
 
 html, body {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  overscroll-behavior: none;
-  background-color: #F8FAF8;
-  color: #0F172A;
+  background-color: #EEF7F2;
+  color: #1C2822;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
@@ -34,25 +32,73 @@ html, body {
     padding-top: max(1rem, env(safe-area-inset-top, 1rem));
   }
 
-  /* Ultra-refined Glass Surface (Linear / Raycast / Apple Maps standard) */
-  .glass-pill {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 
-      0 4px 20px -2px rgba(0, 0, 0, 0.05),
-      0 1px 3px rgba(0, 0, 0, 0.02),
-      inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  /* Nani-inspired Two-Layer Squircle Tray (Outer Well + Inner Sheet) */
+  .nani-well {
+    background-color: rgba(214, 234, 223, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 28px;
+    padding: 6px;
   }
 
-  .glass-card {
+  .nani-sheet {
+    background-color: #FFFFFF;
+    border-radius: 22px;
+    box-shadow: 0 2px 12px -2px rgba(20, 45, 32, 0.05);
+  }
+
+  /* Nani-inspired Dashed Sub-Action Card */
+  .nani-dashed {
+    border: 1.5px dashed rgba(154, 187, 168, 0.78);
+    background-color: rgba(255, 255, 255, 0.82);
+    border-radius: 24px;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .nani-dashed:hover {
+    border-color: #16A34A;
+    background-color: #FFFFFF;
+  }
+
+  /* Nani-inspired Soft Marker Highlight in Headings */
+  .nani-highlight {
+    display: inline-flex;
+    background-image: linear-gradient(
+      86deg,
+      rgba(22, 163, 74, 0.24),
+      rgba(22, 163, 74, 0.09) 7%,
+      rgba(22, 163, 74, 0.18) 90%,
+      rgba(22, 163, 74, 0.28)
+    );
+    border-radius: 0.4em 0.75em;
+    padding-inline: 0.32em 0.28em;
+  }
+
+  /* Nani-inspired 5px White Framed Feature Card */
+  .nani-frame {
+    border: 5px solid #FFFFFF;
+    border-radius: 28px;
+    box-shadow: 0 4px 20px -4px rgba(20, 45, 32, 0.06);
+    background-color: #E5F2EB;
+    overflow: hidden;
+  }
+
+  /* Nani-inspired Wavy Section Divider */
+  .nani-wave-bottom {
+    height: 20px;
+    background-color: #EEF7F2;
+    mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H60V10C52.5 20 37.5 20 30 10C22.5 0 7.5 0 0 10V0Z' fill='black'/%3E%3C/svg%3E");
+    mask-repeat: repeat-x;
+    mask-size: 60px 20px;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H60V10C52.5 20 37.5 20 30 10C22.5 0 7.5 0 0 10V0Z' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: repeat-x;
+    -webkit-mask-size: 60px 20px;
+  }
+
+  .glass-pill {
     background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(32px) saturate(190%);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.95);
-    box-shadow: 
-      0 20px 48px -12px rgba(18, 38, 26, 0.08),
-      0 1px 4px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 4px 20px -2px rgba(20, 45, 32, 0.07);
   }
 }

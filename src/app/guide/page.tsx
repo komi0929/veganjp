@@ -1,281 +1,321 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import AppSidebar, { NavLang } from '@/components/AppSidebar';
 
-export default function GuideAndFaqPage() {
-  const [lang, setLang] = useState<'ja' | 'en'>('ja');
-  const [audience, setAudience] = useState<'owner' | 'traveler'>('owner');
-  const isJa = lang === 'ja';
+type GuideTab = 'traveler' | 'store' | 'faq';
 
-  return (
-    <div className="min-h-screen bg-[#FAF8F4] text-slate-900 pb-24">
-      {/* Top Sticky Header */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 sm:px-6 py-3">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
-            >
-              <span>←</span>
-              <span>{isJa ? 'マップへ戻る' : 'Back to Map'}</span>
-            </Link>
-            <span className="text-sm font-black tracking-tight text-slate-900">
-              vegan<span className="text-emerald-600">.jp</span>{' '}
-              <span className="text-xs font-bold text-slate-500">
-                {isJa ? 'コンセプト ＆ 活用ガイド' : 'Concept & Guide'}
-              </span>
-            </span>
-          </div>
+export default function GuidePage() {
+    const [lang, setLang] = useState<NavLang>('ja');
+    const [activeTab, setActiveTab] = useState<GuideTab>('traveler');
+    const isJa = lang === 'ja';
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setLang(isJa ? 'en' : 'ja')}
-              className="text-xs font-black px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 cursor-pointer"
-            >
-              {isJa ? '🇬🇧 English' : '🇯🇵 日本語'}
-            </button>
-            <Link
-              href="/partner"
-              className="text-xs font-black px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-colors"
-            >
-              {isJa ? '🏪 店舗オーナー画面へ' : '🏪 Partner Studio'}
-            </Link>
-          </div>
+    return (
+        <div className="min-h-dvh bg-[#EEF7F2] text-[#1C2822] md:grid md:grid-cols-[268px_1fr]">
+            <AppSidebar lang={lang} onLangChange={setLang} />
+
+            <div className="flex flex-col min-h-dvh overflow-x-hidden">
+                <main className="flex-1 px-4 sm:px-6 pt-8 md:pt-16 pb-16">
+                    <div className="max-w-2xl mx-auto">
+                        {/* Header Row + Rotated Handwritten Guidance */}
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-3.5 px-1">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-[13px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(22,163,74,0.25)] shrink-0">
+                                    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h1 className="text-xl sm:text-[25px] font-extrabold tracking-tight text-[#1C2822] leading-tight">
+                                        {isJa ? 'Vegan.jp 活用ガイド＆Q&A' : 'How Vegan.jp Works & FAQ'}
+                                    </h1>
+                                    <p className="text-xs font-semibold text-[#526358] mt-0.5">
+                                        {isJa
+                                            ? '「看板の一皿」と「完食御朱印」で旅人と名店をつなぐシンプルな仕組み'
+                                            : 'Connecting travelers and chefs through Signature Dishes & Collectible Stamps'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="hidden sm:flex items-center gap-1.5 text-[#15803D] font-bold text-xs rotate-2 translate-y-1 select-none shrink-0">
+                                <span>{isJa ? '初見でも30秒で使いこなせます' : 'Master in 30 seconds'}</span>
+                                <svg className="w-5 h-5 text-[#16A34A] translate-y-1" viewBox="0 0 28 28" fill="none">
+                                    <path
+                                        d="M4 6C12 6 19 10 20 21M20 21L15 16.5M20 21L24.5 16"
+                                        stroke="currentColor"
+                                        strokeWidth="2.2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* TWO-LAYER SQUIRCLE TRAY (.nani-well + .nani-sheet) */}
+                        <div className="nani-well">
+                            <div className="px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-1 bg-[#CBE2D4]/75 p-1 rounded-[16px]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('traveler')}
+                                        className={`h-8 px-3.5 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${
+                                            activeTab === 'traveler'
+                                                ? 'bg-white text-[#1C2822] shadow-xs'
+                                                : 'text-[#3D5245] hover:text-[#1C2822]'
+                                        }`}
+                                    >
+                                        {isJa ? '1. 訪日客の楽しみ方' : '1. For Travelers'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('store')}
+                                        className={`h-8 px-3.5 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${
+                                            activeTab === 'store'
+                                                ? 'bg-white text-[#1C2822] shadow-xs'
+                                                : 'text-[#3D5245] hover:text-[#1C2822]'
+                                        }`}
+                                    >
+                                        {isJa ? '2. 店舗オーナーの活用法' : '2. For Restaurants'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('faq')}
+                                        className={`h-8 px-3.5 rounded-[12px] text-xs font-bold transition-all active:scale-95 ${
+                                            activeTab === 'faq'
+                                                ? 'bg-white text-[#1C2822] shadow-xs'
+                                                : 'text-[#3D5245] hover:text-[#1C2822]'
+                                        }`}
+                                    >
+                                        {isJa ? '3. なりすまし対策・Q&A' : '3. Security & FAQ'}
+                                    </button>
+                                </div>
+
+                                <span className="h-7 px-3 rounded-full bg-white/80 text-[11px] font-bold text-[#15803D] flex items-center gap-1.5">
+                                    <span className="size-2 rounded-full bg-[#16A34A]" />
+                                    <span>{isJa ? '完全無料・登録不要' : '100% Free'}</span>
+                                </span>
+                            </div>
+
+                            <div className="nani-sheet p-5 sm:p-6">
+                                {activeTab === 'traveler' && (
+                                    <div className="space-y-4">
+                                        <div className="space-y-2.5">
+                                            {[
+                                                {
+                                                    step: 'STEP 01',
+                                                    title: isJa
+                                                        ? 'マップで「シェフの看板の一皿」と「歓迎特典」を見つける'
+                                                        : "Discover a Chef's Signature Dish & Welcome Perk",
+                                                    desc: isJa
+                                                        ? '選んだ言語に合わせてマップ表記も最適化。お店が誇りを持って提供する1皿と、画面提示でもらえる歓迎特典がひと目でわかります。'
+                                                        : 'Map labels adapt to your language. Instantly see each restaurant’s signature vegan dish and exclusive welcome perk.',
+                                                },
+                                                {
+                                                    step: 'STEP 02',
+                                                    title: isJa
+                                                        ? '注文時は「日本語の指差しチケット」を店員さんに見せるだけ'
+                                                        : 'Show the Japanese Order Ticket at the Table',
+                                                    desc: isJa
+                                                        ? '日本語が話せなくても安心。1タップで店員さん向けの大きな日本語注文票＆歓迎特典チケットを表示できます。'
+                                                        : 'Tap once to display a large Japanese order ticket with your welcome perk included.',
+                                                },
+                                                {
+                                                    step: 'STEP 03',
+                                                    title: isJa
+                                                        ? '食後は「完食御朱印」を押して、シェフへ絵葉書を送る'
+                                                        : 'Collect Your Culinary Stamp & Send a Postcard',
+                                                    desc: isJa
+                                                        ? '完食したらデジタル御朱印をゲット！母国語で書いた感謝の絵葉書は日本語に自動翻訳されてシェフに届き、9:16ストーリーズ画像として保存できます。'
+                                                        : 'Stamp your digital book, send an auto-translated thank-you postcard to the chef, and save a 9:16 Instagram Story card.',
+                                                },
+                                            ].map((item) => (
+                                                <div
+                                                    key={item.step}
+                                                    className="rounded-[15px] bg-[#F7FBF8] border border-[#DCECE3] p-4"
+                                                >
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#DCECE3] text-[#15803D]">
+                                                            {item.step}
+                                                        </span>
+                                                        <h3 className="text-xs sm:text-sm font-extrabold text-[#1C2822]">
+                                                            {item.title}
+                                                        </h3>
+                                                    </div>
+                                                    <p className="text-xs text-[#526358] leading-relaxed font-medium">
+                                                        {item.desc}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="pt-2 flex items-center justify-between gap-3">
+                                            <Link
+                                                href="/growth"
+                                                className="h-11 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-[#1C2822] font-bold text-xs sm:text-sm flex items-center gap-2 active:scale-95 transition-all"
+                                            >
+                                                <span>{isJa ? 'ストーリーズ生成を見る' : 'Open Story Studio'}</span>
+                                            </Link>
+                                            <Link
+                                                href="/"
+                                                className="h-11 px-5 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_6px_18px_rgba(28,40,34,0.18)] active:scale-95 transition-all"
+                                            >
+                                                <span>{isJa ? 'マップを開いて体験する →' : 'Explore Map Now →'}</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'store' && (
+                                    <div className="space-y-4">
+                                        <div className="space-y-2.5">
+                                            {[
+                                                {
+                                                    step: 'POINT 01',
+                                                    title: isJa
+                                                        ? '面倒な細かいチェックリストはゼロ。「看板の一皿」だけでOK'
+                                                        : 'No Complex Checklists—Just Your Signature Dish',
+                                                    desc: isJa
+                                                        ? '「看板メニュー1皿」と「画面提示の歓迎特典（ミニドリンク等）」を入力するだけ。英語等の翻訳や指差し注文画面はすべて自動生成されます。'
+                                                        : 'Enter your top dish and a small welcome perk in Japanese; we handle all translations and order tickets.',
+                                                },
+                                                {
+                                                    step: 'POINT 02',
+                                                    title: isJa
+                                                        ? '届いた「ごちそうさま絵葉書」に日本語でひとこと返信'
+                                                        : 'Reply to Traveler Postcards in Japanese',
+                                                    desc: isJa
+                                                        ? '世界中のゲストから日本語に翻訳された絵葉書が届きます。日本語で返信すると自動で英語翻訳され、次のお客様への最高のPRになります。'
+                                                        : 'Read thank-you postcards in Japanese and reply in one line to delight future guests.',
+                                                },
+                                                {
+                                                    step: 'POINT 03',
+                                                    title: isJa
+                                                        ? '初期費用・月額・送客手数料すべて完全無料（0円）'
+                                                        : '100% Free—Zero Monthly or Booking Fees',
+                                                    desc: isJa
+                                                        ? '卓上QRポップの印刷も含め、店舗様から費用をいただくことは一切ありません。'
+                                                        : 'All partner tools and printable table QR stands are completely free.',
+                                                },
+                                            ].map((item) => (
+                                                <div
+                                                    key={item.step}
+                                                    className="rounded-[15px] bg-[#F7FBF8] border border-[#DCECE3] p-4"
+                                                >
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#DCECE3] text-[#15803D]">
+                                                            {item.step}
+                                                        </span>
+                                                        <h3 className="text-xs sm:text-sm font-extrabold text-[#1C2822]">
+                                                            {item.title}
+                                                        </h3>
+                                                    </div>
+                                                    <p className="text-xs text-[#526358] leading-relaxed font-medium">
+                                                        {item.desc}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="pt-2 flex items-center justify-end">
+                                            <Link
+                                                href="/partner"
+                                                className="h-11 px-5 rounded-full bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_6px_18px_rgba(22,163,74,0.22)] active:scale-95 transition-all"
+                                            >
+                                                <span>{isJa ? '店舗オーナースタジオを開く →' : 'Open Partner Studio →'}</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'faq' && (
+                                    <div className="space-y-3">
+                                        {[
+                                            {
+                                                q: isJa
+                                                    ? 'Q. 第三者が勝手にお店のオーナーになりすまして書き換えたりできませんか？'
+                                                    : 'Q. How do you prevent spoofing or unauthorized store edits?',
+                                                a: isJa
+                                                    ? 'A. 3段階のなりすまし防止ロック（①店舗の公式InstagramへのDMコード送信、②店舗固定電話での自動音声コード確認、③公式ドメインメール認証）を導入しており、6桁のOTPコードをクリアしたオーナー様のみが編集・返信できます。'
+                                                    : 'A. We enforce a 3-tier OTP verification lock via Official Instagram DM, Store Landline, or Official Domain Email before any edits can be saved.',
+                                            },
+                                            {
+                                                q: isJa
+                                                    ? 'Q. 写真のリンク切れや営業時間の変更などの不具合はどうやって改善されますか？'
+                                                    : 'Q. How are broken images or outdated store details handled?',
+                                                a: isJa
+                                                    ? 'A. クライアント常駐の「Self-Healing Guard」が画像エラーを検知した瞬間に代替高解像度写真へ自動置換し、バックエンドの自己修復エンジンへ記録します。また10秒修正レポートから誰でも即座にパッチを送信できます。'
+                                                    : 'A. Our Self-Healing Guard automatically swaps broken images on the fly and logs telemetry to the self-healing backend.',
+                                            },
+                                            {
+                                                q: isJa
+                                                    ? 'Q. GoogleマップやHappyCowと何が一番違うのですか？'
+                                                    : 'Q. How is Vegan.jp different from Google Maps or HappyCow?',
+                                                a: isJa
+                                                    ? 'A. 単なる検索ツールではなく、「看板の一皿＆歓迎特典」「店員さんにそのまま見せる日本語注文チケット」「完食御朱印＆シェフとの絵葉書交流」によって、旅の思い出とお店のファンづくりを同時にブーストする点です。'
+                                                    : 'A. Instead of dry directory listings, Vegan.jp focuses on Chef Signature Dishes, Welcome Perks, Japanese Order Tickets, and Collectible Goshuin Stamps.',
+                                            },
+                                        ].map((faq, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="rounded-[15px] bg-[#F7FBF8] border border-[#DCECE3] p-4 space-y-1"
+                                            >
+                                                <div className="text-xs sm:text-sm font-extrabold text-[#1C2822]">
+                                                    {faq.q}
+                                                </div>
+                                                <p className="text-xs text-[#526358] leading-relaxed font-medium">
+                                                    {faq.a}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 2-Column Dashed Quick Links */}
+                        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <Link
+                                href="/partner"
+                                className="nani-dashed p-4 text-left flex items-center justify-between gap-3 group"
+                            >
+                                <div>
+                                    <div className="text-xs sm:text-[13.5px] font-extrabold text-[#1C2822]">
+                                        {isJa ? '店舗オーナー認証を試す（10秒デモ）' : 'Try 10-Second Store Verification'}
+                                    </div>
+                                    <p className="text-[11px] text-[#526358] mt-0.5 font-medium">
+                                        {isJa
+                                            ? '6桁コード発行から看板メニュー編集まで即座に体験'
+                                            : 'Test the OTP unlock & signature dish editor'}
+                                    </p>
+                                </div>
+                                <span className="text-[11px] font-bold text-[#15803D] shrink-0">
+                                    {isJa ? '開く →' : 'Open →'}
+                                </span>
+                            </Link>
+
+                            <Link
+                                href="/growth"
+                                className="nani-dashed p-4 text-left flex items-center justify-between gap-3 group"
+                            >
+                                <div>
+                                    <div className="text-xs sm:text-[13.5px] font-extrabold text-[#1C2822]">
+                                        {isJa ? 'Instagram 自動集客＆自己修復を見る' : 'Explore Viral Growth & Auto-Heal'}
+                                    </div>
+                                    <p className="text-[11px] text-[#526358] mt-0.5 font-medium">
+                                        {isJa
+                                            ? '9:16ストーリーズ画像生成とセルフヒーリング診断'
+                                            : 'Download 9:16 Story cards & run diagnostics'}
+                                    </p>
+                                </div>
+                                <span className="text-[11px] font-bold text-[#15803D] shrink-0">
+                                    {isJa ? '開く →' : 'Open →'}
+                                </span>
+                            </Link>
+                        </div>
+                    </div>
+                </main>
+            </div>
         </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 space-y-10">
-        {/* ─── Hero Section: The Single Unmistakable Core Identity ─── */}
-        <section className="rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white p-6 sm:p-10 shadow-xl space-y-5">
-          <div className="inline-flex items-center gap-2 text-xs font-black px-3.5 py-1 rounded-full bg-amber-400 text-slate-950">
-            <span>💮</span>
-            <span>
-              {isJa
-                ? 'Vegan.jp だけの「選択と集中」：旅の思い出ブースト × お店のファン集客'
-                : 'Why Vegan.jp: Boost Travel Memories × Grow Happy Restaurant Fans'}
-            </span>
-          </div>
-
-          <h1 className="text-2xl sm:text-4xl font-black leading-tight tracking-tight">
-            {isJa ? (
-              <>
-                「看板の一皿」で出会い、
-                <br />
-                「ごちそうさま御朱印＆絵葉書」で
-                <br />
-                旅の思い出とお店のファンが増える。
-              </>
-            ) : (
-              <>
-                Discover by the Chef’s Signature Dish.
-                <br />
-                Boost Trip Memories with Gochisosama Stamps & Postcards.
-              </>
-            )}
-          </h1>
-
-          <p className="text-sm sm:text-base text-emerald-100/90 max-w-3xl leading-relaxed">
-            {isJa
-              ? 'Googleマップや既存サイトの「無機質な星評価・細かすぎるチェック項目」をすべて手放しました。Vegan.jpは、シェフが誇りを持って届ける『看板の一皿＋歓迎特典』と、旅人が食後に集める『美食御朱印スタンプ＆絵葉書』の2つだけで、訪日客の旅を一生の思い出に変え、お店に新しいお客様を次々と呼び込むサービスです。'
-              : 'No dry star ratings or overwhelming checklists. Vegan.jp connects travelers and restaurants through two joyful pillars: the Chef’s #1 Signature Dish (+ Welcome Treat) and collectible Japan Culinary Stamps & Postcards.'}
-          </p>
-
-          {/* Audience Switcher */}
-          <div className="pt-2 flex flex-wrap gap-3">
-            <button
-              onClick={() => setAudience('owner')}
-              className={`px-5 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center gap-2 ${
-                audience === 'owner'
-                  ? 'bg-amber-400 text-slate-950 shadow-lg scale-[1.02]'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              <span>🏪</span>
-              <span>
-                {isJa
-                  ? '飲食店オーナー様：どうやってお客様が増える？（2ステップ）'
-                  : 'For Restaurant Owners (How You Get More Guests)'}
-              </span>
-            </button>
-            <button
-              onClick={() => setAudience('traveler')}
-              className={`px-5 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center gap-2 ${
-                audience === 'traveler'
-                  ? 'bg-amber-400 text-slate-950 shadow-lg scale-[1.02]'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              <span>🧳</span>
-              <span>
-                {isJa
-                  ? '訪日旅行者の方：どうやって旅の思い出がブーストする？'
-                  : 'For Travelers (How It Boosts Your Japan Trip)'}
-              </span>
-            </button>
-          </div>
-        </section>
-
-        {/* ─── Audience-Specific 2-Pillar Value Breakdown ─── */}
-        {audience === 'owner' ? (
-          <section className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Owner Pillar 1 */}
-              <div className="rounded-3xl bg-white border-2 border-amber-300 p-6 shadow-sm space-y-3">
-                <span className="inline-block text-xs font-black px-3 py-1 rounded-full bg-amber-100 text-amber-900">
-                  STEP 1 • 新規来店が増える仕掛け
-                </span>
-                <h2 className="text-lg font-black text-slate-900">
-                  👑 「看板の一皿」と「🎁 画面提示の歓迎特典」を1つ載せるだけ
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  旅人がお店を選ぶ決め手は「細かい成分表」ではなく、<b>「このお店のこの一皿を絶対に食べたい！」という感動</b>です。
-                  自慢の看板メニュー1品と、注文画面提示時のミニ歓迎特典（例：一口餃子2個・ミニ豆乳アイス進呈など）を登録するだけで、「この一皿目当て」の訪日客が迷わず来店し、日本語の注文カードを見せてスムーズにオーダーします。
-                </p>
-              </div>
-
-              {/* Owner Pillar 2 */}
-              <div className="rounded-3xl bg-[#FCF9F2] border-2 border-rose-300 p-6 shadow-sm space-y-3">
-                <span className="inline-block text-xs font-black px-3 py-1 rounded-full bg-rose-100 text-rose-900">
-                  STEP 2 • 旅人の口コミで次のお客様が増える仕掛け
-                </span>
-                <h2 className="text-lg font-black text-slate-900">
-                  💌 届いた「ごちそうさま絵葉書」に日本語で一言返信するだけ
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  食後に旅人が送った「ごちそうさま絵葉書」は日本語に自動翻訳されて届きます。オーナー様が日本語で一言返信すると英語へ自動翻訳され、旅人の<b>『旅の美食御朱印帳』にシェフ直筆返信として刻まれます</b>。感動した旅人がSNSや仲間に絵葉書をシェアし、それを見た次の旅行者が「こんな温かいお店に行きたい！」と次々来店する好循環が生まれます。
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-emerald-950 text-white p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-black">
-                  ✨ 初期費用・月額費用・送客手数料 すべて ¥0（完全無料）
-                </h3>
-                <p className="text-xs text-emerald-200">
-                  所要時間2分。今すぐあなたのお店の「看板の一皿」と「歓迎特典」を設定できます。
-                </p>
-              </div>
-              <Link
-                href="/partner"
-                className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shrink-0 shadow-md transition-all"
-              >
-                🏪 店舗オーナー画面を開く →
-              </Link>
-            </div>
-          </section>
-        ) : (
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Traveler Pillar 1 */}
-            <div className="rounded-3xl bg-white border-2 border-amber-300 p-6 shadow-sm space-y-3">
-              <span className="inline-block text-xs font-black px-3 py-1 rounded-full bg-amber-100 text-amber-900">
-                EXPERIENCE 1 • 最高の一皿と出会う
-              </span>
-              <h2 className="text-lg font-black text-slate-900">
-                👑 シェフの「看板の一皿」と「🎁 画面提示の歓迎特典」を楽しむ
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                どのお店を開いても、シェフが一番誇りを持つ「看板の一皿」が一目でわかります。席に着いたら「店員さんに見せて注文」ボタンを押すだけで、看板メニューの注文と同時に<b>お店からの歓迎プレゼント（ミニデザートやトッピング等）</b>が受け取れます！
-              </p>
-            </div>
-
-            {/* Traveler Pillar 2 */}
-            <div className="rounded-3xl bg-[#FCF9F2] border-2 border-rose-300 p-6 shadow-sm space-y-3">
-              <span className="inline-block text-xs font-black px-3 py-1 rounded-full bg-rose-100 text-rose-900">
-                EXPERIENCE 2 • 旅の思い出を形に残す
-              </span>
-              <h2 className="text-lg font-black text-slate-900">
-                💮 食後に「ごちそうさま」を送って『日本の美食御朱印＆絵葉書』を集める
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                食事のあとにシェフへ「ごちそうさま！」を送ると、そのお店固有の<b>『完食御朱印スタンプ』があなたの御朱印帳に押印</b>され、美しい記念絵葉書が発行されます。さらにシェフからあなた宛ての直筆返信が届き、一生忘れられない日本旅の宝物になります。
-              </p>
-            </div>
-          </section>
-        )}
-
-        {/* ─── Anti-Spoofing & Owner Verification Architecture ─── */}
-        <section className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-xs space-y-5">
-          <div>
-            <span className="inline-block text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 mb-2">
-              🛡️ Security & Trust / なりすまし防止の仕組み
-            </span>
-            <h2 className="text-xl font-black text-slate-900">
-              どうやって本物の店舗オーナーだと証明するの？（なりすまし防止対策）
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              無関係な第三者が勝手に店舗オーナーを名乗って看板メニューや返信を書き換えられないよう、Vegan.jpでは<b>「3方式の6桁ワンタイム認証コード（OTP）ゲート」</b>による本人確認を義務付けています。
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="text-2xl">📸</div>
-              <h3 className="text-sm font-black text-slate-900">
-                ① 公式Instagram 認証コード照合
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                店舗の公式Instagramアカウント宛に6桁のワンタイム認証コードを発行し、本人確認を行います。
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="text-2xl">📞</div>
-              <h3 className="text-sm font-black text-slate-900">
-                ② 店舗固定電話 / 公式ドメインOTP
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                地図データに登録されている店舗電話番号または公式ドメインメール宛に6桁OTPを送信して照合します。
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="text-2xl">📜</div>
-              <h3 className="text-sm font-black text-slate-900">
-                ③ 飲食店営業許可証 番号照合
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                保健所発行の「飲食店営業許可証」番号と店舗所在地を照合し、認定証明書（CERT-VGJP）を発行します。
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ─── Simple Q&A ─── */}
-        <section className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4">
-          <h2 className="text-xl font-black text-slate-900">
-            ❓ よくある質問（Q&A）
-          </h2>
-          <div className="space-y-3">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <h3 className="text-sm font-black text-slate-900">
-                Q. 店舗側で細かいメニュー表や成分チェックリストを全部入力する必要はありますか？
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                <b>A. 一切不要です！</b> Vegan.jpは「選択と集中」を徹底しており、オーナー様が設定するのは<b>「👑 自慢の看板の一皿（1品）」と「🎁 画面提示の歓迎特典」だけ</b>です。2分で設定でき、日々の運用は届いた「ごちそうさま絵葉書」に楽しく一言返信するだけで完結します。
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <h3 className="text-sm font-black text-slate-900">
-                Q. なぜ「看板の一皿＋歓迎特典」と「ごちそうさま御朱印＆絵葉書」でお客様が増えるのですか？
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                <b>A. 来店前の「強い動機づけ」と、食後の「思い出シェア」が直結しているからです。</b> 旅人は「この看板料理が食べたい！しかも画面を見せれば歓迎してもらえる！」というポジティブな理由でお店を選びます。そして食後に発行される御朱印絵葉書とシェフの温かい返信が旅人のSNSや友人へと広がり、次の訪日客を自然に呼び込みます。
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <h3 className="text-sm font-black text-slate-900">
-                Q. 悪質な低評価レビューや嫌がらせ投稿が書かれる心配はありませんか？
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                <b>A. ありません。</b> Vegan.jpには1〜5つ星の採点やクレーム掲示板は存在せず、旅人が食後に「ごちそうさま！」の感謝と感動を届けるポジティブな絵葉書システムのみを採用しています。
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+    );
 }

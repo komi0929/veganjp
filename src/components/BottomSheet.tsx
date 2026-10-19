@@ -240,109 +240,125 @@ export default function BottomSheet({
               </div>
             </div>
 
-            {/* 2. 👑 PILLAR 1: Chef's Signature Dish & Welcome Perk (来店動機＆注文) */}
+            {/* 2. PILLAR 1: Chef's Signature Dish & Welcome Perk (nani.now Two-Layer Squircle Tray) */}
             {signatureDish && (
-              <div className="rounded-3xl bg-gradient-to-br from-amber-50/95 via-orange-50/50 to-white border-2 border-amber-300/90 p-4 sm:p-5 shadow-md space-y-3.5">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-400 text-slate-950 shadow-2xs">
-                    <span>👑</span>
+              <div className="nani-well">
+                <div className="px-3 py-1.5 flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-[#14532D]">
+                    <span className="size-2 rounded-full bg-[#16A34A]" />
                     <span>
                       {isJa
-                        ? 'ここに来たら絶対これ！看板の一皿'
-                        : "Chef's #1 Must-Try Signature Dish"}
+                        ? 'シェフの看板の一皿 ＆ 来店歓迎特典'
+                        : "Chef's #1 Signature Dish & Welcome Perk"}
                     </span>
                   </span>
-                  <span className="text-base font-black text-slate-900 bg-white px-3 py-0.5 rounded-full border border-amber-200">
+                  <span className="text-xs font-extrabold text-[#1C2822] bg-white px-2.5 py-0.5 rounded-full">
                     ¥{signatureDish.price_jpy.toLocaleString()}
                   </span>
                 </div>
 
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
-                    {isJa ? signatureDish.name_ja : signatureDish.name_en}
-                  </h3>
-                  {!isJa && (
-                    <p className="text-xs font-bold text-amber-900 mt-0.5">
-                      {signatureDish.name_ja}
-                    </p>
-                  )}
-                  <p className="text-xs text-slate-700 leading-relaxed mt-1.5">
-                    {isJa ? signatureDish.description_ja : signatureDish.description_en}
-                  </p>
-                </div>
-
-                {/* Special Welcome Perk Box (Boosts Store Visits!) */}
-                <div className="rounded-2xl bg-emerald-950 text-white p-3.5 border border-emerald-700 flex items-center justify-between gap-3">
-                  <div className="space-y-0.5">
-                    <span className="inline-block text-[10px] font-black uppercase tracking-wider text-emerald-300">
-                      {isJa ? 'Vegan.jp 来店歓迎特典（お店からのプレゼント）' : 'Vegan.jp Exclusive Welcome Perk'}
-                    </span>
-                    <p className="text-xs font-bold text-white leading-snug">
-                      {isJa ? welcomePerk.ja : welcomePerk.en}
+                <div className="nani-sheet p-4 sm:p-5 space-y-3.5">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-[#1C2822] leading-snug">
+                      {isJa ? signatureDish.name_ja : signatureDish.name_en}
+                    </h3>
+                    {!isJa && (
+                      <p className="text-xs font-bold text-[#15803D] mt-0.5">
+                        {signatureDish.name_ja}
+                      </p>
+                    )}
+                    <p className="text-xs text-[#526358] leading-relaxed mt-1 font-medium">
+                      {isJa ? signatureDish.description_ja : signatureDish.description_en}
                     </p>
                   </div>
-                </div>
 
-                {/* 1-Tap Show to Staff Button */}
-                <button
-                  onClick={() => setSelectedOrderItem(signatureDish)}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
-                >
-                  <span>🗣️</span>
-                  <span>
-                    {isJa
-                      ? '店員さんに見せて「看板の一皿＋歓迎特典」を注文する'
-                      : 'Show to Staff: Order Signature Dish + Free Welcome Treat'}
-                  </span>
-                </button>
-
-                {/* Optional Popular Sub-dishes */}
-                {subDishes.length > 0 && (
-                  <div className="pt-2 border-t border-amber-200/70 space-y-2">
-                    <p className="text-[11px] font-black text-amber-900">
-                      {isJa ? '🍽️ 一緒に頼みたい人気メニュー' : '🍽️ Popular Pairings'}
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {subDishes.map((dish) => (
-                        <button
-                          key={dish.id}
-                          onClick={() => setSelectedOrderItem(dish)}
-                          className="text-left p-2.5 rounded-xl bg-white/90 hover:bg-white border border-amber-200/80 flex items-center justify-between gap-2 cursor-pointer transition-all"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate">
-                              {isJa ? dish.name_ja : dish.name_en}
-                            </p>
-                            <p className="text-[11px] font-black text-amber-800">
-                              ¥{dish.price_jpy.toLocaleString()}
-                            </p>
-                          </div>
-                          <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-slate-100 text-slate-800 shrink-0">
-                            {isJa ? '注文表示' : 'Order'}
-                          </span>
-                        </button>
-                      ))}
+                  {/* Exclusive Show-Screen Welcome Perk */}
+                  <div className="rounded-[15px] bg-[#F2F9F5] border border-[#C5DDD0] p-3 flex items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider text-[#15803D]">
+                        {isJa ? '画面提示の歓迎特典（無料おもてなし）' : 'Exclusive Show-Screen Welcome Perk'}
+                      </span>
+                      <p className="text-xs font-bold text-[#1C2822] leading-snug">
+                        {isJa ? welcomePerk.ja : welcomePerk.en}
+                      </p>
                     </div>
                   </div>
-                )}
+
+                  {/* Bottom Pill Buttons inside .nani-sheet */}
+                  <div className="pt-1 flex flex-wrap items-center justify-between gap-2.5">
+                    <button
+                      onClick={() =>
+                        onOpenGratitude?.(
+                          place,
+                          'gratitude',
+                          signatureDish ? [signatureDish.name_ja] : []
+                        )
+                      }
+                      className="h-10 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-[#1C2822] font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <span>{isJa ? '完食御朱印・絵葉書を送る' : 'Collect Stamp & Postcard'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedOrderItem(signatureDish)}
+                      className="h-10 px-5 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-bold text-xs flex items-center gap-1.5 shadow-[0_6px_18px_rgba(28,40,34,0.18)] active:scale-95 transition-all cursor-pointer"
+                    >
+                      <span>
+                        {isJa
+                          ? '店員さんに見せて注文＋特典を受取る →'
+                          : 'Show to Staff: Order + Claim Perk →'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Optional Popular Sub-dishes */}
+                  {subDishes.length > 0 && (
+                    <div className="pt-2.5 border-t border-[#EDF5F0] space-y-2">
+                      <p className="text-[11px] font-bold text-[#526358]">
+                        {isJa ? '一緒に頼みたい人気メニュー' : 'Popular Pairings'}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {subDishes.map((dish) => (
+                          <button
+                            key={dish.id}
+                            onClick={() => setSelectedOrderItem(dish)}
+                            className="text-left p-2.5 rounded-[12px] bg-[#F7FBF8] hover:bg-[#EEF7F2] border border-[#DCECE3] flex items-center justify-between gap-2 cursor-pointer transition-all active:scale-98"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-[#1C2822] truncate">
+                                {isJa ? dish.name_ja : dish.name_en}
+                              </p>
+                              <p className="text-[11px] font-extrabold text-[#15803D]">
+                                ¥{dish.price_jpy.toLocaleString()}
+                              </p>
+                            </div>
+                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white border border-[#DCECE3] text-[#1C2822] shrink-0">
+                              {isJa ? '注文票' : 'Order'}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* 3. 💮 PILLAR 2: Gochisosama Postcards & Culinary Stamp Rally (旅の思い出ブースト＆口コミ集客) */}
-            <div className="rounded-3xl bg-[#FCF9F2] border-2 border-rose-200/90 p-4 sm:p-5 space-y-3.5 shadow-sm">
+            {/* 3. PILLAR 2: Gochisosama Postcards & Culinary Stamp Rally (nani.now Dashed Card) */}
+            <div className="nani-dashed p-4 sm:p-5 space-y-3 bg-[#F7FBF8]/90">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full">
-                    💮 {isJa ? '旅の美食御朱印 ＆ ごちそうさま絵葉書' : 'Gochisosama Postcards & Trip Stamps'}
+                  <span className="inline-flex items-center gap-1.5 text-[10.5px] font-extrabold text-[#15803D]">
+                    <span>{isJa ? '旅の美食御朱印 ＆ ごちそうさま絵葉書' : 'Gochisosama Postcards & Culinary Stamps'}</span>
                   </span>
-                  <h3 className="text-sm sm:text-base font-black text-slate-900 mt-1">
+                  <h3 className="text-sm font-extrabold text-[#1C2822] mt-0.5">
                     {isJa
-                      ? '食後に「ごちそうさま」を送って、旅の記念スタンプを集めよう'
-                      : 'Send a Gochisosama Note & Collect Your Japan Culinary Stamp'}
+                      ? '食後に「ごちそうさま」を送って、完食御朱印と9:16ストーリーズ画像を発行'
+                      : 'Send a Gochisosama Note to Stamp Your Book & Create a 9:16 Story'}
                   </h3>
                 </div>
-                <span className="text-xs font-black text-rose-800 bg-white px-2.5 py-1 rounded-full border border-rose-200">
-                  💌 {gratitudeNotes.length} {isJa ? '枚の絵葉書' : 'Postcards'}
+                <span className="text-[11px] font-bold text-[#14532D] bg-white px-2.5 py-1 rounded-full border border-[#DCECE3]">
+                  {gratitudeNotes.length} {isJa ? '通の絵葉書' : 'Postcards'}
                 </span>
               </div>
 
@@ -354,45 +370,44 @@ export default function BottomSheet({
                     signatureDish ? [signatureDish.name_ja] : []
                   )
                 }
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+                className="w-full h-10 px-4 rounded-full bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(22,163,74,0.22)] active:scale-95 transition-all cursor-pointer"
               >
-                <span>💮</span>
                 <span>
                   {isJa
-                    ? 'シェフにごちそうさまを送って「御朱印スタンプ＆絵葉書」を発行する'
-                    : 'Send Gochisosama & Stamp Your Trip Passport'}
+                    ? 'シェフへごちそうさま絵葉書を送る（御朱印ゲット） →'
+                    : 'Send Gochisosama Postcard & Collect Stamp →'}
                 </span>
               </button>
 
               {/* Recent Traveler Postcards & Chef Replies */}
               {gratitudeNotes.length > 0 && (
-                <div className="space-y-2.5 pt-1">
+                <div className="space-y-2 pt-1">
                   {gratitudeNotes.slice(0, 3).map((note) => (
                     <div
                       key={note.id}
-                      className="rounded-2xl bg-white p-3.5 border border-amber-200/80 shadow-2xs space-y-2"
+                      className="rounded-[14px] bg-white p-3.5 border border-[#DCECE3] space-y-1.5"
                     >
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-black text-slate-900">
+                        <span className="font-extrabold text-[#1C2822]">
                           {note.stamp_emoji} {note.sender_name}{' '}
-                          <span className="text-slate-500 font-semibold">({note.sender_country})</span>
+                          <span className="text-[#526358] font-medium">({note.sender_country})</span>
                         </span>
-                        <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                          💮 {isJa ? note.stamp_title_ja : note.stamp_title_en}
+                        <span className="text-[10px] font-bold text-[#15803D] bg-[#EEF7F2] px-2 py-0.5 rounded-full">
+                          {isJa ? note.stamp_title_ja : note.stamp_title_en}
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                      <p className="text-xs text-[#1C2822] leading-relaxed font-medium">
                         &ldquo;{isJa ? note.message_ja_translated : note.message_original}&rdquo;
                       </p>
 
                       {note.owner_reply && (
-                        <div className="rounded-xl bg-emerald-50/90 border border-emerald-200 p-2.5 mt-1.5">
-                          <p className="text-[10px] font-black text-emerald-900 mb-0.5">
-                            👨‍🍳 {note.owner_reply.chef_name}{' '}
-                            {isJa ? 'からの直筆返信' : '— Reply from Chef'}
+                        <div className="rounded-[11px] bg-[#F2F9F5] border border-[#C5DDD0] p-2.5 mt-1">
+                          <p className="text-[10px] font-extrabold text-[#15803D] mb-0.5">
+                            ✓ {note.owner_reply.chef_name}{' '}
+                            {isJa ? 'からの返信' : '— Reply from Chef'}
                           </p>
-                          <p className="text-xs text-emerald-950 leading-relaxed">
+                          <p className="text-xs text-[#1C2822] leading-relaxed font-medium">
                             {isJa ? note.owner_reply.text_ja : note.owner_reply.text_en}
                           </p>
                         </div>
