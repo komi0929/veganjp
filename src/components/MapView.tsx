@@ -645,7 +645,7 @@ function InnerMapView({ currentLang, onSelectLang }: InnerMapViewProps) {
       </motion.div>
 
       {/* ─── Floating Utilities: GPS Locate Button ─── */}
-      <div className="absolute right-4 bottom-24 z-30 flex flex-col gap-2.5 pointer-events-auto">
+      <div className={`absolute right-3.5 z-20 flex-col gap-2.5 pointer-events-auto transition-all ${selectedPlace ? 'hidden md:flex md:bottom-6' : 'flex bottom-40 sm:bottom-56'}`}>
         <button
           onClick={handleLocateMe}
           disabled={locating}

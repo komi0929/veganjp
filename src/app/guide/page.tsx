@@ -13,7 +13,7 @@ export default function GuidePage() {
             <AppSidebar lang={lang} onLangChange={setLang} />
 
             <div className="flex flex-col min-h-dvh overflow-x-hidden">
-                <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 lg:pt-10 pb-20 max-w-6xl w-full mx-auto space-y-6">
+                <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 lg:pt-10 pb-28 max-w-6xl w-full mx-auto space-y-5">
                     {/* Hero Banner */}
                     <div className="bg-white/90 backdrop-blur-md rounded-[24px] p-5 sm:p-6 border border-[#DCECE3] shadow-[0_6px_20px_rgba(20,40,30,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-1">

@@ -47,6 +47,7 @@ export default function BottomSheet({
   const [selectedOrderItem, setSelectedOrderItem] = useState<MenuItem | null>(null);
   const [orderQty, setOrderQty] = useState<number>(1);
   const [selectedSideIds, setSelectedSideIds] = useState<string[]>([]);
+  const [isMobileExpanded, setIsMobileExpanded] = useState<boolean>(false);
 
   const googleDetails = useGooglePlaceDetails(place);
 
@@ -55,6 +56,7 @@ export default function BottomSheet({
     setSelectedOrderItem(null);
     setOrderQty(1);
     setSelectedSideIds([]);
+    setIsMobileExpanded(false);
   }, [place.google_place_id]);
 
   const verifiedMenu = useMemo(
@@ -117,14 +119,30 @@ export default function BottomSheet({
         exit={{ y: 40, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 380, damping: 32 }}
       >
-        <div className="pointer-events-auto w-full max-w-xl md:w-[430px] bg-white rounded-t-[28px] md:rounded-[28px] shadow-[0_16px_48px_rgba(20,40,30,0.18)] border border-[#DCECE3] max-h-[82dvh] md:max-h-full md:h-full flex flex-col overflow-hidden">
-          {/* Mobile Drag Handle */}
-          <div className="md:hidden pt-2 flex justify-center bg-white shrink-0">
-            <div className="w-10 h-1 rounded-full bg-[#DCECE3]" />
-          </div>
+        <div
+          className={`pointer-events-auto w-full max-w-xl md:w-[430px] bg-white rounded-t-[28px] md:rounded-[28px] shadow-[0_16px_48px_rgba(20,40,30,0.18)] border border-[#DCECE3] transition-all duration-300 ${
+            isMobileExpanded ? 'max-h-[86dvh]' : 'max-h-[62dvh]'
+          } md:max-h-full md:h-full flex flex-col overflow-hidden`}
+        >
+          {/* Mobile Interactive Drag/Snap Handle */}
+          <button
+            type="button"
+            onClick={() => setIsMobileExpanded((prev) => !prev)}
+            className="md:hidden pt-2 pb-1 px-4 flex items-center justify-between bg-white shrink-0 w-full cursor-pointer"
+          >
+            <span className="text-[10px] font-bold text-[#526358]">
+              {isJa ? 'シート表示' : 'Sheet View'}
+            </span>
+            <span className="w-10 h-1.5 rounded-full bg-[#C5DDD0]" />
+            <span className="text-[10px] font-extrabold text-[#15803D]">
+              {isMobileExpanded
+                ? isJa ? '地図も見る ▾' : 'Show Map ▾'
+                : isJa ? '全画面で開く ▴' : 'Expand ▴'}
+            </span>
+          </button>
 
           {/* Sticky Store Header */}
-          <div className="px-4 py-3 flex items-start justify-between gap-2 border-b border-[#EDF5F0] bg-white shrink-0">
+          <div className="px-4 py-2.5 sm:py-3 flex items-start justify-between gap-2 border-b border-[#EDF5F0] bg-white shrink-0">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <h2 className="text-base sm:text-[17px] font-extrabold text-[#1C2822] leading-snug">
@@ -184,10 +202,10 @@ export default function BottomSheet({
           </div>
 
           {/* Scrollable Content */}
-          <div className="overflow-y-auto px-4 py-3.5 space-y-4 flex-1">
+          <div className="overflow-y-auto px-4 py-3 space-y-3.5 flex-1">
             {/* 1. Clean Appetizing Food Photo + 1-Tap Navigation Bar */}
             <div className="rounded-[20px] overflow-hidden border border-[#DCECE3] bg-[#F7FBF8]">
-              <div className="relative h-40 w-full overflow-hidden bg-[#EEF7F2]">
+              <div className="relative h-28 sm:h-40 w-full overflow-hidden bg-[#EEF7F2]">
                 <img
                   src={heroImageUrl}
                   alt={place.name}
@@ -431,6 +449,45 @@ export default function BottomSheet({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Mobile Sticky Thumb-Zone Action Bar (Always accessible with 1 thumb without scrolling!) */}
+          <div className="md:hidden shrink-0 border-t border-[#DCECE3] bg-white/95 backdrop-blur-md px-3.5 pt-2.5 pb-[max(0.65rem,env(safe-area-inset-bottom))] flex items-center gap-2">
+            {signatureDish && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedOrderItem(signatureDish);
+                  setOrderQty(1);
+                }}
+                className="flex-1 h-11 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-[0_6px_18px_rgba(28,40,34,0.2)] active:scale-95 transition-all cursor-pointer"
+              >
+                <svg className="size-4 text-[#22C55E] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <line x1="7" y1="8" x2="17" y2="8" />
+                  <line x1="7" y1="12" x2="13" y2="12" />
+                </svg>
+                <span className="truncate">
+                  {isJa
+                    ? '店員さんに見せて注文＋特典'
+                    : 'Show Order & Perk'}
+                </span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() =>
+                onOpenGratitude?.(
+                  place,
+                  'gratitude',
+                  signatureDish ? [signatureDish.name_ja] : []
+                )
+              }
+              className="h-11 px-3.5 rounded-full bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold text-xs flex items-center justify-center gap-1 shadow-[0_4px_12px_rgba(22,163,74,0.25)] active:scale-95 transition-all shrink-0 cursor-pointer"
+            >
+              <span>💮</span>
+              <span>{isJa ? '御朱印・絵葉書' : 'Stamp'}</span>
+            </button>
           </div>
         </div>
 

@@ -41,7 +41,7 @@ function SpotCarouselCard({
     <motion.div
       key={place.google_place_id}
       onClick={() => onSelectPlace(place)}
-      className={`snap-start shrink-0 w-[238px] sm:w-[264px] bg-white/95 backdrop-blur-xl rounded-[22px] p-2.5 cursor-pointer group transition-all ${
+      className={`snap-start shrink-0 w-[292px] sm:w-[260px] flex sm:block items-center gap-2.5 bg-white/95 backdrop-blur-xl rounded-[20px] sm:rounded-[22px] p-2 sm:p-2.5 cursor-pointer group transition-all ${
         isSelected
           ? 'ring-2 ring-[#16A34A] shadow-[0_12px_30px_rgba(22,163,74,0.22)] border border-[#16A34A]'
           : 'shadow-[0_8px_24px_rgba(20,40,30,0.1)] border border-[#DCECE3] hover:border-[#16A34A]/60'
@@ -49,8 +49,8 @@ function SpotCarouselCard({
       whileHover={{ y: -3 }}
       whileTap={{ scale: 0.97 }}
     >
-      {/* Food Photo Frame */}
-      <div className="relative aspect-[16/9] w-full rounded-[15px] overflow-hidden bg-[#EEF7F2] flex items-center justify-center">
+      {/* Food Photo Frame: Compact Square on Mobile, 16:9 on Tablet/Desktop */}
+      <div className="relative size-[84px] sm:w-full sm:h-auto sm:aspect-[16/9] shrink-0 rounded-[14px] sm:rounded-[15px] overflow-hidden bg-[#EEF7F2] flex items-center justify-center">
         {realPhoto ? (
           <img
             src={realPhoto}
@@ -59,20 +59,20 @@ function SpotCarouselCard({
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-[#EEF7F2] text-[#526358] p-3 text-center">
-            <span className="text-[11px] font-bold text-[#1C2822] truncate w-full">
+          <div className="w-full h-full flex flex-col items-center justify-center bg-[#EEF7F2] text-[#526358] p-2 text-center">
+            <span className="text-[10px] font-bold text-[#1C2822] truncate w-full">
               {place.name}
             </span>
           </div>
         )}
 
         {/* Top Overlay Badges */}
-        <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
-          <span className="text-[9.5px] font-extrabold px-2 py-0.5 rounded-full bg-white/95 text-[#14532D] shadow-2xs">
+        <div className="absolute top-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1 pointer-events-none">
+          <span className="hidden sm:inline-block text-[9.5px] font-extrabold px-2 py-0.5 rounded-full bg-white/95 text-[#14532D] shadow-2xs">
             {isJa ? '🎁 歓迎特典あり' : '🎁 Welcome Perk'}
           </span>
           {meta.rating && (
-            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#1C2822]/85 text-white flex items-center gap-0.5">
+            <span className="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-full bg-[#1C2822]/85 text-white flex items-center gap-0.5 ml-auto">
               <span className="text-amber-300">★</span>
               <span>{meta.rating.toFixed(1)}</span>
             </span>
@@ -81,13 +81,13 @@ function SpotCarouselCard({
       </div>
 
       {/* Spot Info + Signature Dish Highlight */}
-      <div className="mt-2 px-1 space-y-1">
+      <div className="min-w-0 flex-1 sm:mt-2 sm:px-1 space-y-1">
         <div className="flex items-center justify-between gap-1 text-[10.5px] text-[#526358] font-semibold">
           <span className="truncate">
             {isJa ? place.area || place.area_en : place.area_en || place.area}
           </span>
           {(place.genre_en || place.genre) && (
-            <span className="text-[9.5px] font-bold text-[#15803D] bg-[#EEF7F2] px-1.5 py-0.2 rounded-md shrink-0">
+            <span className="text-[9.5px] font-bold text-[#15803D] bg-[#EEF7F2] px-1.5 py-0.5 rounded-md shrink-0">
               {isJa
                 ? place.genre || place.genre_en
                 : place.genre_en || place.genre}

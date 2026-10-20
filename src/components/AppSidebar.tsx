@@ -198,11 +198,11 @@ export default function AppSidebar({ lang = 'ja', onLangChange }: AppSidebarProp
                 </div>
             </aside>
 
-            {/* Mobile / Tablet Floating Header */}
-            <header className="lg:hidden sticky top-2.5 z-40 px-3 pt-2">
+            {/* Mobile / Tablet Top Header (Logo + Language Switcher + Quick Map CTA) */}
+            <header className="lg:hidden sticky top-2 z-40 px-3 pt-1.5">
                 <div className="max-w-2xl mx-auto rounded-full bg-white/95 backdrop-blur-md border border-[#DCECE3] shadow-[0_6px_20px_rgba(20,40,30,0.06)] px-3 py-1.5 flex items-center justify-between gap-2">
                     <Link href="/" className="flex items-center gap-2 shrink-0">
-                        <div className="size-7 rounded-[9px] bg-[#16A34A] text-white flex items-center justify-center">
+                        <div className="size-7 rounded-[9px] bg-[#16A34A] text-white flex items-center justify-center shadow-xs">
                             <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
                                 <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
@@ -211,32 +211,71 @@ export default function AppSidebar({ lang = 'ja', onLangChange }: AppSidebarProp
                         <span className="font-extrabold text-sm text-[#1C2822]">Vegan.jp</span>
                     </Link>
 
-                    <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                        {navItems.map((item) => {
-                            const active = pathname === item.href;
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
-                                        active
-                                            ? 'bg-[#1C2822] text-white'
-                                            : 'text-[#4A5D52] hover:bg-[#EEF7F2]'
-                                    }`}
-                                >
-                                    {item.href === '/'
-                                        ? isJa ? 'マップ' : 'Map'
-                                        : item.href === '/partner'
-                                        ? isJa ? '店舗スタジオ' : 'Partner'
-                                        : item.href === '/growth'
-                                        ? isJa ? '自動集客' : 'Growth'
-                                        : isJa ? 'ガイド' : 'Guide'}
-                                </Link>
-                            );
-                        })}
-                    </nav>
+                    <div className="flex items-center gap-1.5">
+                        {onLangChange && (
+                            <select
+                                aria-label="Language"
+                                value={lang}
+                                onChange={(e) => onLangChange(e.target.value as NavLang)}
+                                className="h-8 rounded-full border border-[#DCECE3] bg-[#F7FBF8] px-2.5 text-xs font-extrabold text-[#1C2822] focus:outline-none focus:border-[#16A34A]"
+                            >
+                                {LANG_OPTIONS.map((opt) => (
+                                    <option key={opt.code} value={opt.code}>
+                                        🌐 {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                        <Link
+                            href="/"
+                            className="h-8 px-3 rounded-full bg-[#16A34A] text-white text-xs font-extrabold flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+                        >
+                            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                            </svg>
+                            <span>{isJa ? 'マップ' : 'Map'}</span>
+                        </Link>
+                    </div>
                 </div>
             </header>
+
+            {/* Mobile / Tablet Native Bottom Tab Bar (Thumb-Zone Navigation) */}
+            <nav
+                aria-label="Mobile Navigation"
+                className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#DCECE3] shadow-[0_-6px_24px_rgba(20,40,30,0.07)] px-2 pt-1.5 pb-[max(0.45rem,env(safe-area-inset-bottom))]"
+            >
+                <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
+                    {navItems.map((item) => {
+                        const active = pathname === item.href;
+                        const shortLabel =
+                            item.href === '/'
+                                ? isJa ? 'マップ' : 'Map'
+                                : item.href === '/partner'
+                                ? isJa ? '店舗スタジオ' : 'Partner'
+                                : item.href === '/growth'
+                                ? isJa ? '自動集客' : 'Growth'
+                                : isJa ? 'ガイド' : 'Guide';
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex flex-col items-center justify-center py-1 rounded-[12px] transition-all active:scale-95 ${
+                                    active
+                                        ? 'bg-[#EEF7F2] text-[#15803D] font-extrabold'
+                                        : 'text-[#526358] font-bold hover:text-[#1C2822]'
+                                }`}
+                            >
+                                <span className={active ? 'text-[#16A34A]' : 'text-[#687D70]'}>
+                                    {item.icon}
+                                </span>
+                                <span className="text-[10.5px] leading-tight mt-0.5 truncate max-w-full px-1">
+                                    {shortLabel}
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </div>
+            </nav>
         </>
     );
 }

@@ -26,6 +26,7 @@ export default function PartnerPortalPage() {
     );
     const [toastMsg, setToastMsg] = useState<string | null>(null);
     const [showVerifyPanel, setShowVerifyPanel] = useState(false);
+    const [mobileView, setMobileView] = useState<'edit' | 'preview'>('edit');
 
     // Anti-Spoofing OTP Verification States
     const [verifyMethod, setVerifyMethod] =
@@ -297,39 +298,39 @@ export default function PartnerPortalPage() {
                     </div>
                 )}
 
-                <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 lg:pt-10 pb-20 max-w-6xl w-full mx-auto space-y-6">
+                <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 lg:pt-10 pb-28 max-w-6xl w-full mx-auto space-y-5">
                     {/* Top Header + Store Selector Bar */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/90 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#DCECE3] shadow-[0_6px_20px_rgba(20,40,30,0.04)]">
-                        <div className="flex items-center gap-3.5">
-                            <div className="size-11 rounded-[14px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(22,163,74,0.25)] shrink-0">
-                                <svg className="size-5.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 bg-white/90 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#DCECE3] shadow-[0_6px_20px_rgba(20,40,30,0.04)]">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 sm:size-11 rounded-[14px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(22,163,74,0.25)] shrink-0">
+                                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                                     <polyline points="9 22 9 12 15 12 15 22" />
                                 </svg>
                             </div>
                             <div>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1C2822]">
+                                    <h1 className="text-base sm:text-xl font-extrabold tracking-tight text-[#1C2822]">
                                         {isJa ? '店舗オーナースタジオ' : 'Restaurant Partner Studio'}
                                     </h1>
-                                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#EEF7F2] text-[#15803D]">
+                                    <span className="text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-[#EEF7F2] text-[#15803D]">
                                         {isJa ? '初期費用・手数料 0円' : '100% Free'}
                                     </span>
                                 </div>
                                 <p className="text-xs font-medium text-[#526358] mt-0.5">
                                     {isJa
-                                        ? '左で「看板の一皿＆歓迎特典」を入力すると、右のスマホ画面プレビュー（6言語注文票）にリアルタイム反映されます'
-                                        : 'Edit your Signature Dish & Welcome Perk on the left and watch the live traveler preview on the right'}
+                                        ? '「看板の一皿＆歓迎特典」を登録すると、訪日客のスマホ画面（6言語注文票）へ即時反映されます'
+                                        : 'Register your Signature Dish & Welcome Perk for instant live preview across 6 languages'}
                                 </p>
                             </div>
                         </div>
 
                         {/* Store Selector & Verification Toggle */}
-                        <div className="flex flex-wrap items-center gap-2.5">
+                        <div className="flex flex-wrap items-center gap-2">
                             <select
                                 value={selectedPlaceId}
                                 onChange={(e) => setSelectedPlaceId(e.target.value)}
-                                className="h-10 rounded-[14px] bg-[#F7FBF8] border border-[#DCECE3] px-3 text-xs font-extrabold text-[#1C2822] focus:outline-none focus:border-[#16A34A] max-w-[270px]"
+                                className="h-10 rounded-[14px] bg-[#F7FBF8] border border-[#DCECE3] px-3 text-xs font-extrabold text-[#1C2822] focus:outline-none focus:border-[#16A34A] w-full sm:w-auto sm:max-w-[270px]"
                             >
                                 {allPlaces.map((p) => {
                                     const verified = Boolean(
@@ -497,22 +498,56 @@ export default function PartnerPortalPage() {
                         </div>
                     )}
 
+                    {/* Mobile 1-Tap Switcher between Editor & Live iPhone Preview */}
+                    <div className="lg:hidden bg-white/95 backdrop-blur-md p-1.5 rounded-full border border-[#DCECE3] grid grid-cols-2 gap-1 shadow-xs">
+                        <button
+                            type="button"
+                            onClick={() => setMobileView('edit')}
+                            className={`h-9 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+                                mobileView === 'edit'
+                                    ? 'bg-[#1C2822] text-white shadow-xs'
+                                    : 'text-[#526358]'
+                            }`}
+                        >
+                            {isJa ? '✏️ メニュー・絵葉書を編集' : '✏️ Edit Menu & Notes'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileView('preview')}
+                            className={`h-9 rounded-full text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                                mobileView === 'preview'
+                                    ? 'bg-[#16A34A] text-white shadow-xs'
+                                    : 'text-[#15803D] bg-[#EEF7F2]'
+                            }`}
+                        >
+                            <span className="size-2 rounded-full bg-current" />
+                            <span>{isJa ? '📱 スマホ画面プレビュー' : '📱 Live Preview'}</span>
+                        </button>
+                    </div>
+
                     {/* ─── 2-COLUMN SPLIT WORKSPACE: Left Editor + Inbox / Right Live iPhone Preview ─── */}
                     <div className="grid grid-cols-1 lg:grid-cols-[1fr_370px] gap-6 items-start">
                         {/* LEFT COLUMN: Pillar 1 (Dish & Perk Editor) + Pillar 2 (Postcard Inbox) */}
-                        <div className="space-y-6">
+                        <div className={`space-y-6 ${mobileView === 'preview' ? 'hidden lg:block' : 'block'}`}>
                             {/* PILLAR 1: Signature Dish & Welcome Perk Editor */}
                             <div className="nani-well">
-                                <div className="px-3.5 py-2 flex items-center justify-between">
+                                <div className="px-3.5 py-2 flex items-center justify-between gap-2">
                                     <span className="text-xs font-extrabold text-[#14532D] flex items-center gap-2">
-                                        <span className="size-2 rounded-full bg-[#16A34A]" />
+                                        <span className="size-2 rounded-full bg-[#16A34A] shrink-0" />
                                         <span>
                                             {isJa
-                                                ? '① 看板の一皿 ＆ 画面提示の歓迎特典（来店動機の登録）'
-                                                : "1. Chef's Signature Dish & Welcome Perk"}
+                                                ? '① 看板の一皿 ＆ 歓迎特典の登録'
+                                                : "1. Chef's Signature Dish & Perk"}
                                         </span>
                                     </span>
-                                    <span className="text-[11px] font-bold text-[#15803D] bg-white/80 px-2.5 py-0.5 rounded-full">
+                                    <button
+                                        type="button"
+                                        onClick={() => setMobileView('preview')}
+                                        className="lg:hidden text-[10.5px] font-extrabold text-[#15803D] bg-white px-2.5 py-0.5 rounded-full shrink-0 border border-[#C5DDD0]"
+                                    >
+                                        {isJa ? 'プレビューを見る →' : 'Preview →'}
+                                    </button>
+                                    <span className="hidden lg:inline-block text-[11px] font-bold text-[#15803D] bg-white/80 px-2.5 py-0.5 rounded-full shrink-0">
                                         {isJa ? '右側のプレビューに即時反映' : 'Live Preview Active'}
                                     </span>
                                 </div>
@@ -741,7 +776,7 @@ export default function PartnerPortalPage() {
                         </div>
 
                         {/* RIGHT COLUMN: Sticky Real-Time Traveler iPhone Preview + Table QR Print */}
-                        <div className="space-y-4 lg:sticky lg:top-6">
+                        <div className={`space-y-4 lg:sticky lg:top-6 ${mobileView === 'edit' ? 'hidden lg:block' : 'block'}`}>
                             <div className="rounded-[28px] bg-[#1C2822] p-3.5 text-white shadow-[0_16px_40px_rgba(20,40,30,0.18)]">
                                 <div className="flex items-center justify-between px-2 pb-2.5">
                                     <span className="text-[11px] font-extrabold text-[#86EFAC] flex items-center gap-1.5">

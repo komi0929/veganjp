@@ -208,25 +208,25 @@ https://vegan.jp/?store=${encodeURIComponent(selectedPlace.google_place_id)}&ref
                     </div>
                 )}
 
-                <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 lg:pt-10 pb-20 max-w-6xl w-full mx-auto space-y-6">
+                <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 lg:pt-10 pb-28 max-w-6xl w-full mx-auto space-y-5">
                     {/* Top Header + Live Telemetry Summary Pills */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/90 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#DCECE3] shadow-[0_6px_20px_rgba(20,40,30,0.04)]">
-                        <div className="flex items-center gap-3.5">
-                            <div className="size-11 rounded-[14px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(22,163,74,0.25)] shrink-0">
-                                <svg className="size-5.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 bg-white/90 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#DCECE3] shadow-[0_6px_20px_rgba(20,40,30,0.04)]">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 sm:size-11 rounded-[14px] bg-[#16A34A] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(22,163,74,0.25)] shrink-0">
+                                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                                 </svg>
                             </div>
                             <div>
-                                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1C2822]">
+                                <h1 className="text-base sm:text-xl font-extrabold tracking-tight text-[#1C2822]">
                                     {isJa
                                         ? 'Instagram 自動集客 ＆ 自己修復スタジオ'
                                         : 'Autonomous Viral Growth & Auto-Heal Studio'}
                                 </h1>
                                 <p className="text-xs font-medium text-[#526358] mt-0.5">
                                     {isJa
-                                        ? '① 9:16ストーリーズ画像生成 → ② 旅人の御朱印から未登録店へ自動招待 → ③ 不具合の24時間セルフ修復'
+                                        ? '① 9:16ストーリーズ画像生成 → ② 未登録店へ自動招待 → ③ 不具合の24時間セルフ修復'
                                         : '1. 9:16 Story Generator · 2. Unclaimed Store Auto-Invites · 3. 24/7 Self-Healing Engine'}
                                 </p>
                             </div>
@@ -395,8 +395,8 @@ https://vegan.jp/?store=${encodeURIComponent(selectedPlace.google_place_id)}&ref
                                         </div>
                                     </div>
 
-                                    {/* Caption + Action Buttons */}
-                                    <div className="flex flex-col justify-between space-y-3">
+                                    {/* Caption + Action Buttons (Buttons placed first on mobile for 1-thumb reach!) */}
+                                    <div className="flex flex-col-reverse sm:flex-col justify-between gap-3">
                                         <div className="flex-1 flex flex-col">
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-xs font-extrabold text-[#1C2822]">
@@ -411,31 +411,17 @@ https://vegan.jp/?store=${encodeURIComponent(selectedPlace.google_place_id)}&ref
                                             <textarea
                                                 readOnly
                                                 value={generatedCaption}
-                                                rows={10}
+                                                rows={8}
                                                 className="w-full flex-1 rounded-[14px] border border-[#DCECE3] bg-white p-3.5 text-xs leading-relaxed text-[#1C2822] font-medium resize-none focus:outline-none"
                                             />
                                         </div>
 
-                                        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    handleCopyText('main_caption', generatedCaption)
-                                                }
-                                                className="h-11 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-[#1C2822] font-bold text-xs flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
-                                            >
-                                                <span>
-                                                    {copiedKey === 'main_caption'
-                                                        ? isJa ? '✓ コピー完了' : '✓ Copied'
-                                                        : isJa ? '紹介文とURLをコピー' : 'Copy Caption & URL'}
-                                                </span>
-                                            </button>
-
+                                        <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center justify-between gap-2 pt-1">
                                             <button
                                                 type="button"
                                                 onClick={handleDownloadStory}
                                                 disabled={isGeneratingPng}
-                                                className="h-11 px-5 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-bold text-xs flex items-center gap-2 shadow-[0_6px_18px_rgba(28,40,34,0.18)] active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                                                className="h-11 px-5 rounded-full bg-[#1C2822] hover:bg-[#2C3E35] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-[0_6px_18px_rgba(28,40,34,0.18)] active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                                             >
                                                 <span>
                                                     {isGeneratingPng
@@ -443,6 +429,20 @@ https://vegan.jp/?store=${encodeURIComponent(selectedPlace.google_place_id)}&ref
                                                         : isJa
                                                         ? 'ストーリーズ画像 (9:16) を保存 ↓'
                                                         : 'Download 9:16 Story PNG ↓'}
+                                                </span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleCopyText('main_caption', generatedCaption)
+                                                }
+                                                className="h-11 px-4 rounded-full border-[1.5px] border-[#C5DDD0] bg-white hover:bg-[#F2F9F5] text-[#1C2822] font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+                                            >
+                                                <span>
+                                                    {copiedKey === 'main_caption'
+                                                        ? isJa ? '✓ コピー完了' : '✓ Copied'
+                                                        : isJa ? '紹介文とURLをコピー' : 'Copy Caption & URL'}
                                                 </span>
                                             </button>
                                         </div>
